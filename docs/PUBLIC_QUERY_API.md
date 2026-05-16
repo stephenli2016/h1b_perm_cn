@@ -170,6 +170,35 @@ Supported filters:
 
 The payload includes count, min, p25, median, p75, max, fiscal years, top job titles, top locations, and a Chinese low-sample warning when fewer than 3 records match.
 
+### `checkH1BWageLevel`
+
+M18 adds the public query method behind `/tools/h1b-wage-level-checker`.
+
+Supported inputs:
+
+- `socOrJobTitle`: standard SOC code such as `15-1252`, or an English job/SOC title keyword.
+- `city`
+- `state`
+- `offeredWage`
+- `wageYear`
+- `wageUnit`: `Year` or `Hour`
+
+Behavior:
+
+- Resolves a SOC code directly when the input matches `NN-NNNN`.
+- Otherwise tries to resolve the keyword against PWD SOC titles and H-1B LCA job/SOC titles.
+- Looks up DOL/FLAG prevailing wage rows by SOC, state, optional city, and wage year.
+- Uses exact city, metro-area, then state-level fallback matching from the M07 PWD lookup helper.
+- Converts Year/Hour inputs with a 2,080-hour annualization assumption only when the matched wage row uses the other unit.
+- Compares the offered wage to Level 1-4 in the matched wage row.
+- Returns related H-1B companies, job titles, and locations from same-SOC LCA samples.
+
+Public interpretation note:
+
+- The result is only a public-data approximation.
+- It does not determine whether a wage, job duty description, LCA, PWD, or petition is legally sufficient.
+- Low-sample related H-1B data is shown only as background.
+
 ### `getRelatedEntities`
 
 Returns related employers, job titles, and locations for a company page.
@@ -217,6 +246,7 @@ M11 validates public inputs before lookup:
 - SOC codes must match `NN-NNNN`.
 - State codes must be two uppercase letters after normalization.
 - Search limits are bounded.
+- Wage-level checker text inputs are length-limited; wage year, state, unit, and offered wage are validated before lookup.
 
 Invalid input returns a typed error instead of throwing.
 

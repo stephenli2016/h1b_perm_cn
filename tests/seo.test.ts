@@ -93,7 +93,9 @@ describe("M15 SEO indexability and sitemaps", () => {
       "http://localhost:3000/perm/company/northstar-cloud",
     );
 
-    expect(listSitemapEntries("tools")).toEqual([]);
+    expect(listSitemapEntries("tools").map((entry) => entry.url)).toEqual([
+      "http://localhost:3000/tools/h1b-wage-level-checker",
+    ]);
     expect(listSitemapEntries("guides")).toEqual([]);
     expect(listSitemapEntries("visa-bulletin")).toEqual([]);
     const coreUrls = listSitemapEntries("core").map((entry) => entry.url);
@@ -115,6 +117,9 @@ describe("M15 SEO indexability and sitemaps", () => {
       "http://localhost:3000/perm/company/brightline-health",
     );
     expect(companyUrlSet).not.toContain("northstar-cloud");
+    expect(renderUrlSet(listSitemapEntries("tools"))).toContain(
+      "http://localhost:3000/tools/h1b-wage-level-checker",
+    );
   });
 
   it("exposes route-specific SEO helper output for page components", () => {

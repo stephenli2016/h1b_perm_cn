@@ -314,6 +314,145 @@ describe("public query repository", () => {
     });
   });
 
+  it("checks H-1B wage level against matched PWD fixture records", () => {
+    const repo = createPublicQueryRepository({ cacheEnabled: false });
+    const result = repo.checkH1BWageLevel({
+      socOrJobTitle: "15-1252",
+      city: "Seattle",
+      state: "WA",
+      offeredWage: 119600,
+      wageYear: 2025,
+      wageUnit: "Year",
+    });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) {
+      throw new Error(result.error.messageZh);
+    }
+
+    expect(result.data.resolvedSoc).toMatchObject({
+      socCode: "15-1252",
+      matchMethod: "soc_code",
+    });
+    expect(result.data.lookupStatus).toBe("matched");
+    expect(result.data.matchScope).toBe("city_state");
+    expect(result.data.comparison).toMatchObject({
+      band: "level_2_to_3",
+      lowerLevel: 2,
+      nextLevel: 3,
+    });
+    expect(result.data.wageRecord?.levels).toHaveLength(4);
+    expect(result.data.sourceNames).toContain("DOL FLAG wage data fixture");
+    expect(result.data.interpretationNoteZh).toContain("不构成法律");
+  });
+
+  it("resolves job title keywords and can match metro-area wage rows", () => {
+    const repo = createPublicQueryRepository({ cacheEnabled: false });
+    const result = repo.checkH1BWageLevel({
+      socOrJobTitle: "Software Engineer",
+      city: "Bellevue",
+      state: "WA",
+      offeredWage: 90000,
+      wageYear: 2025,
+      wageUnit: "Year",
+    });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) {
+      throw new Error(result.error.messageZh);
+    }
+
+    expect(result.data.resolvedSoc).toMatchObject({
+      socCode: "15-1252",
+      matchMethod: "h1b_job_title",
+    });
+    expect(result.data.matchScope).toBe("area_name");
+    expect(result.data.comparison?.band).toBe("below_level_1");
+    expect(result.data.comparison?.messageZh).toContain("不是个案法律结论");
+  });
+
+  it("converts annual wage inputs when the PWD record is hourly", () => {
+    const hourlyFixtureData: FixtureData = {
+      ...emptyFixtureData,
+      sourceFiles: [
+        {
+          id: "source-hourly-pwd",
+          sourceName: "DOL FLAG hourly wage fixture",
+          officialUrl: "https://flag.dol.gov/wage-data",
+          fiscalYear: 2026,
+          fileType: "csv",
+          latestDataDate: "2026-07-01",
+        },
+      ],
+      pwdRecords: [
+        {
+          id: "pwd-worcester-15-2051-2026",
+          sourceFileId: "source-hourly-pwd",
+          locationId: "loc-worcester-ma",
+          sourceRecordId: "fixture-hourly-001",
+          sourceRecordFingerprint: "fixture-hourly-001",
+          dataSeries: "DOL FLAG OFLC Wage Data Downloads",
+          effectiveYear: 2026,
+          socCode: "15-2051",
+          socTitle: "Data Scientists",
+          areaName: "Worcester MA-CT",
+          city: "Worcester",
+          state: "MA",
+          wageLevel1: 43.25,
+          wageLevel2: 54.4,
+          wageLevel3: 65.55,
+          wageLevel4: 76.7,
+          wageUnit: "Hour",
+        },
+      ],
+    };
+    const repo = createPublicQueryRepository({
+      data: hourlyFixtureData,
+      cacheEnabled: false,
+    });
+    const result = repo.checkH1BWageLevel({
+      socOrJobTitle: "15-2051",
+      city: "Worcester",
+      state: "MA",
+      offeredWage: 120000,
+      wageYear: 2026,
+      wageUnit: "Year",
+    });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) {
+      throw new Error(result.error.messageZh);
+    }
+
+    expect(result.data.unitConversion).toMatchObject({
+      originalUnit: "Year",
+      comparisonUnit: "Hour",
+    });
+    expect(result.data.comparison?.offeredWageForComparison).toBeCloseTo(
+      57.69,
+      2,
+    );
+    expect(result.data.comparison?.band).toBe("level_2_to_3");
+  });
+
+  it("rejects invalid wage-level checker inputs with friendly errors", () => {
+    const repo = createPublicQueryRepository({ cacheEnabled: false });
+    const invalid = repo.checkH1BWageLevel({
+      socOrJobTitle: "S",
+      state: "Washington",
+      offeredWage: -1,
+      wageYear: 2025,
+    });
+
+    expect(invalid).toMatchObject({
+      ok: false,
+      error: {
+        code: "invalid_input",
+        field: "socOrJobTitle",
+      },
+    });
+  });
+
   it("returns related employers, job titles, and locations", () => {
     const repo = createPublicQueryRepository({ cacheEnabled: false });
     const result = repo.getRelatedEntities({ slug: "acme-analytics" });

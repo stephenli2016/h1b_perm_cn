@@ -17,11 +17,28 @@ const requiredM02Routes = [
   "/corrections",
 ] as const;
 
+const requiredM18Routes = ["/tools/h1b-wage-level-checker"] as const;
+
 describe("public route map", () => {
   it("contains every M02 route", () => {
     const routePaths = publicRoutes.map((route) => route.path);
 
     expect(routePaths).toEqual(expect.arrayContaining([...requiredM02Routes]));
+  });
+
+  it("adds the M18 wage-level checker as an indexable tool route", () => {
+    const routePaths = publicRoutes.map((route) => route.path);
+    const wageToolRoute = publicRoutes.find(
+      (route) => route.path === "/tools/h1b-wage-level-checker",
+    );
+
+    expect(routePaths).toEqual(expect.arrayContaining([...requiredM18Routes]));
+    expect(wageToolRoute).toMatchObject({
+      dataPage: true,
+      indexing: "indexable",
+      nav: false,
+      sitemapGroup: "tools",
+    });
   });
 
   it("adds the M13 combined company directory without crowding primary nav", () => {

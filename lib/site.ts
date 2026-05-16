@@ -122,6 +122,18 @@ export const publicRoutes = [
     dataPage: true,
   },
   {
+    path: "/tools/h1b-wage-level-checker",
+    label: "H-1B 工资 Level",
+    title: "H-1B 工资 Level 中文判断工具",
+    description:
+      "按 SOC、worksite、offered wage 和 wage year 对照 DOL/FLAG prevailing wage level 公开数据。",
+    section: "tools",
+    nav: false,
+    sitemapGroup: "tools",
+    indexing: "indexable",
+    dataPage: true,
+  },
+  {
     path: "/guides",
     label: "指南",
     title: "职业移民中文指南",

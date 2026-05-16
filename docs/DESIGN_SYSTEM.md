@@ -18,7 +18,7 @@ Layout and navigation:
 
 Data display:
 
-- `MetricCard` — compact key metric card with optional trend label.
+- `MetricCard` — compact key metric card with optional positive or warning trend label.
 - `DataTable` — responsive table wrapper with caption, column scopes, and empty-state fallback.
 - `SourceNote` — source and coverage box.
 - `RelatedLinks` — internal-link list for related companies, guides, tools, jobs, or locations.
@@ -62,5 +62,6 @@ M12 wires representative components into:
 
 - `/h1b`
 - `/visa-bulletin`
+- `/tools/h1b-wage-level-checker`
 
 Later milestones will reuse the same components in search, company pages, tools, and guide templates.

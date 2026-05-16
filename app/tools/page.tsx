@@ -25,6 +25,7 @@ const plannedTools = [
   {
     title: "H-1B 工资 Level 中文判断",
     description: "按 SOC、地区、工资和年份做近似对照，并清楚列出限制。",
+    href: "/tools/h1b-wage-level-checker",
     meta: "M18",
   },
   {
@@ -42,7 +43,7 @@ const plannedTools = [
 export default function ToolsPage() {
   return (
     <PageShell
-      description="M02 先建立工具目录和页面边界。真正的输入、计算和数据联动会在后续工具里程碑逐项实现。"
+      description="面向 H-1B、PERM、工资和排期判断的中文工具入口。已上线的工具会连接官方来源 fixture 或后续真实数据。"
       eyebrow="工具目录"
       title="职业移民工具"
     >
@@ -50,6 +51,7 @@ export default function ToolsPage() {
         {plannedTools.map((tool) => (
           <RouteCard
             description={tool.description}
+            href={tool.href}
             key={tool.title}
             meta={tool.meta}
             title={tool.title}

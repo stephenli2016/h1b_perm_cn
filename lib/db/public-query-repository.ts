@@ -6,8 +6,12 @@ import {
   getEmployerImmigrationSummary,
   getLatestVisaBulletinMonth,
   listVisaBulletinRows,
+  lookupPrevailingWage,
+  matchWageAmountToLevels,
   normalizeEmployerName,
   searchEmployers as searchLocalEmployers,
+  type PrevailingWageLookupResult,
+  type WageLevelMatchResult,
 } from "@/lib/db/local-repository";
 import type {
   CompanyPageMetrics,
@@ -15,6 +19,7 @@ import type {
   FixtureData,
   H1BLcaRecord,
   PermRecord,
+  PwdRecord,
   VisaBulletinDate,
   VisaBulletinMonth,
 } from "@/lib/db/types";
@@ -30,8 +35,10 @@ const SLUG_PATTERN = /^[a-z0-9](?:[a-z0-9-]{0,78}[a-z0-9])?$/;
 const MONTH_KEY_PATTERN = /^\d{4}-(0[1-9]|1[0-2])$/;
 const SOC_CODE_PATTERN = /^\d{2}-\d{4}$/;
 const MAX_DIRECTORY_TEXT_LENGTH = 120;
+const MAX_WAGE_LOOKUP_TEXT_LENGTH = 120;
 const DEFAULT_DIRECTORY_PAGE_SIZE = 2;
 const MAX_DIRECTORY_PAGE_SIZE = 50;
+const ANNUAL_HOURS = 2080;
 const H1B_STATUSES: readonly H1BLcaRecord["caseStatus"][] = [
   "CERTIFIED",
   "WITHDRAWN",
@@ -160,6 +167,96 @@ export type PublicWageDistributionPayload = {
   jobTitles: readonly { value: string; count: number }[];
   locations: readonly { value: string; count: number }[];
   sampleWarningZh?: string;
+};
+
+export type PublicH1BWageLevelCheckInput = {
+  socOrJobTitle?: string;
+  city?: string;
+  state?: string;
+  offeredWage?: number;
+  wageYear?: number;
+  wageUnit?: "Year" | "Hour";
+};
+
+export type PublicResolvedSocCode = {
+  socCode: string;
+  socTitle: string;
+  matchMethod: "soc_code" | "pwd_soc_title" | "h1b_job_title";
+  matchedLabel: string;
+  alternativeSocCodes: readonly {
+    socCode: string;
+    socTitle: string;
+    matchScore: number;
+  }[];
+};
+
+export type PublicWageLevelRow = {
+  level: 1 | 2 | 3 | 4;
+  amount: number;
+};
+
+export type PublicWageLevelComparison = {
+  band: WageLevelMatchResult["band"];
+  labelZh: string;
+  messageZh: string;
+  cautionLevel: "low" | "medium" | "high";
+  offeredWageForComparison: number;
+  offeredWageUnitForComparison: "Year" | "Hour";
+  lowerLevel?: 1 | 2 | 3 | 4;
+  lowerAmount?: number;
+  nextLevel?: 1 | 2 | 3 | 4;
+  nextAmount?: number;
+};
+
+export type PublicWageUnitConversion = {
+  originalAmount: number;
+  originalUnit: "Year" | "Hour";
+  comparisonAmount: number;
+  comparisonUnit: "Year" | "Hour";
+  noteZh: string;
+};
+
+export type PublicH1BWageLevelCheckPayload = {
+  input: {
+    socOrJobTitle: string;
+    city?: string;
+    state: string;
+    offeredWage: number;
+    wageYear: number;
+    wageUnit: "Year" | "Hour";
+  };
+  resolvedSoc: PublicResolvedSocCode;
+  lookupStatus: PrevailingWageLookupResult["status"];
+  matchScope?: PrevailingWageLookupResult["matchScope"];
+  wageRecord?: {
+    id: string;
+    effectiveYear: number;
+    socCode: string;
+    socTitle: string;
+    areaName: string;
+    city: string;
+    state: string;
+    dataSeries: string;
+    wageUnit: "Year" | "Hour";
+    levels: readonly PublicWageLevelRow[];
+  };
+  comparison?: PublicWageLevelComparison;
+  unitConversion?: PublicWageUnitConversion;
+  related: {
+    sampleCount: number;
+    sampleWarningZh?: string;
+    companies: readonly {
+      employer: Employer;
+      href: string;
+      recordCount: number;
+      medianAnnualWage?: number;
+    }[];
+    jobTitles: readonly { value: string; count: number }[];
+    locations: readonly { value: string; count: number }[];
+  };
+  sourceNames: readonly string[];
+  latestDataDate?: string;
+  interpretationNoteZh: string;
 };
 
 export type PublicRelatedEntitiesPayload = {
@@ -923,6 +1020,83 @@ export function createPublicQueryRepository(
       );
     },
 
+    checkH1BWageLevel(
+      input: PublicH1BWageLevelCheckInput,
+    ): PublicQueryResult<PublicH1BWageLevelCheckPayload> {
+      const normalized = normalizeWageLevelCheckInput(input);
+      if (!normalized.ok) {
+        return normalized;
+      }
+
+      return runCached("checkH1BWageLevel", normalized.data, () => {
+        const resolvedSoc = resolveSocCode(normalized.data.socOrJobTitle, data);
+        if (!resolvedSoc) {
+          return failure(
+            "not_found",
+            "未能从 SOC code 或职位关键词匹配到可用的工资数据。",
+            "socOrJobTitle",
+            "请尝试输入标准 SOC code，例如 15-1252，或使用更接近公开数据中的英文职位名称。",
+          );
+        }
+
+        const lookup = lookupPrevailingWage(
+          {
+            socCode: resolvedSoc.socCode,
+            city: normalized.data.city,
+            state: normalized.data.state,
+            effectiveYear: normalized.data.wageYear,
+          },
+          data,
+        );
+        const related = buildWageLevelRelatedData(
+          resolvedSoc.socCode,
+          normalized.data.city,
+          normalized.data.state,
+          data,
+        );
+        const sourceIds = [
+          lookup.record?.sourceFileId,
+          ...related.sourceFileIds,
+        ].filter((sourceId): sourceId is string => Boolean(sourceId));
+        const sourceInfo = summarizeSourceFiles(sourceIds, data);
+
+        if (!lookup.record) {
+          return failure(
+            "not_found",
+            "未找到匹配该 SOC、州和年份的 prevailing wage 记录。",
+            "socOrJobTitle",
+            "可以先保留 SOC code，尝试去掉城市或换一个已覆盖的 wage year。",
+          );
+        }
+
+        const normalizedWage = normalizeWageForComparison(
+          normalized.data.offeredWage,
+          normalized.data.wageUnit,
+          lookup.record.wageUnit,
+        );
+        const comparison = buildWageLevelComparison(
+          matchWageAmountToLevels(lookup.record, normalizedWage.amount),
+          normalizedWage.amount,
+          lookup.record.wageUnit,
+        );
+
+        return success({
+          input: normalized.data,
+          resolvedSoc,
+          lookupStatus: lookup.status,
+          matchScope: lookup.matchScope,
+          wageRecord: toPublicWageRecord(lookup.record),
+          comparison,
+          unitConversion: normalizedWage.conversion,
+          related: related.payload,
+          sourceNames: sourceInfo.sourceNames,
+          latestDataDate: sourceInfo.latestDataDate,
+          interpretationNoteZh:
+            "此工具只把输入工资与 DOL/FLAG prevailing wage level 公开数值做近似对照；它不判断职位职责、case 分类、LCA/PWD 填写是否正确，也不构成法律、移民、税务或职业建议。",
+        });
+      });
+    },
+
     getRelatedEntities(
       input: PublicEmployerBySlugInput,
     ): PublicQueryResult<PublicRelatedEntitiesPayload> {
@@ -1240,6 +1414,110 @@ function normalizeLimit(
   return success(Math.min(value, maxValue));
 }
 
+function normalizeWageLevelCheckInput(
+  input: PublicH1BWageLevelCheckInput,
+): PublicQueryResult<PublicH1BWageLevelCheckPayload["input"]> {
+  const socOrJobTitle = input.socOrJobTitle?.trim();
+  const city = input.city?.trim();
+  const state = input.state?.trim().toUpperCase();
+  const wageUnit = input.wageUnit ?? "Year";
+  const offeredWage = input.offeredWage;
+  const wageYear = input.wageYear;
+
+  if (!socOrJobTitle) {
+    return failure(
+      "invalid_input",
+      "请输入 SOC code 或英文职位关键词。",
+      "socOrJobTitle",
+      "例如 15-1252、Software Developers 或 Software Engineer。",
+    );
+  }
+
+  if (
+    socOrJobTitle.length < 2 ||
+    socOrJobTitle.length > MAX_WAGE_LOOKUP_TEXT_LENGTH
+  ) {
+    return failure(
+      "invalid_input",
+      "SOC/职位关键词长度无效。",
+      "socOrJobTitle",
+      `请控制在 2-${MAX_WAGE_LOOKUP_TEXT_LENGTH} 个字符以内。`,
+    );
+  }
+
+  if (!state || !/^[A-Z]{2}$/.test(state)) {
+    return failure(
+      "invalid_input",
+      "请输入两位美国州代码。",
+      "state",
+      "例如 WA、CA、TX、NY。",
+    );
+  }
+
+  if (city && city.length > MAX_WAGE_LOOKUP_TEXT_LENGTH) {
+    return failure(
+      "invalid_input",
+      "城市名称太长。",
+      "city",
+      `请控制在 ${MAX_WAGE_LOOKUP_TEXT_LENGTH} 个字符以内。`,
+    );
+  }
+
+  if (!Number.isFinite(offeredWage) || offeredWage === undefined) {
+    return failure(
+      "invalid_input",
+      "请输入 offered wage 数字。",
+      "offeredWage",
+      "请只输入数字，不需要输入 $ 或逗号。",
+    );
+  }
+
+  if (offeredWage <= 0 || offeredWage > 10_000_000) {
+    return failure(
+      "invalid_input",
+      "offered wage 数值无效。",
+      "offeredWage",
+      "请确认工资单位是年薪或时薪，并输入正数。",
+    );
+  }
+
+  if (!Number.isInteger(wageYear) || wageYear === undefined) {
+    return failure(
+      "invalid_input",
+      "请输入 wage year。",
+      "wageYear",
+      "请使用四位年份，例如 2025。",
+    );
+  }
+
+  if (wageYear < 2000 || wageYear > 2100) {
+    return failure(
+      "invalid_input",
+      "wage year 格式无效。",
+      "wageYear",
+      "请使用四位年份，例如 2025。",
+    );
+  }
+
+  if (!["Year", "Hour"].includes(wageUnit)) {
+    return failure(
+      "invalid_input",
+      "工资单位无效。",
+      "wageUnit",
+      "当前只支持 Year 或 Hour。",
+    );
+  }
+
+  return success({
+    socOrJobTitle,
+    city,
+    state,
+    offeredWage,
+    wageYear,
+    wageUnit,
+  });
+}
+
 function toH1BDirectoryRow(
   record: H1BLcaRecord,
   data: FixtureData,
@@ -1425,6 +1703,354 @@ function summarizeSourceFiles(
       .filter((date): date is string => Boolean(date))
       .sort()
       .at(-1),
+  };
+}
+
+type SocResolutionCandidate = {
+  socCode: string;
+  socTitle: string;
+  matchMethod: PublicResolvedSocCode["matchMethod"];
+  matchedLabel: string;
+  matchScore: number;
+};
+
+function resolveSocCode(
+  socOrJobTitle: string,
+  data: FixtureData,
+): PublicResolvedSocCode | undefined {
+  const trimmed = socOrJobTitle.trim();
+  const queryKey = normalizeEmployerName(trimmed);
+
+  if (SOC_CODE_PATTERN.test(trimmed)) {
+    const title =
+      data.pwdRecords.find((record) => record.socCode === trimmed)?.socTitle ??
+      data.h1bLcaRecords.find((record) => record.socCode === trimmed)
+        ?.socTitle ??
+      "Unknown SOC title";
+
+    return {
+      socCode: trimmed,
+      socTitle: title,
+      matchMethod: "soc_code",
+      matchedLabel: trimmed,
+      alternativeSocCodes: buildSocAlternatives(trimmed, data),
+    };
+  }
+
+  const candidates = new Map<string, SocResolutionCandidate>();
+  const addCandidate = (
+    socCode: string,
+    socTitle: string,
+    matchMethod: PublicResolvedSocCode["matchMethod"],
+    matchedLabel: string,
+    score: number,
+  ) => {
+    const existing = candidates.get(socCode);
+    const nextScore = (existing?.matchScore ?? 0) + score;
+
+    candidates.set(socCode, {
+      socCode,
+      socTitle: existing?.socTitle ?? socTitle,
+      matchMethod: existing?.matchMethod ?? matchMethod,
+      matchedLabel: existing?.matchedLabel ?? matchedLabel,
+      matchScore: nextScore,
+    });
+  };
+
+  for (const record of data.pwdRecords) {
+    const titleKey = normalizeEmployerName(record.socTitle);
+    if (titleKey.includes(queryKey) || queryKey.includes(titleKey)) {
+      addCandidate(
+        record.socCode,
+        record.socTitle,
+        "pwd_soc_title",
+        record.socTitle,
+        titleKey === queryKey ? 40 : 24,
+      );
+    }
+  }
+
+  for (const record of data.h1bLcaRecords) {
+    const jobKey = normalizeEmployerName(record.jobTitle);
+    const titleKey = normalizeEmployerName(record.socTitle);
+    if (jobKey.includes(queryKey) || queryKey.includes(jobKey)) {
+      addCandidate(
+        record.socCode,
+        record.socTitle,
+        "h1b_job_title",
+        record.jobTitle,
+        jobKey === queryKey ? 16 : 8,
+      );
+    } else if (titleKey.includes(queryKey) || queryKey.includes(titleKey)) {
+      addCandidate(
+        record.socCode,
+        record.socTitle,
+        "h1b_job_title",
+        record.socTitle,
+        titleKey === queryKey ? 12 : 6,
+      );
+    }
+  }
+
+  const sortedCandidates = [...candidates.values()].sort(
+    (left, right) =>
+      right.matchScore - left.matchScore ||
+      left.socCode.localeCompare(right.socCode),
+  );
+  const selected = sortedCandidates[0];
+
+  if (!selected) {
+    return undefined;
+  }
+
+  return {
+    socCode: selected.socCode,
+    socTitle: selected.socTitle,
+    matchMethod: selected.matchMethod,
+    matchedLabel: selected.matchedLabel,
+    alternativeSocCodes: sortedCandidates
+      .filter((candidate) => candidate.socCode !== selected.socCode)
+      .slice(0, 4)
+      .map((candidate) => ({
+        socCode: candidate.socCode,
+        socTitle: candidate.socTitle,
+        matchScore: candidate.matchScore,
+      })),
+  };
+}
+
+function buildSocAlternatives(
+  selectedSocCode: string,
+  data: FixtureData,
+): PublicResolvedSocCode["alternativeSocCodes"] {
+  const candidates = new Map<string, SocResolutionCandidate>();
+  const selectedPrefix = selectedSocCode.slice(0, 2);
+
+  for (const record of [...data.pwdRecords, ...data.h1bLcaRecords]) {
+    if (record.socCode === selectedSocCode) {
+      continue;
+    }
+
+    if (!record.socCode.startsWith(selectedPrefix)) {
+      continue;
+    }
+
+    const existing = candidates.get(record.socCode);
+    candidates.set(record.socCode, {
+      socCode: record.socCode,
+      socTitle: existing?.socTitle ?? record.socTitle,
+      matchMethod: existing?.matchMethod ?? "pwd_soc_title",
+      matchedLabel: existing?.matchedLabel ?? record.socTitle,
+      matchScore: (existing?.matchScore ?? 0) + 1,
+    });
+  }
+
+  return [...candidates.values()]
+    .sort(
+      (left, right) =>
+        right.matchScore - left.matchScore ||
+        left.socCode.localeCompare(right.socCode),
+    )
+    .slice(0, 4)
+    .map((candidate) => ({
+      socCode: candidate.socCode,
+      socTitle: candidate.socTitle,
+      matchScore: candidate.matchScore,
+    }));
+}
+
+function toPublicWageRecord(
+  record: PwdRecord,
+): NonNullable<PublicH1BWageLevelCheckPayload["wageRecord"]> {
+  return {
+    id: record.id,
+    effectiveYear: record.effectiveYear,
+    socCode: record.socCode,
+    socTitle: record.socTitle,
+    areaName: record.areaName,
+    city: record.city,
+    state: record.state,
+    dataSeries: record.dataSeries,
+    wageUnit: record.wageUnit,
+    levels: [
+      { level: 1 as const, amount: record.wageLevel1 },
+      { level: 2 as const, amount: record.wageLevel2 },
+      { level: 3 as const, amount: record.wageLevel3 },
+      { level: 4 as const, amount: record.wageLevel4 },
+    ].filter((level) => Number.isFinite(level.amount)),
+  };
+}
+
+function normalizeWageForComparison(
+  amount: number,
+  inputUnit: "Year" | "Hour",
+  comparisonUnit: "Year" | "Hour",
+): {
+  amount: number;
+  conversion?: PublicWageUnitConversion;
+} {
+  if (inputUnit === comparisonUnit) {
+    return { amount };
+  }
+
+  const convertedAmount =
+    inputUnit === "Year" ? amount / ANNUAL_HOURS : amount * ANNUAL_HOURS;
+
+  return {
+    amount: convertedAmount,
+    conversion: {
+      originalAmount: amount,
+      originalUnit: inputUnit,
+      comparisonAmount: convertedAmount,
+      comparisonUnit,
+      noteZh:
+        inputUnit === "Year"
+          ? "该 wage record 使用小时工资，工具按 2,080 小时/年把输入年薪换算为小时工资，仅用于粗略对照。"
+          : "该 wage record 使用年薪，工具按 2,080 小时/年把输入时薪换算为年薪，仅用于粗略对照。",
+    },
+  };
+}
+
+function buildWageLevelComparison(
+  match: WageLevelMatchResult,
+  offeredWageForComparison: number,
+  offeredWageUnitForComparison: "Year" | "Hour",
+): PublicWageLevelComparison {
+  const labels: Record<WageLevelMatchResult["band"], string> = {
+    below_level_1: "低于 Level 1 公开数值",
+    level_1_to_2: "介于 Level 1 和 Level 2",
+    level_2_to_3: "介于 Level 2 和 Level 3",
+    level_3_to_4: "介于 Level 3 和 Level 4",
+    level_4_or_above: "达到或高于 Level 4",
+    unknown: "无法判断区间",
+  };
+  const cautionLevels: Record<
+    WageLevelMatchResult["band"],
+    PublicWageLevelComparison["cautionLevel"]
+  > = {
+    below_level_1: "high",
+    level_1_to_2: "medium",
+    level_2_to_3: "medium",
+    level_3_to_4: "low",
+    level_4_or_above: "low",
+    unknown: "medium",
+  };
+
+  return {
+    band: match.band,
+    labelZh: labels[match.band],
+    messageZh: wageLevelMessageZh(match),
+    cautionLevel: cautionLevels[match.band],
+    offeredWageForComparison,
+    offeredWageUnitForComparison,
+    lowerLevel: match.lowerLevel,
+    lowerAmount: match.lowerAmount,
+    nextLevel: match.nextLevel,
+    nextAmount: match.nextAmount,
+  };
+}
+
+function wageLevelMessageZh(match: WageLevelMatchResult) {
+  if (match.band === "below_level_1") {
+    return "输入工资低于该公开记录的 Level 1 数值。请把它视为需要进一步核对的信号，而不是个案法律结论。";
+  }
+
+  if (match.band === "level_4_or_above") {
+    return "输入工资达到或高于该公开记录的最高 level 数值。仍需结合职位职责、地区、正式 PWD/LCA 和律师判断。";
+  }
+
+  if (match.lowerLevel && match.nextLevel) {
+    return `输入工资介于 Level ${match.lowerLevel} 和 Level ${match.nextLevel} 之间。这个区间只能说明与公开 wage table 的相对位置，不能单独判断 H-1B 合规。`;
+  }
+
+  return "当前公开记录的 level 数值不完整，工具无法给出可靠区间。";
+}
+
+function buildWageLevelRelatedData(
+  socCode: string,
+  city: string | undefined,
+  state: string,
+  data: FixtureData,
+) {
+  const sameSocRecords = data.h1bLcaRecords.filter(
+    (record) => record.socCode === socCode,
+  );
+  const stateRecords = sameSocRecords.filter(
+    (record) => record.worksiteState.toUpperCase() === state,
+  );
+  const cityRecords = city
+    ? stateRecords.filter(
+        (record) =>
+          normalizeLocationText(record.worksiteCity) ===
+          normalizeLocationText(city),
+      )
+    : [];
+  const records =
+    cityRecords.length > 0
+      ? cityRecords
+      : stateRecords.length > 0
+        ? stateRecords
+        : sameSocRecords;
+  const companiesById = new Map<string, H1BLcaRecord[]>();
+
+  for (const record of records) {
+    const employerRecords = companiesById.get(record.employerId);
+    if (employerRecords) {
+      employerRecords.push(record);
+    } else {
+      companiesById.set(record.employerId, [record]);
+    }
+  }
+
+  const companies = [...companiesById.entries()]
+    .map(([employerId, employerRecords]) => {
+      const employer = data.employers.find(
+        (candidate) => candidate.id === employerId,
+      );
+      const wages = employerRecords
+        .map((record) => record.annualizedWageFrom)
+        .filter((wage) => Number.isFinite(wage))
+        .sort((left, right) => left - right);
+
+      return employer
+        ? {
+            employer,
+            href: `/h1b/company/${employer.slug}`,
+            recordCount: employerRecords.length,
+            medianAnnualWage:
+              wages.length > 0 ? percentile(wages, 0.5) : undefined,
+          }
+        : undefined;
+    })
+    .filter((company): company is NonNullable<typeof company> =>
+      Boolean(company),
+    )
+    .sort(
+      (left, right) =>
+        right.recordCount - left.recordCount ||
+        left.employer.displayName.localeCompare(right.employer.displayName),
+    )
+    .slice(0, 5);
+
+  return {
+    payload: {
+      sampleCount: records.length,
+      sampleWarningZh:
+        records.length > 0 && records.length < 3
+          ? "相关 H-1B LCA 样本少于 3 条，只适合作为很弱的公开数据背景。"
+          : undefined,
+      companies,
+      jobTitles: topCounts(records.map((record) => record.jobTitle)).slice(
+        0,
+        5,
+      ),
+      locations: topCounts(
+        records.map(
+          (record) => `${record.worksiteCity}, ${record.worksiteState}`,
+        ),
+      ).slice(0, 5),
+    },
+    sourceFileIds: records.map((record) => record.sourceFileId),
   };
 }
 

@@ -1,6 +1,6 @@
-# SEO Indexability and Sitemaps — M15-M17
+# SEO Indexability and Sitemaps — M15-M18
 
-Milestones: M15 — Company page quality scoring, noindex, and sitemap logic; M16 — Generate first 500 high-quality company pages; M17 — Expand toward 2,000 company pages and performance hardening
+Milestones: M15 — Company page quality scoring, noindex, and sitemap logic; M16 — Generate first 500 high-quality company pages; M17 — Expand toward 2,000 company pages and performance hardening; M18 — H-1B wage-level checker tool
 
 ## Purpose
 
@@ -61,7 +61,9 @@ M15 adds XML sitemap route handlers:
 - `/sitemaps/guides.xml` — indexable guide pages only.
 - `/sitemaps/visa-bulletin.xml` — indexable visa bulletin pages only.
 
-Current tools, guides, and visa bulletin routes remain `noindex-until-data`, so their split sitemaps return empty `<urlset>` shells until later content/data milestones make them indexable.
+After M18, `/sitemaps/tools.xml` includes `/tools/h1b-wage-level-checker` because it has a real form, fixture-backed official-source wage comparison, worked example, source notes, related internal links, and cautious Chinese explanations. The `/tools` directory itself remains `noindex-until-data` until it has enough standalone content.
+
+Guides and visa bulletin split sitemaps still return empty `<urlset>` shells until later content/data milestones make those routes indexable.
 
 M16 adds `selectCompanyPageRoutes(data)`, which selects the first indexable route pages from the same quality logic. M17 raises the default launch target to 2,000 route pages when data quality supports it. The same selector is used for company route static params, while `dynamicParams = true` keeps low-data company pages accessible on demand with `noindex`.
 
@@ -75,7 +77,7 @@ M17 also adds company sitemap pagination. When the selected company route set ex
 - High-data fixture company route-specific indexability.
 - Metadata robots and canonical URLs.
 - Company sitemap inclusion/exclusion.
-- Empty split sitemaps for noindex-until-data route groups.
+- The M18 wage-level checker entering the tools sitemap while noindex-until-data route groups stay out.
 - Sitemap XML rendering.
 
 `tests/company-page-scale.test.ts` covers the M16/M17 generated fixture validation, 500-page and 2,000-page route pre-generation limits, sitemap pagination, duplicate-fingerprint check, low-data exclusion, page-size estimates, and selection performance budget.
