@@ -1,8 +1,9 @@
 import { localFixtureData } from "@/data/fixtures/local-fixtures";
 import type { FixtureData } from "@/lib/db/types";
 import {
+  COMPANY_SITEMAP_PAGE_SIZE,
+  EXPANDED_COMPANY_PAGE_TARGET,
   selectCompanyPageRoutes,
-  INITIAL_COMPANY_PAGE_TARGET,
 } from "@/lib/seo/company-page-selection";
 import { getCanonicalUrl, publicRoutes } from "@/lib/site";
 
@@ -18,6 +19,16 @@ export type SitemapEntry = {
   lastModified?: string;
   changeFrequency?: "daily" | "weekly" | "monthly" | "yearly";
   priority?: number;
+};
+
+export type SitemapIndexEntry = {
+  url: string;
+};
+
+export type SitemapListOptions = {
+  limit?: number;
+  page?: number;
+  pageSize?: number;
 };
 
 export const splitSitemapDefinitions = [
@@ -46,6 +57,7 @@ export const splitSitemapDefinitions = [
 export function listSitemapEntries(
   kind: SitemapKind,
   data: FixtureData = localFixtureData,
+  options: SitemapListOptions = {},
 ): SitemapEntry[] {
   switch (kind) {
     case "core":
@@ -57,17 +69,67 @@ export function listSitemapEntries(
     case "visa-bulletin":
       return listStaticRouteEntries("visa-bulletin");
     case "company-pages":
-      return listCompanyPageEntries(data);
+      return listCompanyPageEntries(data, options);
   }
 }
 
-export function renderSitemapIndex() {
+export function listSitemapIndexEntries(
+  data: FixtureData = localFixtureData,
+): SitemapIndexEntry[] {
+  return splitSitemapDefinitions.flatMap((definition) => {
+    if (definition.kind !== "company-pages") {
+      return [
+        {
+          url: getCanonicalUrl(definition.path),
+        },
+      ];
+    }
+
+    return listCompanySitemapPages(data).map((page) => ({
+      url: getCanonicalUrl(page.path),
+    }));
+  });
+}
+
+export function listCompanySitemapPages(
+  data: FixtureData = localFixtureData,
+  options: SitemapListOptions = {},
+) {
+  const limit = options.limit ?? EXPANDED_COMPANY_PAGE_TARGET;
+  const pageSize = options.pageSize ?? COMPANY_SITEMAP_PAGE_SIZE;
+  const entries = listCompanyPageEntries(data, {
+    limit,
+  });
+  const pageCount = Math.max(1, Math.ceil(entries.length / pageSize));
+
+  if (pageCount === 1) {
+    return [
+      {
+        page: 1,
+        path: "/sitemaps/company-pages.xml",
+        entryCount: entries.length,
+      },
+    ];
+  }
+
+  return Array.from({ length: pageCount }, (_, index) => {
+    const page = index + 1;
+    const start = index * pageSize;
+
+    return {
+      page,
+      path: `/sitemaps/company-pages/${page}.xml`,
+      entryCount: entries.slice(start, start + pageSize).length,
+    };
+  });
+}
+
+export function renderSitemapIndex(data: FixtureData = localFixtureData) {
   return xmlDocument(
     [
       '<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
-      ...splitSitemapDefinitions.map(
-        (definition) =>
-          `<sitemap><loc>${escapeXml(getCanonicalUrl(definition.path))}</loc></sitemap>`,
+      ...listSitemapIndexEntries(data).map(
+        (entry) => `<sitemap><loc>${escapeXml(entry.url)}</loc></sitemap>`,
       ),
       "</sitemapindex>",
     ].join(""),
@@ -107,15 +169,25 @@ function listStaticRouteEntries(
     }));
 }
 
-function listCompanyPageEntries(data: FixtureData): SitemapEntry[] {
+function listCompanyPageEntries(
+  data: FixtureData,
+  options: SitemapListOptions,
+): SitemapEntry[] {
+  const pageSize = options.pageSize ?? COMPANY_SITEMAP_PAGE_SIZE;
+  const page = Math.max(1, options.page ?? 1);
+  const start = options.page === undefined ? 0 : (page - 1) * pageSize;
+  const end = options.page === undefined ? undefined : start + pageSize;
+
   return selectCompanyPageRoutes(data, {
-    limit: INITIAL_COMPANY_PAGE_TARGET,
-  }).map((candidate) => ({
-    url: candidate.url,
-    lastModified: candidate.latestDataDate,
-    changeFrequency: "monthly" as const,
-    priority: candidate.rank <= 100 ? 0.8 : 0.65,
-  }));
+    limit: options.limit ?? EXPANDED_COMPANY_PAGE_TARGET,
+  })
+    .slice(start, end)
+    .map((candidate) => ({
+      url: candidate.url,
+      lastModified: candidate.latestDataDate,
+      changeFrequency: "monthly" as const,
+      priority: candidate.rank <= 100 ? 0.8 : 0.65,
+    }));
 }
 
 function renderUrlEntry(entry: SitemapEntry) {

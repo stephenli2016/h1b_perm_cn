@@ -1,6 +1,6 @@
-# SEO Indexability and Sitemaps — M15/M16
+# SEO Indexability and Sitemaps — M15-M17
 
-Milestones: M15 — Company page quality scoring, noindex, and sitemap logic; M16 — Generate first 500 high-quality company pages
+Milestones: M15 — Company page quality scoring, noindex, and sitemap logic; M16 — Generate first 500 high-quality company pages; M17 — Expand toward 2,000 company pages and performance hardening
 
 ## Purpose
 
@@ -63,7 +63,9 @@ M15 adds XML sitemap route handlers:
 
 Current tools, guides, and visa bulletin routes remain `noindex-until-data`, so their split sitemaps return empty `<urlset>` shells until later content/data milestones make them indexable.
 
-M16 adds `selectCompanyPageRoutes(data)`, which caps `/sitemaps/company-pages.xml` at the first 500 selected indexable route pages. The same selector is used for company route static params, while `dynamicParams = true` keeps low-data company pages accessible on demand with `noindex`.
+M16 adds `selectCompanyPageRoutes(data)`, which selects the first indexable route pages from the same quality logic. M17 raises the default launch target to 2,000 route pages when data quality supports it. The same selector is used for company route static params, while `dynamicParams = true` keeps low-data company pages accessible on demand with `noindex`.
+
+M17 also adds company sitemap pagination. When the selected company route set exceeds 500 URLs, `/sitemap.xml` points to chunked sitemap files such as `/sitemaps/company-pages/1.xml`, `/sitemaps/company-pages/2.xml`, and so on. The legacy `/sitemaps/company-pages.xml` remains valid for the default one-page fixture state.
 
 ## Validation Coverage
 
@@ -76,4 +78,4 @@ M16 adds `selectCompanyPageRoutes(data)`, which caps `/sitemaps/company-pages.xm
 - Empty split sitemaps for noindex-until-data route groups.
 - Sitemap XML rendering.
 
-`tests/company-page-scale.test.ts` covers the M16 500-page generated fixture validation, route pre-generation limit, sitemap limit, duplicate-fingerprint check, and selection performance budget.
+`tests/company-page-scale.test.ts` covers the M16/M17 generated fixture validation, 500-page and 2,000-page route pre-generation limits, sitemap pagination, duplicate-fingerprint check, low-data exclusion, page-size estimates, and selection performance budget.

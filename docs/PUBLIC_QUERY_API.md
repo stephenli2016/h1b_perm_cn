@@ -112,7 +112,7 @@ Returns mode-specific company slugs selected for static pre-generation:
 - `/h1b/company/[slug]`
 - `/perm/company/[slug]`
 
-M16 uses this method to pre-generate only selected indexable route pages, capped at 500 by default. Other valid company slugs can still render dynamically and stay `noindex` when they do not meet route-specific quality thresholds.
+M16/M17 use this method to pre-generate only selected indexable route pages, capped at 2,000 by default after M17. Other valid company slugs can still render dynamically and stay `noindex` when they do not meet route-specific quality thresholds.
 
 ### `getCompanyProfileBySlug`
 
@@ -135,6 +135,8 @@ The payload includes:
 The method is intentionally combined so H-1B and PERM company pages can share one template while still using route-specific titles, breadcrumbs, canonical URLs, and robots metadata.
 
 M15 adds route-specific quality decisions through `getCompanyPageSeo(metrics, mode)`. The profile payload exposes the neutral score and matched thresholds; each route then decides whether the H-1B or PERM page is indexable.
+
+M17 keeps company page payloads bounded by limiting recent H-1B rows, PERM timeline rows, and job/location breakdown rows used by the visible page template.
 
 ### `getH1BSummaryByEmployer`
 

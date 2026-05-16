@@ -735,27 +735,30 @@ export function calculateCompanyPageMetrics(
   const currentFiscalYear =
     options.currentFiscalYear ?? getLatestEmployerFiscalYear(data);
   const oldestFiscalYear = currentFiscalYear - recentYearWindow + 1;
+  const h1bRecordsByEmployer = groupRecentEmployerRecords(
+    data.h1bLcaRecords,
+    oldestFiscalYear,
+    currentFiscalYear,
+  );
+  const permRecordsByEmployer = groupRecentEmployerRecords(
+    data.permRecords,
+    oldestFiscalYear,
+    currentFiscalYear,
+  );
+  const uscisRecordsByEmployer = groupRecentEmployerRecords(
+    data.uscisH1BEmployerRecords,
+    oldestFiscalYear,
+    currentFiscalYear,
+  );
+  const sourceFilesById = new Map(
+    data.sourceFiles.map((sourceFile) => [sourceFile.id, sourceFile]),
+  );
 
   return data.employers
     .map((employer) => {
-      const h1bRecords = data.h1bLcaRecords.filter(
-        (record) =>
-          record.employerId === employer.id &&
-          record.fiscalYear >= oldestFiscalYear &&
-          record.fiscalYear <= currentFiscalYear,
-      );
-      const permRecords = data.permRecords.filter(
-        (record) =>
-          record.employerId === employer.id &&
-          record.fiscalYear >= oldestFiscalYear &&
-          record.fiscalYear <= currentFiscalYear,
-      );
-      const uscisRecords = data.uscisH1BEmployerRecords.filter(
-        (record) =>
-          record.employerId === employer.id &&
-          record.fiscalYear >= oldestFiscalYear &&
-          record.fiscalYear <= currentFiscalYear,
-      );
+      const h1bRecords = h1bRecordsByEmployer.get(employer.id) ?? [];
+      const permRecords = permRecordsByEmployer.get(employer.id) ?? [];
+      const uscisRecords = uscisRecordsByEmployer.get(employer.id) ?? [];
       const fiscalYears = [
         ...h1bRecords.map((record) => record.fiscalYear),
         ...permRecords.map((record) => record.fiscalYear),
@@ -789,9 +792,11 @@ export function calculateCompanyPageMetrics(
         ...permRecords.map((record) => record.sourceFileId),
         ...uscisRecords.map((record) => record.sourceFileId),
       ]);
-      const sourceFiles = data.sourceFiles.filter((sourceFile) =>
-        sourceIds.has(sourceFile.id),
-      );
+      const sourceFiles = [...sourceIds]
+        .map((sourceId) => sourceFilesById.get(sourceId))
+        .filter((sourceFile): sourceFile is NonNullable<typeof sourceFile> =>
+          Boolean(sourceFile),
+        );
       const professionalSocRecordCount = countProfessionalSocRecords([
         ...h1bRecords.map((record) => record.socCode),
         ...permRecords.map((record) => record.socCode),
@@ -924,6 +929,34 @@ function getLatestEmployerFiscalYear(data: FixtureData) {
     ...data.uscisH1BEmployerRecords.map((record) => record.fiscalYear),
     0,
   );
+}
+
+function groupRecentEmployerRecords<
+  TRecord extends { employerId: string; fiscalYear: number },
+>(
+  records: readonly TRecord[],
+  oldestFiscalYear: number,
+  currentFiscalYear: number,
+) {
+  const recordsByEmployer = new Map<string, TRecord[]>();
+
+  for (const record of records) {
+    if (
+      record.fiscalYear < oldestFiscalYear ||
+      record.fiscalYear > currentFiscalYear
+    ) {
+      continue;
+    }
+
+    const employerRecords = recordsByEmployer.get(record.employerId);
+    if (employerRecords) {
+      employerRecords.push(record);
+    } else {
+      recordsByEmployer.set(record.employerId, [record]);
+    }
+  }
+
+  return recordsByEmployer;
 }
 
 function countProfessionalSocRecords(socCodes: readonly string[]) {

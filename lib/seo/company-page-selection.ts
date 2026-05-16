@@ -7,7 +7,18 @@ import {
 import { getCanonicalUrl } from "@/lib/site";
 
 export const INITIAL_COMPANY_PAGE_TARGET = 500;
-export const COMPANY_PAGE_SELECTION_BUDGET_MS = 2500;
+export const EXPANDED_COMPANY_PAGE_TARGET = 2000;
+export const COMPANY_PAGE_SELECTION_BUDGET_MS = 4000;
+export const COMPANY_SITEMAP_PAGE_SIZE = 500;
+export const COMPANY_PAGE_VISIBLE_ROW_BUDGET = 64;
+
+export const COMPANY_PAGE_VISIBLE_LIMITS = {
+  h1bRecentRecords: 8,
+  permTimelineRows: 8,
+  jobBreakdownRows: 20,
+  locationBreakdownRows: 20,
+  fiscalYearRows: 5,
+} as const;
 
 export type CompanyDataSourceKind =
   | "official_or_imported"
@@ -25,6 +36,7 @@ export type CompanyPageRouteCandidate = {
   recordCount5y: number;
   matchedThresholds: readonly string[];
   contentFingerprint: string;
+  estimatedVisibleRows: number;
   latestDataDate?: string;
 };
 
@@ -42,6 +54,9 @@ export type CompanyPageSelectionProfile = {
   permRouteCount: number;
   uniqueEmployerCount: number;
   duplicateContentFingerprintCount: number;
+  lowDataSelectedRouteCount: number;
+  oversizedPageCount: number;
+  maxEstimatedVisibleRows: number;
   elapsedMs: number;
   budgetMs: number;
   withinBudget: boolean;
@@ -52,7 +67,7 @@ export function selectCompanyPageRoutes(
   data: FixtureData,
   options: CompanyPageSelectionOptions = {},
 ): CompanyPageRouteCandidate[] {
-  const limit = options.limit ?? INITIAL_COMPANY_PAGE_TARGET;
+  const limit = options.limit ?? EXPANDED_COMPANY_PAGE_TARGET;
   const modes = options.modes ?? (["h1b", "perm"] as const);
   const metricsByEmployer = calculateCompanyPageMetrics(data);
   const sourceFilesByEmployer = getSourceFilesByEmployer(data);
@@ -87,6 +102,7 @@ export function selectCompanyPageRoutes(
             metrics.employerId,
             mode,
           ),
+          estimatedVisibleRows: estimateCompanyPageVisibleRows(metrics),
           latestDataDate: latestSourceDate(
             sourceFilesByEmployer.get(employer.id) ?? [],
           ),
@@ -107,7 +123,7 @@ export function selectCompanyPageRoutes(
 export function listCompanyStaticSlugs(
   data: FixtureData,
   mode: CompanyPageMode,
-  limit = INITIAL_COMPANY_PAGE_TARGET,
+  limit = EXPANDED_COMPANY_PAGE_TARGET,
 ) {
   return selectCompanyPageRoutes(data, {
     limit,
@@ -124,20 +140,25 @@ export function profileCompanyPageSelection(
 ): CompanyPageSelectionProfile {
   const now = options.now ?? (() => Date.now());
   const budgetMs = options.budgetMs ?? COMPANY_PAGE_SELECTION_BUDGET_MS;
+  const targetPageCount = options.limit ?? EXPANDED_COMPANY_PAGE_TARGET;
   const startedAt = now();
-  const selected = selectCompanyPageRoutes(data, options);
+  const availableRoutes = selectCompanyPageRoutes(data, {
+    ...options,
+    limit: Number.MAX_SAFE_INTEGER,
+  });
+  const selected = availableRoutes.slice(0, targetPageCount);
   const elapsedMs = Math.max(0, now() - startedAt);
   const fingerprints = selected.map(
     (candidate) => candidate.contentFingerprint,
   );
+  const visibleRows = selected.map(
+    (candidate) => candidate.estimatedVisibleRows,
+  );
 
   return {
     dataSourceKind: inferCompanyDataSourceKind(data),
-    targetPageCount: options.limit ?? INITIAL_COMPANY_PAGE_TARGET,
-    availableRouteCount: selectCompanyPageRoutes(data, {
-      ...options,
-      limit: Number.MAX_SAFE_INTEGER,
-    }).length,
+    targetPageCount,
+    availableRouteCount: availableRoutes.length,
     selectedRouteCount: selected.length,
     h1bRouteCount: selected.filter((candidate) => candidate.mode === "h1b")
       .length,
@@ -148,11 +169,43 @@ export function profileCompanyPageSelection(
     ).size,
     duplicateContentFingerprintCount:
       fingerprints.length - new Set(fingerprints).size,
+    lowDataSelectedRouteCount: selected.filter(
+      (candidate) => candidate.matchedThresholds.length === 0,
+    ).length,
+    oversizedPageCount: selected.filter(
+      (candidate) =>
+        candidate.estimatedVisibleRows > COMPANY_PAGE_VISIBLE_ROW_BUDGET,
+    ).length,
+    maxEstimatedVisibleRows: Math.max(...visibleRows, 0),
     elapsedMs,
     budgetMs,
     withinBudget: elapsedMs <= budgetMs,
     buildStrategy: "pre_generate_selected_routes_dynamic_fallback",
   };
+}
+
+export function estimateCompanyPageVisibleRows(metrics: CompanyPageMetrics) {
+  return (
+    Math.min(
+      COMPANY_PAGE_VISIBLE_LIMITS.fiscalYearRows,
+      metrics.latestFiscalYear > 0
+        ? COMPANY_PAGE_VISIBLE_LIMITS.fiscalYearRows
+        : 0,
+    ) +
+    Math.min(COMPANY_PAGE_VISIBLE_LIMITS.h1bRecentRecords, metrics.lcaCount5y) +
+    Math.min(
+      COMPANY_PAGE_VISIBLE_LIMITS.permTimelineRows,
+      metrics.permCount5y,
+    ) +
+    Math.min(
+      COMPANY_PAGE_VISIBLE_LIMITS.jobBreakdownRows,
+      metrics.jobTitleCount,
+    ) +
+    Math.min(
+      COMPANY_PAGE_VISIBLE_LIMITS.locationBreakdownRows,
+      metrics.locationCount,
+    )
+  );
 }
 
 export function inferCompanyDataSourceKind(

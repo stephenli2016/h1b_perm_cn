@@ -27,7 +27,7 @@ Initial sitemap groups:
 
 - `core`: `/`, `/about`
 - `data-directory`: `/h1b`, `/perm`
-- `company-pages`: first selected high-quality `/h1b/company/[slug]` and `/perm/company/[slug]` pages after M15/M16 quality and selection logic
+- `company-pages`: first selected high-quality `/h1b/company/[slug]` and `/perm/company/[slug]` pages after M15-M17 quality and selection logic
 - `tools`: `/tools` and future implemented tool pages from `docs/CONTENT_GUIDE_50_TOPICS.md`
 - `guides`: `/guides` and future implemented guide pages from `docs/CONTENT_GUIDE_50_TOPICS.md`
 - `visa-bulletin`: `/visa-bulletin` and future monthly pages if official data exists

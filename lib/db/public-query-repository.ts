@@ -20,7 +20,8 @@ import type {
 } from "@/lib/db/types";
 import {
   listCompanyStaticSlugs as selectCompanyStaticSlugs,
-  INITIAL_COMPANY_PAGE_TARGET,
+  COMPANY_PAGE_VISIBLE_LIMITS,
+  EXPANDED_COMPANY_PAGE_TARGET,
 } from "@/lib/seo/company-page-selection";
 import type { CompanyPageMode } from "@/lib/seo/company-quality";
 
@@ -637,7 +638,7 @@ export function createPublicQueryRepository(
 
     listCompanyStaticSlugs(
       mode: CompanyPageMode,
-      limit = INITIAL_COMPANY_PAGE_TARGET,
+      limit = EXPANDED_COMPANY_PAGE_TARGET,
     ) {
       return selectCompanyStaticSlugs(data, mode, limit);
     },
@@ -704,7 +705,7 @@ export function createPublicQueryRepository(
             .map((record) => toH1BDirectoryRow(record, data))
             .filter((row): row is PublicDisclosureRecordRow => Boolean(row))
             .sort(compareDirectoryRows)
-            .slice(0, 8),
+            .slice(0, COMPANY_PAGE_VISIBLE_LIMITS.h1bRecentRecords),
           permTimeline: buildPermTimeline(permRecords),
           jobBreakdown: buildJobBreakdown(h1bRecords, permRecords),
           locationBreakdown: buildLocationBreakdown(h1bRecords, permRecords),
@@ -1466,7 +1467,7 @@ function buildCompanyFiscalYears(
   const fiscalYears = uniqueSorted([
     ...h1bRecords.map((record) => record.fiscalYear),
     ...permRecords.map((record) => record.fiscalYear),
-  ]);
+  ]).slice(0, COMPANY_PAGE_VISIBLE_LIMITS.fiscalYearRows);
 
   return fiscalYears.map((fiscalYear) => {
     const yearH1BRecords = h1bRecords.filter(
@@ -1516,7 +1517,10 @@ function buildJobBreakdown(
     });
   }
 
-  return sortCompanyBreakdowns([...rows.values()]);
+  return sortCompanyBreakdowns([...rows.values()]).slice(
+    0,
+    COMPANY_PAGE_VISIBLE_LIMITS.jobBreakdownRows,
+  );
 }
 
 function buildLocationBreakdown(
@@ -1549,7 +1553,10 @@ function buildLocationBreakdown(
     });
   }
 
-  return sortCompanyBreakdowns([...rows.values()]);
+  return sortCompanyBreakdowns([...rows.values()]).slice(
+    0,
+    COMPANY_PAGE_VISIBLE_LIMITS.locationBreakdownRows,
+  );
 }
 
 function addBreakdownRecord(
@@ -1603,7 +1610,7 @@ function buildPermTimeline(
         right.decisionDate.localeCompare(left.decisionDate) ||
         left.caseNumber.localeCompare(right.caseNumber),
     )
-    .slice(0, 8)
+    .slice(0, COMPANY_PAGE_VISIBLE_LIMITS.permTimelineRows)
     .map((record) => ({
       id: record.id,
       fiscalYear: record.fiscalYear,
