@@ -18,6 +18,10 @@ const requiredM02Routes = [
 ] as const;
 
 const requiredM18Routes = ["/tools/h1b-wage-level-checker"] as const;
+const requiredM19Routes = [
+  "/tools/eb2-eb3-china-priority-date-calculator",
+  "/visa-bulletin/[year]/[month]",
+] as const;
 
 describe("public route map", () => {
   it("contains every M02 route", () => {
@@ -38,6 +42,31 @@ describe("public route map", () => {
       indexing: "indexable",
       nav: false,
       sitemapGroup: "tools",
+    });
+  });
+
+  it("adds M19 priority-date and monthly visa bulletin routes", () => {
+    const routePaths = publicRoutes.map((route) => route.path);
+    const priorityDateToolRoute = publicRoutes.find(
+      (route) => route.path === "/tools/eb2-eb3-china-priority-date-calculator",
+    );
+    const monthlyVisaBulletinRoute = publicRoutes.find(
+      (route) => route.path === "/visa-bulletin/[year]/[month]",
+    );
+
+    expect(routePaths).toEqual(expect.arrayContaining([...requiredM19Routes]));
+    expect(priorityDateToolRoute).toMatchObject({
+      dataPage: true,
+      indexing: "indexable",
+      nav: false,
+      sitemapGroup: "tools",
+    });
+    expect(monthlyVisaBulletinRoute).toMatchObject({
+      dataPage: true,
+      indexing: "conditional",
+      nav: false,
+      samplePath: "/visa-bulletin/2026/06",
+      sitemapGroup: "visa-bulletin",
     });
   });
 
@@ -87,7 +116,9 @@ describe("public route map", () => {
         "/perm",
         "/perm/company/[slug]",
         "/tools",
+        "/tools/eb2-eb3-china-priority-date-calculator",
         "/visa-bulletin",
+        "/visa-bulletin/[year]/[month]",
       ]),
     );
   });

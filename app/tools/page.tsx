@@ -31,6 +31,7 @@ const plannedTools = [
   {
     title: "中国 EB-2 / EB-3 排期计算器",
     description: "基于 Visa Bulletin 和 USCIS filing chart 做中文解释。",
+    href: "/tools/eb2-eb3-china-priority-date-calculator",
     meta: "M19",
   },
   {

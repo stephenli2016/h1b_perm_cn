@@ -67,7 +67,7 @@ export function listSitemapEntries(
     case "guides":
       return listStaticRouteEntries("guides");
     case "visa-bulletin":
-      return listStaticRouteEntries("visa-bulletin");
+      return listVisaBulletinEntries(data);
     case "company-pages":
       return listCompanyPageEntries(data, options);
   }
@@ -187,6 +187,21 @@ function listCompanyPageEntries(
       lastModified: candidate.latestDataDate,
       changeFrequency: "monthly" as const,
       priority: candidate.rank <= 100 ? 0.8 : 0.65,
+    }));
+}
+
+function listVisaBulletinEntries(data: FixtureData): SitemapEntry[] {
+  return [...data.visaBulletinMonths]
+    .sort((left, right) => right.monthKey.localeCompare(left.monthKey))
+    .map((month) => ({
+      url: getCanonicalUrl(
+        `/visa-bulletin/${month.bulletinYear}/${String(
+          month.bulletinMonth,
+        ).padStart(2, "0")}`,
+      ),
+      lastModified: month.publishedAt,
+      changeFrequency: "monthly" as const,
+      priority: 0.55,
     }));
 }
 

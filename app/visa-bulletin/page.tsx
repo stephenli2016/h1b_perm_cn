@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 
 import { PageShell } from "@/components/page-shell";
 import { SourceNote } from "@/components/source-note";
@@ -97,6 +98,23 @@ export default function VisaBulletinPage() {
               当月选择、个人类别、chargeability、身份和案件事实。本站内容仅供信息参考，不构成法律、移民、税务或职业建议。
             </p>
           </DisclaimerBox>
+
+          <div className="flex flex-wrap gap-3">
+            <Link
+              className="rounded-md bg-[var(--accent)] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[var(--accent-strong)]"
+              href={`/visa-bulletin/${latestMonth.bulletinYear}/${String(
+                latestMonth.bulletinMonth,
+              ).padStart(2, "0")}`}
+            >
+              查看本月详情
+            </Link>
+            <Link
+              className="rounded-md border border-[var(--line)] px-4 py-2 text-sm font-semibold text-[var(--accent-strong)] transition hover:bg-slate-50"
+              href={`/tools/eb2-eb3-china-priority-date-calculator?category=EB-2&chargeabilityArea=china-mainland&priorityDate=2021-08-31&chartType=${latestMonth.uscisFilingChart}&monthKey=${latestMonth.monthKey}`}
+            >
+              用优先日计算
+            </Link>
+          </div>
         </section>
       ) : (
         <EmptyState

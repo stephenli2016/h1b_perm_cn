@@ -95,9 +95,29 @@ describe("M15 SEO indexability and sitemaps", () => {
 
     expect(listSitemapEntries("tools").map((entry) => entry.url)).toEqual([
       "http://localhost:3000/tools/h1b-wage-level-checker",
+      "http://localhost:3000/tools/eb2-eb3-china-priority-date-calculator",
     ]);
     expect(listSitemapEntries("guides")).toEqual([]);
-    expect(listSitemapEntries("visa-bulletin")).toEqual([]);
+    expect(listSitemapEntries("visa-bulletin")).toEqual([
+      {
+        url: "http://localhost:3000/visa-bulletin/2026/06",
+        lastModified: "2026-05-04",
+        changeFrequency: "monthly",
+        priority: 0.55,
+      },
+      {
+        url: "http://localhost:3000/visa-bulletin/2026/05",
+        lastModified: "2026-04-07",
+        changeFrequency: "monthly",
+        priority: 0.55,
+      },
+      {
+        url: "http://localhost:3000/visa-bulletin/2026/04",
+        lastModified: "2026-03-10",
+        changeFrequency: "monthly",
+        priority: 0.55,
+      },
+    ]);
     const coreUrls = listSitemapEntries("core").map((entry) => entry.url);
 
     expect(coreUrls).toContain("http://localhost:3000/");
@@ -119,6 +139,12 @@ describe("M15 SEO indexability and sitemaps", () => {
     expect(companyUrlSet).not.toContain("northstar-cloud");
     expect(renderUrlSet(listSitemapEntries("tools"))).toContain(
       "http://localhost:3000/tools/h1b-wage-level-checker",
+    );
+    expect(renderUrlSet(listSitemapEntries("tools"))).toContain(
+      "http://localhost:3000/tools/eb2-eb3-china-priority-date-calculator",
+    );
+    expect(renderUrlSet(listSitemapEntries("visa-bulletin"))).toContain(
+      "http://localhost:3000/visa-bulletin/2026/06",
     );
   });
 

@@ -499,6 +499,131 @@ describe("public query repository", () => {
     expect(filtered.data.interpretationNoteZh).toContain("USCIS 当月选择");
   });
 
+  it("checks China EB priority dates against selected Visa Bulletin charts", () => {
+    const repo = createPublicQueryRepository({ cacheEnabled: false });
+    const current = repo.checkVisaBulletinPriorityDate({
+      monthKey: "2026-06",
+      category: "EB-2",
+      chargeabilityArea: "china-mainland",
+      priorityDate: "2021-08-31",
+      chartType: "final_action",
+    });
+    const equalCutoff = repo.checkVisaBulletinPriorityDate({
+      monthKey: "2026-06",
+      category: "EB-2",
+      chargeabilityArea: "china-mainland",
+      priorityDate: "2021-09-01",
+      chartType: "final_action",
+    });
+    const datesForFiling = repo.checkVisaBulletinPriorityDate({
+      monthKey: "2026-06",
+      category: "EB-2",
+      chargeabilityArea: "china-mainland",
+      priorityDate: "2021-12-31",
+      chartType: "dates_for_filing",
+    });
+
+    expect(
+      repo.listVisaBulletinMonths().map((month) => month.monthKey),
+    ).toEqual(["2026-06", "2026-05", "2026-04"]);
+    expect(current.ok).toBe(true);
+    expect(equalCutoff.ok).toBe(true);
+    expect(datesForFiling.ok).toBe(true);
+    if (!current.ok || !equalCutoff.ok || !datesForFiling.ok) {
+      throw new Error("expected priority date checks to resolve");
+    }
+
+    expect(current.data).toMatchObject({
+      resultStatus: "current",
+      isCurrentOnSelectedChart: true,
+      selectedChartUsableForAdjustment: true,
+      sourceUrl:
+        "https://travel.state.gov/content/travel/en/legal/visa-law0/visa-bulletin/2026/visa-bulletin-for-june-2026.html",
+    });
+    expect(current.data.rows).toHaveLength(3);
+    expect(current.data.interpretationNoteZh).toContain("不判断 I-485");
+    expect(equalCutoff.data).toMatchObject({
+      resultStatus: "not_current",
+      isCurrentOnSelectedChart: false,
+    });
+    expect(datesForFiling.data).toMatchObject({
+      resultStatus: "current",
+      selectedChartUsableForAdjustment: false,
+    });
+    expect(datesForFiling.data.uscisFilingChartNoteZh).toContain(
+      "Final Action Dates",
+    );
+  });
+
+  it("handles Visa Bulletin Current and Unavailable states", () => {
+    const statusFixtureData: FixtureData = {
+      ...emptyFixtureData,
+      visaBulletinMonths: [
+        {
+          id: "vb-status-2026-07",
+          monthKey: "2026-07",
+          bulletinYear: 2026,
+          bulletinMonth: 7,
+          sourceUrl:
+            "https://travel.state.gov/content/travel/en/legal/visa-law0/visa-bulletin.html",
+          publishedAt: "2026-06-10",
+          uscisFilingChart: "dates_for_filing",
+        },
+      ],
+      visaBulletinDates: [
+        {
+          id: "vb-status-current",
+          bulletinMonthId: "vb-status-2026-07",
+          category: "EB-1",
+          chargeabilityArea: "china-mainland",
+          chartType: "final_action",
+          cutoffStatus: "current",
+          rawValue: "C",
+        },
+        {
+          id: "vb-status-unavailable",
+          bulletinMonthId: "vb-status-2026-07",
+          category: "EB-1",
+          chargeabilityArea: "china-mainland",
+          chartType: "dates_for_filing",
+          cutoffStatus: "unavailable",
+          rawValue: "U",
+        },
+      ],
+    };
+    const repo = createPublicQueryRepository({
+      data: statusFixtureData,
+      cacheEnabled: false,
+    });
+    const current = repo.checkVisaBulletinPriorityDate({
+      category: "EB-1",
+      priorityDate: "2026-01-01",
+      chartType: "final_action",
+    });
+    const unavailable = repo.checkVisaBulletinPriorityDate({
+      category: "EB-1",
+      priorityDate: "2026-01-01",
+      chartType: "dates_for_filing",
+    });
+
+    expect(current.ok).toBe(true);
+    expect(unavailable.ok).toBe(true);
+    if (!current.ok || !unavailable.ok) {
+      throw new Error("expected C/U priority date checks to resolve");
+    }
+
+    expect(current.data).toMatchObject({
+      resultStatus: "current_all",
+      isCurrentOnSelectedChart: true,
+      selectedChartUsableForAdjustment: false,
+    });
+    expect(unavailable.data).toMatchObject({
+      resultStatus: "unavailable",
+      isCurrentOnSelectedChart: false,
+      selectedChartUsableForAdjustment: true,
+    });
+  });
+
   it("tracks cache hits and misses within a repository instance", () => {
     let now = 1000;
     const repo = createPublicQueryRepository({

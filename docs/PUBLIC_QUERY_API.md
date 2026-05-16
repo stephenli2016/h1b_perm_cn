@@ -221,6 +221,35 @@ Supported filters:
 - `category`: `EB-1`, `EB-2`, `EB-3`
 - `chargeabilityArea`: currently only `china-mainland`
 
+### `listVisaBulletinMonths`
+
+M19 adds a small helper for pages and sitemaps. It returns fixture-backed Visa Bulletin months sorted newest first.
+
+### `checkVisaBulletinPriorityDate`
+
+M19 adds the public query method behind `/tools/eb2-eb3-china-priority-date-calculator`.
+
+Supported inputs:
+
+- `monthKey`: optional `YYYY-MM`; defaults to the latest fixture month.
+- `category`: `EB-1`, `EB-2`, or `EB-3`; defaults to `EB-2`.
+- `chargeabilityArea`: currently only `china-mainland`.
+- `priorityDate`: required `YYYY-MM-DD`.
+- `chartType`: `final_action` or `dates_for_filing`; defaults to `final_action`.
+
+Behavior:
+
+- Looks up the selected Visa Bulletin row for month/category/chargeability/chart.
+- Handles date, `C`, and `U` states.
+- For date cutoffs, treats the priority date as current only when it is earlier than the cut-off date. Equal to the cut-off date is not current.
+- Returns whether the selected chart matches the USCIS employment-based adjustment-of-status filing chart for that month.
+- Returns the source URL, source names, full monthly EB table rows, and Chinese interpretation notes.
+
+Public interpretation note:
+
+- The result only explains the public chart relationship.
+- It does not determine whether a person can file I-485, receive approval, or rely on any personalized immigration outcome.
+
 ## Caching Strategy
 
 Each repository instance has an in-memory cache:

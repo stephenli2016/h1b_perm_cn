@@ -134,6 +134,18 @@ export const publicRoutes = [
     dataPage: true,
   },
   {
+    path: "/tools/eb2-eb3-china-priority-date-calculator",
+    label: "EB 优先日排期计算器",
+    title: "中国 EB-2 / EB-3 优先日排期计算器",
+    description:
+      "按职业移民类别、priority date、Visa Bulletin 月份和 chart type 对照中国大陆出生 EB 排期公开数据。",
+    section: "tools",
+    nav: false,
+    sitemapGroup: "tools",
+    indexing: "indexable",
+    dataPage: true,
+  },
+  {
     path: "/guides",
     label: "指南",
     title: "职业移民中文指南",
@@ -155,6 +167,19 @@ export const publicRoutes = [
     nav: true,
     sitemapGroup: "visa-bulletin",
     indexing: "noindex-until-data",
+    dataPage: true,
+  },
+  {
+    path: "/visa-bulletin/[year]/[month]",
+    samplePath: "/visa-bulletin/2026/06",
+    label: "月度排期页",
+    title: "中国职业移民月度排期",
+    description:
+      "按月份查看中国大陆出生 EB-1、EB-2、EB-3 Final Action Dates、Dates for Filing 和 USCIS filing chart 选择。",
+    section: "visa-bulletin",
+    nav: false,
+    sitemapGroup: "visa-bulletin",
+    indexing: "conditional",
     dataPage: true,
   },
   {

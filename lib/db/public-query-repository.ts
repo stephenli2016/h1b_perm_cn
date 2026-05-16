@@ -1,6 +1,7 @@
 import { localFixtureData } from "@/data/fixtures/local-fixtures";
 import {
   calculateCompanyPageMetrics,
+  checkVisaBulletinPriorityDate as checkLocalVisaBulletinPriorityDate,
   getCompanyIndexabilityDecision,
   getEmployerBySlug as getLocalEmployerBySlug,
   getEmployerImmigrationSummary,
@@ -48,6 +49,15 @@ const PERM_STATUSES: readonly PermRecord["caseStatus"][] = [
   "Certified",
   "Denied",
   "Withdrawn",
+];
+const VISA_BULLETIN_CATEGORIES: readonly VisaBulletinDate["category"][] = [
+  "EB-1",
+  "EB-2",
+  "EB-3",
+];
+const VISA_BULLETIN_CHART_TYPES: readonly VisaBulletinDate["chartType"][] = [
+  "final_action",
+  "dates_for_filing",
 ];
 
 export type PublicQueryErrorCode = "empty_data" | "invalid_input" | "not_found";
@@ -285,6 +295,34 @@ export type PublicVisaBulletinDatesPayload = {
   }[];
   sourceUrl: string;
   interpretationNoteZh: string;
+};
+
+export type PublicVisaBulletinPriorityDateInput = {
+  monthKey?: string;
+  category?: VisaBulletinDate["category"];
+  chargeabilityArea?: VisaBulletinDate["chargeabilityArea"];
+  priorityDate?: string;
+  chartType?: VisaBulletinDate["chartType"];
+};
+
+export type PublicVisaBulletinPriorityDatePayload = {
+  input: {
+    monthKey: string;
+    category: VisaBulletinDate["category"];
+    chargeabilityArea: VisaBulletinDate["chargeabilityArea"];
+    priorityDate: string;
+    chartType: VisaBulletinDate["chartType"];
+  };
+  month: VisaBulletinMonth;
+  selectedDate: VisaBulletinDate;
+  rows: PublicVisaBulletinDatesPayload["rows"];
+  resultStatus: "current" | "current_all" | "not_current" | "unavailable";
+  isCurrentOnSelectedChart: boolean;
+  selectedChartUsableForAdjustment: boolean;
+  sourceUrl: string;
+  sourceNames: readonly string[];
+  interpretationNoteZh: string;
+  uscisFilingChartNoteZh: string;
 };
 
 export type PublicDirectorySearchInput = {
@@ -740,6 +778,12 @@ export function createPublicQueryRepository(
       return selectCompanyStaticSlugs(data, mode, limit);
     },
 
+    listVisaBulletinMonths() {
+      return [...data.visaBulletinMonths].sort((left, right) =>
+        right.monthKey.localeCompare(left.monthKey),
+      );
+    },
+
     getCompanyProfileBySlug(
       input: PublicEmployerBySlugInput,
     ): PublicQueryResult<PublicCompanyProfilePayload> {
@@ -1178,6 +1222,78 @@ export function createPublicQueryRepository(
       );
     },
 
+    checkVisaBulletinPriorityDate(
+      input: PublicVisaBulletinPriorityDateInput,
+    ): PublicQueryResult<PublicVisaBulletinPriorityDatePayload> {
+      const normalized = normalizeVisaBulletinPriorityDateInput(input);
+      if (!normalized.ok) {
+        return normalized;
+      }
+
+      return runCached("checkVisaBulletinPriorityDate", normalized.data, () => {
+        const month = normalized.data.monthKey
+          ? data.visaBulletinMonths.find(
+              (candidate) => candidate.monthKey === normalized.data.monthKey,
+            )
+          : getLatestVisaBulletinMonth(data);
+
+        if (!month) {
+          return failure(
+            data.visaBulletinMonths.length === 0 ? "empty_data" : "not_found",
+            "未找到对应月份的 Visa Bulletin 数据。",
+            "monthKey",
+          );
+        }
+
+        const localResult = checkLocalVisaBulletinPriorityDate(
+          {
+            monthKey: month.monthKey,
+            category: normalized.data.category,
+            chargeabilityArea: normalized.data.chargeabilityArea,
+            chartType: normalized.data.chartType,
+            priorityDate: normalized.data.priorityDate,
+          },
+          data,
+        );
+
+        if (localResult.status === "not_found" || !localResult.date) {
+          return failure(
+            "not_found",
+            "未找到对应类别、地区和图表的排期记录。",
+            "category",
+          );
+        }
+
+        return success({
+          input: {
+            ...normalized.data,
+            monthKey: month.monthKey,
+          },
+          month,
+          selectedDate: localResult.date,
+          rows: listVisaBulletinRows(month.monthKey, data),
+          resultStatus:
+            localResult.status === "current" &&
+            localResult.date.cutoffStatus === "current"
+              ? "current_all"
+              : localResult.status,
+          isCurrentOnSelectedChart: localResult.canProceedByChart,
+          selectedChartUsableForAdjustment:
+            normalized.data.chartType === month.uscisFilingChart,
+          sourceUrl: month.sourceUrl,
+          sourceNames: [
+            "U.S. Department of State Visa Bulletin",
+            "USCIS Adjustment of Status filing chart",
+          ],
+          interpretationNoteZh: `${localResult.messageZh} 这个结果只回答优先日与所选公开表格的日期关系，不判断 I-485 是否一定可交、是否能获批，或任何个人法律结论。`,
+          uscisFilingChartNoteZh: buildUscisFilingChartNote(
+            normalized.data.chartType,
+            month.uscisFilingChart,
+          ),
+        });
+      });
+    },
+
     cacheStats(): PublicQueryCacheStats {
       return {
         enabled: cacheEnabled,
@@ -1515,6 +1631,69 @@ function normalizeWageLevelCheckInput(
     offeredWage,
     wageYear,
     wageUnit,
+  });
+}
+
+function normalizeVisaBulletinPriorityDateInput(
+  input: PublicVisaBulletinPriorityDateInput,
+): PublicQueryResult<{
+  monthKey?: string;
+  category: VisaBulletinDate["category"];
+  chargeabilityArea: VisaBulletinDate["chargeabilityArea"];
+  priorityDate: string;
+  chartType: VisaBulletinDate["chartType"];
+}> {
+  const monthKey = input.monthKey?.trim();
+  const category = input.category ?? "EB-2";
+  const chargeabilityArea = input.chargeabilityArea ?? "china-mainland";
+  const priorityDate = input.priorityDate?.trim();
+  const chartType = input.chartType ?? "final_action";
+
+  if (monthKey && !MONTH_KEY_PATTERN.test(monthKey)) {
+    return failure(
+      "invalid_input",
+      "Visa Bulletin 月份格式无效。",
+      "monthKey",
+      "请使用 YYYY-MM 格式，例如 2026-06。",
+    );
+  }
+
+  if (!VISA_BULLETIN_CATEGORIES.includes(category)) {
+    return failure("invalid_input", "职业移民类别无效。", "category");
+  }
+
+  if (chargeabilityArea !== "china-mainland") {
+    return failure(
+      "invalid_input",
+      "当前工具只支持中国大陆出生 chargeability area。",
+      "chargeabilityArea",
+    );
+  }
+
+  if (!priorityDate || !isValidIsoDate(priorityDate)) {
+    return failure(
+      "invalid_input",
+      "请输入有效的 priority date。",
+      "priorityDate",
+      "请使用 YYYY-MM-DD 格式，例如 2021-08-31。",
+    );
+  }
+
+  if (!VISA_BULLETIN_CHART_TYPES.includes(chartType)) {
+    return failure(
+      "invalid_input",
+      "排期表类型无效。",
+      "chartType",
+      "请选择 Final Action Dates 或 Dates for Filing。",
+    );
+  }
+
+  return success({
+    monthKey,
+    category,
+    chargeabilityArea,
+    priorityDate,
+    chartType,
   });
 }
 
@@ -1948,6 +2127,26 @@ function buildWageLevelComparison(
     nextLevel: match.nextLevel,
     nextAmount: match.nextAmount,
   };
+}
+
+function buildUscisFilingChartNote(
+  selectedChart: VisaBulletinDate["chartType"],
+  uscisChart: VisaBulletinMonth["uscisFilingChart"],
+) {
+  const selectedLabel = chartTypeLabelZh(selectedChart);
+  const uscisLabel = chartTypeLabelZh(uscisChart);
+
+  if (selectedChart === uscisChart) {
+    return `USCIS 当月职业移民调整身份说明使用 ${uscisLabel}。本工具仍只做公开日期对照，不代表一定可以提交 I-485。`;
+  }
+
+  return `USCIS 当月职业移民调整身份说明使用 ${uscisLabel}，你选择的 ${selectedLabel} 更适合作为背景参考；是否可用这张表提交 I-485 不能由本站判断。`;
+}
+
+function chartTypeLabelZh(chartType: VisaBulletinDate["chartType"]) {
+  return chartType === "final_action"
+    ? "Final Action Dates"
+    : "Dates for Filing";
 }
 
 function wageLevelMessageZh(match: WageLevelMatchResult) {
@@ -2456,6 +2655,32 @@ function percentile(sortedValues: readonly number[], percentileValue: number) {
   }
 
   return lowerValue + (upperValue - lowerValue) * (index - lowerIndex);
+}
+
+function isValidIsoDate(value: string) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    return false;
+  }
+
+  const [year, month, day] = value.split("-").map(Number);
+  if (
+    year === undefined ||
+    month === undefined ||
+    day === undefined ||
+    !Number.isInteger(year) ||
+    !Number.isInteger(month) ||
+    !Number.isInteger(day)
+  ) {
+    return false;
+  }
+
+  const candidate = new Date(Date.UTC(year, month - 1, day));
+
+  return (
+    candidate.getUTCFullYear() === year &&
+    candidate.getUTCMonth() === month - 1 &&
+    candidate.getUTCDate() === day
+  );
 }
 
 function uniqueSorted(values: readonly number[]) {
