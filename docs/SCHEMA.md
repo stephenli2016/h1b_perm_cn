@@ -386,6 +386,7 @@ Typed helpers live in:
 
 - `lib/db/types.ts`
 - `lib/db/local-repository.ts`
+- `lib/db/public-query-repository.ts`
 
 Covered fixture query examples:
 
@@ -395,6 +396,15 @@ Covered fixture query examples:
 - Visa Bulletin date lookup
 - guide priority inventory
 - indexable company candidate filtering
+
+M11 public query API:
+
+- validates public inputs before lookup
+- returns typed success/error unions with Chinese messages
+- provides wage distributions and related employer/job/location helpers
+- uses per-instance in-memory caching for fixture reads
+
+Details live in `docs/PUBLIC_QUERY_API.md`.
 
 All fixture data is synthetic and exists only to validate schema shape and query behavior. It must not be published as real official data.
 
