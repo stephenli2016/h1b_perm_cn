@@ -69,6 +69,19 @@
       "required": true
     },
     {
+      "id": "flag_oews_wage_2025_2026",
+      "source_name": "DOL FLAG OFLC Wage Data Downloads — 2025-2026 Wage Files",
+      "official_url": "https://flag.dol.gov/sites/default/files/wages/OFLC_Wages_2025-26.zip",
+      "fiscal_year": 2026,
+      "quarter": null,
+      "expected_file_type": "zip",
+      "checksum_sha256": null,
+      "downloaded_path": "data/raw/flag_oews_wage_2025_2026.zip",
+      "fixture_path": "data/fixtures/raw/flag_oews_wage_2025_2026.csv",
+      "parser_name": "oflc_pwd_disclosure",
+      "required": true
+    },
+    {
       "id": "flag_wage_downloads_2025_2026",
       "source_name": "DOL FLAG OFLC Wage Data Downloads",
       "official_url": "https://flag.dol.gov/wage-data/wage-data-downloads",

@@ -54,6 +54,7 @@ pnpm etl:fingerprint
 pnpm etl:fixtures
 pnpm etl:lca:fixtures
 pnpm etl:perm:fixtures
+pnpm etl:pwd:fixtures
 pnpm etl:test
 ```
 
@@ -62,3 +63,5 @@ Use `python3 -m etl.cli download --manifest data/source_manifest.json --log data
 M05 adds `parse-lca` and `parse-lca-manifest` for OFLC LCA/H-1B disclosure files. The fixture command writes normalized JSONL to `data/normalized/h1b_lca_records.jsonl`, which is ignored as generated local output.
 
 M06 adds `parse-perm` and `parse-perm-manifest` for OFLC PERM disclosure files. The fixture command writes normalized JSONL to `data/normalized/perm_records.jsonl`, which is ignored as generated local output.
+
+M07 adds `parse-pwd` and `parse-pwd-manifest` for OFLC Prevailing Wage disclosure files and FLAG OFLC wage downloads. The fixture command writes normalized JSONL to `data/normalized/pwd_records.jsonl`, which is ignored as generated local output.

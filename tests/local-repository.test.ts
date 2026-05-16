@@ -8,6 +8,8 @@ import {
   getVisaBulletinCutoff,
   listIndexableCompanyCandidates,
   listPriorityGuidePages,
+  lookupPrevailingWage,
+  matchWageAmountToLevels,
   normalizeEmployerName,
   searchEmployers,
 } from "@/lib/db/local-repository";
@@ -55,6 +57,70 @@ describe("local fixture repository", () => {
   });
 
   it("looks up local prevailing wage fixtures by SOC and location", () => {
+    const lookup = lookupPrevailingWage({
+      socCode: "15-1252",
+      city: "Seattle",
+      state: "WA",
+      effectiveYear: 2025,
+    });
+
+    expect(lookup).toMatchObject({
+      status: "matched",
+      matchScope: "city_state",
+    });
+    expect(lookup.record).toMatchObject({
+      socCode: "15-1252",
+      city: "Seattle",
+      state: "WA",
+      wageLevel2: 108900,
+      wageUnit: "Year",
+    });
+    expect(
+      findPrevailingWage({
+        socCode: "15-1252",
+        city: "Seattle",
+        state: "WA",
+        effectiveYear: 2025,
+      })?.id,
+    ).toBe("pwd-seattle-15-1252-2025");
+  });
+
+  it("falls back from exact city to area and statewide wage records", () => {
+    const areaLookup = lookupPrevailingWage({
+      socCode: "15-1252",
+      city: "Bellevue",
+      state: "WA",
+      effectiveYear: 2025,
+    });
+    const statewideLookup = lookupPrevailingWage({
+      socCode: "15-1252",
+      city: "Spokane",
+      state: "WA",
+      effectiveYear: 2025,
+    });
+    const missingLookup = lookupPrevailingWage({
+      socCode: "99-9999",
+      city: "Seattle",
+      state: "WA",
+      effectiveYear: 2025,
+    });
+
+    expect(areaLookup).toMatchObject({
+      status: "matched",
+      matchScope: "area_name",
+    });
+    expect(areaLookup.record?.id).toBe("pwd-seattle-15-1252-2025");
+    expect(statewideLookup).toMatchObject({
+      status: "fallback",
+      matchScope: "state",
+    });
+    expect(statewideLookup.record?.id).toBe("pwd-wa-statewide-15-1252-2025");
+    expect(missingLookup).toMatchObject({
+      status: "not_found",
+    });
+  });
+
+  it("matches a wage amount to PWD levels without treating it as an approval odds metric", () => {
     const wage = findPrevailingWage({
       socCode: "15-1252",
       city: "Seattle",
@@ -62,12 +128,15 @@ describe("local fixture repository", () => {
       effectiveYear: 2025,
     });
 
-    expect(wage).toMatchObject({
-      socCode: "15-1252",
-      city: "Seattle",
-      state: "WA",
-      wageLevel2: 108900,
-      wageUnit: "Year",
+    expect(wage).toBeDefined();
+    expect(matchWageAmountToLevels(wage!, 119600)).toMatchObject({
+      band: "level_2_to_3",
+      lowerLevel: 2,
+      nextLevel: 3,
+    });
+    expect(matchWageAmountToLevels(wage!, 70000)).toMatchObject({
+      band: "below_level_1",
+      nextLevel: 1,
     });
   });
 
