@@ -20,6 +20,8 @@
     "etl:perm:fixtures": "python3 -m etl.cli parse-perm-manifest --manifest data/source_manifest.json --output data/normalized/perm_records.jsonl --fixtures-only",
     "etl:pwd:fixture": "python3 -m etl.cli parse-pwd --input data/fixtures/raw/oflc_pwd_fy2026_q2.csv --source-id oflc_pwd_fy2026_q2 --effective-year 2026 --data-series \"DOL OFLC Prevailing Wage Disclosure Data\" --output data/normalized/pwd_records.jsonl",
     "etl:pwd:fixtures": "python3 -m etl.cli parse-pwd-manifest --manifest data/source_manifest.json --output data/normalized/pwd_records.jsonl --fixtures-only",
+    "etl:uscis:h1b:fixture": "python3 -m etl.cli parse-uscis-h1b --input data/fixtures/raw/uscis_h1b_employer_data_fy2023.csv --source-id uscis_h1b_employer_data_fy2023 --fiscal-year 2023 --output data/normalized/uscis_h1b_employer_records.jsonl",
+    "etl:uscis:h1b:fixtures": "python3 -m etl.cli parse-uscis-h1b-manifest --manifest data/source_manifest.json --output data/normalized/uscis_h1b_employer_records.jsonl --fixtures-only",
     "etl:test": "python3 -m unittest discover -s tests/etl -p 'test_*.py'",
     "format": "prettier --check .",
     "format:write": "prettier --write ."

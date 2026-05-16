@@ -12,6 +12,7 @@ import {
   matchWageAmountToLevels,
   normalizeEmployerName,
   searchEmployers,
+  summarizeUscisH1BEmployerData,
 } from "@/lib/db/local-repository";
 
 describe("local fixture repository", () => {
@@ -54,6 +55,38 @@ describe("local fixture repository", () => {
     expect(summary?.topJobTitles[0]?.jobTitle).toBe("Software Engineer");
     expect(summary?.topLocations[0]?.location).toBe("Seattle, WA");
     expect(summary?.latestDataDate).toBe("2025-09-30");
+  });
+
+  it("summarizes USCIS H-1B Employer Data Hub records by employer and fiscal year", () => {
+    const summaries = summarizeUscisH1BEmployerData({
+      employerName: "Acme Analytics, LLC",
+      fiscalYear: 2025,
+    });
+
+    expect(summaries).toEqual([
+      {
+        fiscalYear: 2025,
+        totalRecords: 1,
+        initialApprovals: 2,
+        initialDenials: 0,
+        continuingApprovals: 3,
+        continuingDenials: 0,
+        initialDecisions: 2,
+        continuingDecisions: 3,
+        firstDecisions: 5,
+        cities: ["Seattle"],
+        states: ["WA"],
+        naicsCodes: ["541511"],
+      },
+    ]);
+
+    expect(
+      summarizeUscisH1BEmployerData({ employerId: "emp-northstar" })[0],
+    ).toMatchObject({
+      fiscalYear: 2025,
+      firstDecisions: 3,
+      naicsCodes: ["541512"],
+    });
   });
 
   it("looks up local prevailing wage fixtures by SOC and location", () => {

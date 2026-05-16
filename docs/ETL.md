@@ -55,6 +55,7 @@ pnpm etl:fixtures
 pnpm etl:lca:fixtures
 pnpm etl:perm:fixtures
 pnpm etl:pwd:fixtures
+pnpm etl:uscis:h1b:fixtures
 pnpm etl:test
 ```
 
@@ -65,3 +66,5 @@ M05 adds `parse-lca` and `parse-lca-manifest` for OFLC LCA/H-1B disclosure files
 M06 adds `parse-perm` and `parse-perm-manifest` for OFLC PERM disclosure files. The fixture command writes normalized JSONL to `data/normalized/perm_records.jsonl`, which is ignored as generated local output.
 
 M07 adds `parse-pwd` and `parse-pwd-manifest` for OFLC Prevailing Wage disclosure files and FLAG OFLC wage downloads. The fixture command writes normalized JSONL to `data/normalized/pwd_records.jsonl`, which is ignored as generated local output.
+
+M08 adds `parse-uscis-h1b` and `parse-uscis-h1b-manifest` for USCIS H-1B Employer Data Hub CSV files and local HTML table fixtures. The fixture command writes normalized JSONL to `data/normalized/uscis_h1b_employer_records.jsonl`, which is ignored as generated local output.

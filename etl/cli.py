@@ -12,6 +12,10 @@ from etl.manifest import ManifestError, SourceEntry, load_manifest
 from etl.parsers.oflc_lca import parse_lca_file, write_lca_jsonl
 from etl.parsers.oflc_perm import parse_perm_file, write_perm_jsonl
 from etl.parsers.oflc_pwd import parse_pwd_file, write_pwd_jsonl
+from etl.parsers.uscis_h1b_employer import (
+    parse_uscis_h1b_employer_file,
+    write_uscis_h1b_employer_jsonl,
+)
 from etl.run_log import append_run_log, create_run_id, record_from_download_result
 
 
@@ -68,6 +72,20 @@ def main(argv: Sequence[str] | None = None) -> int:
     parse_pwd_manifest_parser.add_argument("--repo-root", default=".")
     parse_pwd_manifest_parser.add_argument("--output", required=True)
     parse_pwd_manifest_parser.add_argument("--fixtures-only", action="store_true")
+
+    parse_uscis_h1b_parser = subparsers.add_parser("parse-uscis-h1b")
+    parse_uscis_h1b_parser.add_argument("--input", required=True)
+    parse_uscis_h1b_parser.add_argument("--source-id", required=True)
+    parse_uscis_h1b_parser.add_argument("--fiscal-year", type=int)
+    parse_uscis_h1b_parser.add_argument("--output", required=True)
+
+    parse_uscis_h1b_manifest_parser = subparsers.add_parser(
+        "parse-uscis-h1b-manifest"
+    )
+    parse_uscis_h1b_manifest_parser.add_argument("--manifest", required=True)
+    parse_uscis_h1b_manifest_parser.add_argument("--repo-root", default=".")
+    parse_uscis_h1b_manifest_parser.add_argument("--output", required=True)
+    parse_uscis_h1b_manifest_parser.add_argument("--fixtures-only", action="store_true")
 
     args = parser.parse_args(argv)
 
@@ -321,6 +339,82 @@ def main(argv: Sequence[str] | None = None) -> int:
                     {
                         "parser_name": "oflc_pwd_disclosure",
                         "source_count": len(pwd_sources),
+                        "output": args.output,
+                        "records_seen": sum(result.records_seen for result in parse_results),
+                        "records_inserted": sum(
+                            result.records_inserted for result in parse_results
+                        ),
+                        "duplicate_records": sum(
+                            result.duplicate_records for result in parse_results
+                        ),
+                        "records_written": written,
+                        "sources": [
+                            {
+                                "source_file_id": result.source_file_id,
+                                "input_path": result.input_path,
+                                "records_seen": result.records_seen,
+                                "records_inserted": result.records_inserted,
+                                "duplicate_records": result.duplicate_records,
+                            }
+                            for result in parse_results
+                        ],
+                    },
+                    ensure_ascii=False,
+                    indent=2,
+                )
+            )
+            return 0
+
+        if args.command == "parse-uscis-h1b":
+            result = parse_uscis_h1b_employer_file(
+                args.input,
+                source_file_id=args.source_id,
+                fiscal_year=args.fiscal_year,
+            )
+            written = write_uscis_h1b_employer_jsonl(args.output, result.records)
+            print(
+                json.dumps(
+                    {
+                        "source_file_id": result.source_file_id,
+                        "input_path": result.input_path,
+                        "output": args.output,
+                        "records_seen": result.records_seen,
+                        "records_inserted": result.records_inserted,
+                        "duplicate_records": result.duplicate_records,
+                        "records_written": written,
+                    },
+                    ensure_ascii=False,
+                    indent=2,
+                )
+            )
+            return 0
+
+        if args.command == "parse-uscis-h1b-manifest":
+            manifest = load_manifest(args.manifest)
+            repo_root = Path(args.repo_root)
+            uscis_sources = [
+                source
+                for source in manifest.sources
+                if source.parser_name == "uscis_h1b_employer_data_hub"
+            ]
+            parse_results = []
+            all_records = []
+            for source in uscis_sources:
+                input_path = _source_input_path(source, repo_root, args.fixtures_only)
+                result = parse_uscis_h1b_employer_file(
+                    input_path,
+                    source_file_id=source.id,
+                    fiscal_year=source.fiscal_year,
+                )
+                parse_results.append(result)
+                all_records.extend(result.records)
+
+            written = write_uscis_h1b_employer_jsonl(args.output, all_records)
+            print(
+                json.dumps(
+                    {
+                        "parser_name": "uscis_h1b_employer_data_hub",
+                        "source_count": len(uscis_sources),
                         "output": args.output,
                         "records_seen": sum(result.records_seen for result in parse_results),
                         "records_inserted": sum(

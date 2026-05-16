@@ -44,6 +44,27 @@ export type EmployerImmigrationSummary = {
   latestDataDate?: string;
 };
 
+export type UscisH1BSummaryInput = {
+  employerId?: string;
+  employerName?: string;
+  fiscalYear?: number;
+};
+
+export type UscisH1BEmployerFiscalYearSummary = {
+  fiscalYear: number;
+  totalRecords: number;
+  initialApprovals: number;
+  initialDenials: number;
+  continuingApprovals: number;
+  continuingDenials: number;
+  initialDecisions: number;
+  continuingDecisions: number;
+  firstDecisions: number;
+  cities: readonly string[];
+  states: readonly string[];
+  naicsCodes: readonly string[];
+};
+
 export type WageLookupInput = {
   socCode: string;
   state: string;
@@ -219,6 +240,76 @@ export function getEmployerImmigrationSummary(
       .sort()
       .at(-1),
   };
+}
+
+export function summarizeUscisH1BEmployerData(
+  input: UscisH1BSummaryInput,
+  data: FixtureData = localFixtureData,
+): UscisH1BEmployerFiscalYearSummary[] {
+  const normalizedEmployerName = input.employerName
+    ? normalizeEmployerName(input.employerName)
+    : undefined;
+  const records = data.uscisH1BEmployerRecords
+    .filter(
+      (record) => !input.employerId || record.employerId === input.employerId,
+    )
+    .filter(
+      (record) =>
+        !normalizedEmployerName ||
+        normalizeEmployerName(record.rawEmployerName) ===
+          normalizedEmployerName,
+    )
+    .filter(
+      (record) =>
+        input.fiscalYear === undefined ||
+        record.fiscalYear === input.fiscalYear,
+    );
+  const byFiscalYear = new Map<number, typeof records>();
+
+  for (const record of records) {
+    byFiscalYear.set(record.fiscalYear, [
+      ...(byFiscalYear.get(record.fiscalYear) ?? []),
+      record,
+    ]);
+  }
+
+  return [...byFiscalYear.entries()]
+    .sort(([leftYear], [rightYear]) => rightYear - leftYear)
+    .map(([fiscalYear, yearRecords]) => {
+      const initialApprovals = sum(
+        yearRecords.map((record) => record.initialApprovals),
+      );
+      const initialDenials = sum(
+        yearRecords.map((record) => record.initialDenials),
+      );
+      const continuingApprovals = sum(
+        yearRecords.map((record) => record.continuingApprovals),
+      );
+      const continuingDenials = sum(
+        yearRecords.map((record) => record.continuingDenials),
+      );
+
+      return {
+        fiscalYear,
+        totalRecords: yearRecords.length,
+        initialApprovals,
+        initialDenials,
+        continuingApprovals,
+        continuingDenials,
+        initialDecisions: initialApprovals + initialDenials,
+        continuingDecisions: continuingApprovals + continuingDenials,
+        firstDecisions:
+          initialApprovals +
+          initialDenials +
+          continuingApprovals +
+          continuingDenials,
+        cities: uniqueStrings(yearRecords.map((record) => record.city)),
+        states: uniqueStrings(yearRecords.map((record) => record.state)),
+        naicsCodes: uniqueStrings(
+          yearRecords.map((record) => record.naicsCode),
+        ),
+      };
+    });
 }
 
 export function findPrevailingWage(
@@ -442,6 +533,10 @@ function sum(values: readonly number[]) {
 
 function uniqueSorted(values: readonly number[]) {
   return [...new Set(values)].sort((a, b) => b - a);
+}
+
+function uniqueStrings(values: readonly string[]) {
+  return [...new Set(values)].sort();
 }
 
 function topCounts(values: readonly string[]) {

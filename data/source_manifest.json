@@ -108,6 +108,19 @@
       "required": false
     },
     {
+      "id": "uscis_h1b_employer_data_fy2023",
+      "source_name": "USCIS H-1B Employer Data Hub Files",
+      "official_url": "https://www.uscis.gov/archive/h-1b-employer-data-hub-files",
+      "fiscal_year": 2023,
+      "quarter": null,
+      "expected_file_type": "csv",
+      "checksum_sha256": null,
+      "downloaded_path": "data/raw/uscis_h1b_employer_data_fy2023.csv",
+      "fixture_path": "data/fixtures/raw/uscis_h1b_employer_data_fy2023.csv",
+      "parser_name": "uscis_h1b_employer_data_hub",
+      "required": true
+    },
+    {
       "id": "dos_visa_bulletin_2026_05",
       "source_name": "U.S. Department of State Visa Bulletin",
       "official_url": "https://travel.state.gov/content/travel/en/legal/visa-law0/visa-bulletin.html",
