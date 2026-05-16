@@ -1,6 +1,6 @@
-# SEO Indexability and Sitemaps — M15-M21
+# SEO Indexability and Sitemaps — M15-M22
 
-Milestones: M15 — Company page quality scoring, noindex, and sitemap logic; M16 — Generate first 500 high-quality company pages; M17 — Expand toward 2,000 company pages and performance hardening; M18 — H-1B wage-level checker tool; M19 — EB priority date calculator; M20 — Company immigration public-data signal; M21 — H-1B transfer and PERM restart tools
+Milestones: M15 — Company page quality scoring, noindex, and sitemap logic; M16 — Generate first 500 high-quality company pages; M17 — Expand toward 2,000 company pages and performance hardening; M18 — H-1B wage-level checker tool; M19 — EB priority date calculator; M20 — Company immigration public-data signal; M21 — H-1B transfer and PERM restart tools; M22 — 50 guide/tool content pages
 
 ## Purpose
 
@@ -61,9 +61,9 @@ M15 adds XML sitemap route handlers:
 - `/sitemaps/guides.xml` — indexable guide pages only.
 - `/sitemaps/visa-bulletin.xml` — indexable visa bulletin pages only.
 
-After M21, `/sitemaps/tools.xml` includes `/tools/h1b-wage-level-checker`, `/tools/eb2-eb3-china-priority-date-calculator`, `/tools/company-immigration-score`, `/tools/h1b-transfer-risk-checklist`, and `/tools/perm-restart-timeline-estimator` because they have real utility or methodology value, fixture-backed or official-source context, worked examples or checklists, source notes, related internal links, and cautious Chinese explanations. The `/tools` directory itself remains `noindex-until-data` until it has enough standalone content.
+After M22, `/sitemaps/tools.xml` includes `/tools` plus all 12 tool pages from `docs/CONTENT_GUIDE_50_TOPICS.md`. Five routes are interactive pages from M18-M21; seven use the M22 shared content renderer.
 
-Guides still return empty `<urlset>` shells until later content milestones make guide routes indexable.
+After M22, `/sitemaps/guides.xml` includes `/guides` plus all 38 guide pages from `docs/CONTENT_GUIDE_50_TOPICS.md`. Each content page is backed by `lib/content/guide-pages.ts` and contains a unique title, meta description, official source context, checklist, worked example, common mistakes, related links, review date, and disclaimer.
 
 After M19, `/sitemaps/visa-bulletin.xml` includes month-specific pages for fixture-backed Visa Bulletin months, such as `/visa-bulletin/2026/06`. The shell route `/visa-bulletin` remains noindex. Dynamic monthly pages are included only when data exists in the local official-source fixture.
 
@@ -82,7 +82,10 @@ M17 also adds company sitemap pagination. When the selected company route set ex
 - The M18 wage-level checker and M19 priority-date calculator entering the tools sitemap while noindex-until-data route groups stay out.
 - The M20 company immigration signal methodology page entering the tools sitemap.
 - The M21 H-1B transfer and PERM restart pages entering the tools sitemap without collecting sensitive personal information.
+- The M22 typed content registry publishing 12 tool pages, 38 guide pages, and directory pages into the tools and guides sitemaps.
 - M19 fixture-backed monthly Visa Bulletin pages entering `/sitemaps/visa-bulletin.xml`.
 - Sitemap XML rendering.
+
+`tests/content-pages.test.tsx` covers M22-specific content quality checks: exact 50-page coverage, priority 1 coverage, source-backed non-thin content fields, forbidden-language guards, rendered source links, disclaimers, review dates, and representative dynamic route rendering.
 
 `tests/company-page-scale.test.ts` covers the M16/M17 generated fixture validation, 500-page and 2,000-page route pre-generation limits, sitemap pagination, duplicate-fingerprint check, low-data exclusion, page-size estimates, and selection performance budget.

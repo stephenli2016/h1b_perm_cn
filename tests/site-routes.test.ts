@@ -117,6 +117,23 @@ describe("public route map", () => {
     });
   });
 
+  it("promotes tool and guide directories after M22 content publication", () => {
+    expect(publicRoutes.find((route) => route.path === "/tools")).toMatchObject(
+      {
+        indexing: "indexable",
+        nav: true,
+        sitemapGroup: "tools",
+      },
+    );
+    expect(
+      publicRoutes.find((route) => route.path === "/guides"),
+    ).toMatchObject({
+      indexing: "indexable",
+      nav: true,
+      sitemapGroup: "guides",
+    });
+  });
+
   it("keeps the Chinese primary navigation focused", () => {
     expect(primaryNavItems.map((item) => item.label)).toEqual([
       "首页",

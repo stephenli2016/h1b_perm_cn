@@ -1,64 +1,63 @@
 import type { Metadata } from "next";
 
+import { ContentDirectoryCard } from "@/components/content/content-article";
 import { PageShell } from "@/components/page-shell";
-import { RouteCard } from "@/components/route-card";
+import {
+  type ContentCategory,
+  listContentPages,
+} from "@/lib/content/guide-pages";
 
 export const metadata: Metadata = {
   title: "职业移民中文指南",
   description:
-    "解释 LCA、PERM、Prevailing Wage、Visa Bulletin 和求职决策的中文指南目录规划。",
+    "50 个中文职业移民工具/指南页面，解释 LCA、PERM、Prevailing Wage、Visa Bulletin 和求职决策。",
   alternates: {
     canonical: "/guides",
   },
   robots: {
-    index: false,
+    index: true,
     follow: true,
   },
 };
 
-const guideGroups = [
-  {
-    title: "H-1B 数据解释",
-    description:
-      "解释 LCA、USCIS Employer Data Hub、case status、SOC code 和城市工资查询。",
-    meta: "10 篇规划",
-  },
-  {
-    title: "Prevailing Wage 和薪资",
-    description:
-      "解释 wage level、地区影响、谈薪参考和工资偏低时需要谨慎看的信号。",
-    meta: "8 篇规划",
-  },
-  {
-    title: "PERM 和绿卡",
-    description: "解释 PERM、PWD、recruitment、I-140 和公司绿卡公开数据信号。",
-    meta: "10 篇规划",
-  },
-  {
-    title: "排期与求职决策",
-    description:
-      "解释 Visa Bulletin、filing chart、中国 EB 类别和面试时如何问政策。",
-    meta: "10 篇规划",
-  },
+const guideCategories: ContentCategory[] = [
+  "H-1B 数据解释",
+  "Prevailing Wage 和薪资",
+  "PERM 和绿卡",
+  "排期与中国 backlog",
+  "求职与公司判断",
 ];
 
 export default function GuidesPage() {
+  const guides = listContentPages("guide");
+
   return (
     <PageShell
-      description="这里会承载 50 个高价值中文工具/指南页面。M02 先建立目录；M22 再发布完整内容。"
+      description="面向海外华人求职者和职业移民申请人的中文指南目录。每篇内容都包含官方来源、示例或清单、常见误区、相关链接和免责声明。"
       eyebrow="指南目录"
       title="职业移民中文指南"
     >
-      <section className="grid gap-4 md:grid-cols-2">
-        {guideGroups.map((group) => (
-          <RouteCard
-            description={group.description}
-            key={group.title}
-            meta={group.meta}
-            title={group.title}
-          />
-        ))}
-      </section>
+      <div className="space-y-8">
+        {guideCategories.map((category) => {
+          const pages = guides.filter((page) => page.category === category);
+
+          return (
+            <section className="space-y-4" key={category}>
+              <div>
+                <h2 className="text-xl font-semibold">{category}</h2>
+                <p className="mt-2 text-sm text-[var(--muted)]">
+                  {pages.length} 篇已发布内容页。
+                </p>
+              </div>
+              <div className="grid gap-4 md:grid-cols-2">
+                {pages.map((page) => (
+                  <ContentDirectoryCard key={page.path} page={page} />
+                ))}
+              </div>
+            </section>
+          );
+        })}
+      </div>
     </PageShell>
   );
 }

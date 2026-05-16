@@ -113,12 +113,11 @@ export const publicRoutes = [
     path: "/tools",
     label: "工具",
     title: "职业移民工具",
-    description:
-      "H-1B 工资、公司 sponsor 记录、PERM、排期和跳槽时间线等中文工具入口。",
+    description: "12 个 H-1B、PERM、工资、排期和跳槽时间线中文工具入口。",
     section: "tools",
     nav: true,
     sitemapGroup: "tools",
-    indexing: "noindex-until-data",
+    indexing: "indexable",
     dataPage: true,
   },
   {
@@ -186,11 +185,11 @@ export const publicRoutes = [
     label: "指南",
     title: "职业移民中文指南",
     description:
-      "解释 LCA、PERM、Prevailing Wage、Visa Bulletin 和求职决策的中文指南目录。",
+      "38 篇解释 LCA、PERM、Prevailing Wage、Visa Bulletin 和求职决策的中文指南目录。",
     section: "guides",
     nav: true,
     sitemapGroup: "guides",
-    indexing: "noindex-until-data",
+    indexing: "indexable",
     dataPage: false,
   },
   {

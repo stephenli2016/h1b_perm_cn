@@ -67,6 +67,9 @@ M12 wires representative components into:
 - `/tools/company-immigration-score`
 - `/tools/h1b-transfer-risk-checklist`
 - `/tools/perm-restart-timeline-estimator`
+- `/tools/[slug]` M22 shared content pages
+- `/guides`
+- `/guides/[slug]` M22 shared content pages
 - `/visa-bulletin/[year]/[month]`
 
 Later milestones will reuse the same components in search, company pages, tools, and guide templates.

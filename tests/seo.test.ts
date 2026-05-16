@@ -93,14 +93,34 @@ describe("M15 SEO indexability and sitemaps", () => {
       "http://localhost:3000/perm/company/northstar-cloud",
     );
 
-    expect(listSitemapEntries("tools").map((entry) => entry.url)).toEqual([
-      "http://localhost:3000/tools/h1b-wage-level-checker",
-      "http://localhost:3000/tools/eb2-eb3-china-priority-date-calculator",
-      "http://localhost:3000/tools/company-immigration-score",
-      "http://localhost:3000/tools/h1b-transfer-risk-checklist",
-      "http://localhost:3000/tools/perm-restart-timeline-estimator",
-    ]);
-    expect(listSitemapEntries("guides")).toEqual([]);
+    const toolUrls = listSitemapEntries("tools").map((entry) => entry.url);
+    const guideUrls = listSitemapEntries("guides").map((entry) => entry.url);
+
+    expect(toolUrls).toHaveLength(13);
+    expect(toolUrls).toEqual(
+      expect.arrayContaining([
+        "http://localhost:3000/tools",
+        "http://localhost:3000/tools/h1b-company-sponsor-checker",
+        "http://localhost:3000/tools/h1b-wage-level-checker",
+        "http://localhost:3000/tools/eb2-eb3-china-priority-date-calculator",
+        "http://localhost:3000/tools/company-immigration-score",
+        "http://localhost:3000/tools/h1b-transfer-risk-checklist",
+        "http://localhost:3000/tools/perm-restart-timeline-estimator",
+        "http://localhost:3000/tools/visa-bulletin-alert",
+      ]),
+    );
+    expect(guideUrls).toHaveLength(39);
+    expect(guideUrls).toEqual(
+      expect.arrayContaining([
+        "http://localhost:3000/guides",
+        "http://localhost:3000/guides/what-is-lca-chinese",
+        "http://localhost:3000/guides/h1b-employer-data-hub-explained",
+        "http://localhost:3000/guides/prevailing-wage-explained",
+        "http://localhost:3000/guides/perm-explained-chinese",
+        "http://localhost:3000/guides/visa-bulletin-explained-chinese",
+        "http://localhost:3000/guides/how-to-choose-h1b-sponsor-company",
+      ]),
+    );
     expect(listSitemapEntries("visa-bulletin")).toEqual([
       {
         url: "http://localhost:3000/visa-bulletin/2026/06",
@@ -144,6 +164,9 @@ describe("M15 SEO indexability and sitemaps", () => {
       "http://localhost:3000/tools/h1b-wage-level-checker",
     );
     expect(renderUrlSet(listSitemapEntries("tools"))).toContain(
+      "http://localhost:3000/tools/h1b-company-sponsor-checker",
+    );
+    expect(renderUrlSet(listSitemapEntries("tools"))).toContain(
       "http://localhost:3000/tools/eb2-eb3-china-priority-date-calculator",
     );
     expect(renderUrlSet(listSitemapEntries("tools"))).toContain(
@@ -154,6 +177,9 @@ describe("M15 SEO indexability and sitemaps", () => {
     );
     expect(renderUrlSet(listSitemapEntries("tools"))).toContain(
       "http://localhost:3000/tools/perm-restart-timeline-estimator",
+    );
+    expect(renderUrlSet(listSitemapEntries("guides"))).toContain(
+      "http://localhost:3000/guides/visa-bulletin-explained-chinese",
     );
     expect(renderUrlSet(listSitemapEntries("visa-bulletin"))).toContain(
       "http://localhost:3000/visa-bulletin/2026/06",

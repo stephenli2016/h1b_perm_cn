@@ -1,4 +1,5 @@
 import { localFixtureData } from "@/data/fixtures/local-fixtures";
+import { listContentPages, type ContentKind } from "@/lib/content/guide-pages";
 import type { FixtureData } from "@/lib/db/types";
 import {
   COMPANY_SITEMAP_PAGE_SIZE,
@@ -63,14 +64,45 @@ export function listSitemapEntries(
     case "core":
       return listStaticRouteEntries(["core", "compliance"]);
     case "tools":
-      return listStaticRouteEntries("tools");
+      return listContentRouteEntries("tool", "/tools");
     case "guides":
-      return listStaticRouteEntries("guides");
+      return listContentRouteEntries("guide", "/guides");
     case "visa-bulletin":
       return listVisaBulletinEntries(data);
     case "company-pages":
       return listCompanyPageEntries(data, options);
   }
+}
+
+function listContentRouteEntries(
+  kind: ContentKind,
+  directoryPath: "/tools" | "/guides",
+): SitemapEntry[] {
+  const directoryRoute = publicRoutes.find(
+    (route) =>
+      route.path === directoryPath &&
+      route.sitemapGroup === (kind === "tool" ? "tools" : "guides") &&
+      route.indexing === "indexable",
+  );
+  const directoryEntry = directoryRoute
+    ? [
+        {
+          url: getCanonicalUrl(directoryRoute.path),
+          changeFrequency: "monthly" as const,
+          priority: 0.55,
+        },
+      ]
+    : [];
+
+  return [
+    ...directoryEntry,
+    ...listContentPages(kind).map((contentPage) => ({
+      url: getCanonicalUrl(contentPage.path),
+      lastModified: contentPage.lastReviewed,
+      changeFrequency: "monthly" as const,
+      priority: contentPage.priority === 1 ? 0.7 : 0.55,
+    })),
+  ];
 }
 
 export function listSitemapIndexEntries(
