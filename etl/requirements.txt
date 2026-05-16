@@ -1,0 +1,7 @@
+# M04 ETL framework is intentionally standard-library only so local fixture
+# validation does not require network access or package installation.
+#
+# Future parser milestones can add pinned runtime dependencies here, for example:
+# duckdb>=1.2,<2
+# polars>=1.20,<2
+# pytest>=8,<9

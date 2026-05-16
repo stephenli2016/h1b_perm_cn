@@ -1,0 +1,43 @@
+{
+  "name": "visaradar-cn",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "pnpm@11.1.2",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build --webpack",
+    "start": "next start",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "db:validate": "vitest run tests/schema.test.ts tests/local-repository.test.ts",
+    "etl:validate": "python3 -m etl.cli validate-manifest --manifest data/source_manifest.json",
+    "etl:fingerprint": "python3 -m etl.cli fingerprint --path data/fixtures/raw/oflc_lca_fy2026_q2.csv",
+    "etl:fixtures": "python3 -m etl.cli download --manifest data/source_manifest.json --log data/etl_runs/local.jsonl --fixtures-only",
+    "etl:lca:fixture": "python3 -m etl.cli parse-lca --input data/fixtures/raw/oflc_lca_fy2026_q2.csv --source-id oflc_lca_fy2026_q2 --fiscal-year 2026 --output data/normalized/h1b_lca_records.jsonl",
+    "etl:lca:fixtures": "python3 -m etl.cli parse-lca-manifest --manifest data/source_manifest.json --output data/normalized/h1b_lca_records.jsonl --fixtures-only",
+    "etl:perm:fixture": "python3 -m etl.cli parse-perm --input data/fixtures/raw/oflc_perm_fy2026_q2.csv --source-id oflc_perm_fy2026_q2 --fiscal-year 2026 --output data/normalized/perm_records.jsonl",
+    "etl:perm:fixtures": "python3 -m etl.cli parse-perm-manifest --manifest data/source_manifest.json --output data/normalized/perm_records.jsonl --fixtures-only",
+    "etl:test": "python3 -m unittest discover -s tests/etl -p 'test_*.py'",
+    "format": "prettier --check .",
+    "format:write": "prettier --write ."
+  },
+  "dependencies": {
+    "next": "16.2.6",
+    "react": "19.2.6",
+    "react-dom": "19.2.6"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "4.3.0",
+    "@types/node": "25.8.0",
+    "@types/react": "19.2.14",
+    "@types/react-dom": "19.2.3",
+    "eslint": "9.39.1",
+    "eslint-config-next": "16.2.6",
+    "postcss": "8.5.14",
+    "prettier": "3.8.3",
+    "tailwindcss": "4.3.0",
+    "typescript": "6.0.3",
+    "vitest": "4.1.6"
+  }
+}
