@@ -128,6 +128,7 @@ The payload includes:
 - Recent H-1B LCA rows.
 - PERM timeline rows.
 - Wage distribution from annualized H-1B wage fields.
+- Company immigration public-data signal (`immigrationSignal`) with transparent dimensions, evidence text, low-sample flag, and methodology link.
 - Job title and worksite location breakdowns.
 - Related companies, job titles, and locations for internal links.
 - Source names, latest data date, interpretation note, and company-page SEO metadata.
@@ -137,6 +138,8 @@ The method is intentionally combined so H-1B and PERM company pages can share on
 M15 adds route-specific quality decisions through `getCompanyPageSeo(metrics, mode)`. The profile payload exposes the neutral score and matched thresholds; each route then decides whether the H-1B or PERM page is indexable.
 
 M17 keeps company page payloads bounded by limiting recent H-1B rows, PERM timeline rows, and job/location breakdown rows used by the visible page template.
+
+M20 adds `immigrationSignal`, named publicly as `公开数据友好度信号`. It is a public-data coverage and explainability signal, not H-1B or green-card success odds. Low-sample profiles are explicitly flagged and the composite score is capped.
 
 ### `getH1BSummaryByEmployer`
 

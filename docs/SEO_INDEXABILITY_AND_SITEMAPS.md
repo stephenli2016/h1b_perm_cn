@@ -1,6 +1,6 @@
-# SEO Indexability and Sitemaps — M15-M19
+# SEO Indexability and Sitemaps — M15-M20
 
-Milestones: M15 — Company page quality scoring, noindex, and sitemap logic; M16 — Generate first 500 high-quality company pages; M17 — Expand toward 2,000 company pages and performance hardening; M18 — H-1B wage-level checker tool; M19 — EB priority date calculator
+Milestones: M15 — Company page quality scoring, noindex, and sitemap logic; M16 — Generate first 500 high-quality company pages; M17 — Expand toward 2,000 company pages and performance hardening; M18 — H-1B wage-level checker tool; M19 — EB priority date calculator; M20 — Company immigration public-data signal
 
 ## Purpose
 
@@ -61,7 +61,7 @@ M15 adds XML sitemap route handlers:
 - `/sitemaps/guides.xml` — indexable guide pages only.
 - `/sitemaps/visa-bulletin.xml` — indexable visa bulletin pages only.
 
-After M19, `/sitemaps/tools.xml` includes `/tools/h1b-wage-level-checker` and `/tools/eb2-eb3-china-priority-date-calculator` because both have real forms, fixture-backed official-source comparisons, worked examples, source notes, related internal links, and cautious Chinese explanations. The `/tools` directory itself remains `noindex-until-data` until it has enough standalone content.
+After M20, `/sitemaps/tools.xml` includes `/tools/h1b-wage-level-checker`, `/tools/eb2-eb3-china-priority-date-calculator`, and `/tools/company-immigration-score` because they have real utility or methodology value, fixture-backed official-source context, worked examples, source notes, related internal links, and cautious Chinese explanations. The `/tools` directory itself remains `noindex-until-data` until it has enough standalone content.
 
 Guides still return empty `<urlset>` shells until later content milestones make guide routes indexable.
 
@@ -80,6 +80,7 @@ M17 also adds company sitemap pagination. When the selected company route set ex
 - Metadata robots and canonical URLs.
 - Company sitemap inclusion/exclusion.
 - The M18 wage-level checker and M19 priority-date calculator entering the tools sitemap while noindex-until-data route groups stay out.
+- The M20 company immigration signal methodology page entering the tools sitemap.
 - M19 fixture-backed monthly Visa Bulletin pages entering `/sitemaps/visa-bulletin.xml`.
 - Sitemap XML rendering.
 

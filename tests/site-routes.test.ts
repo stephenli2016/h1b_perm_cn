@@ -22,6 +22,7 @@ const requiredM19Routes = [
   "/tools/eb2-eb3-china-priority-date-calculator",
   "/visa-bulletin/[year]/[month]",
 ] as const;
+const requiredM20Routes = ["/tools/company-immigration-score"] as const;
 
 describe("public route map", () => {
   it("contains every M02 route", () => {
@@ -67,6 +68,21 @@ describe("public route map", () => {
       nav: false,
       samplePath: "/visa-bulletin/2026/06",
       sitemapGroup: "visa-bulletin",
+    });
+  });
+
+  it("adds the M20 company immigration signal methodology route", () => {
+    const routePaths = publicRoutes.map((route) => route.path);
+    const signalRoute = publicRoutes.find(
+      (route) => route.path === "/tools/company-immigration-score",
+    );
+
+    expect(routePaths).toEqual(expect.arrayContaining([...requiredM20Routes]));
+    expect(signalRoute).toMatchObject({
+      dataPage: true,
+      indexing: "indexable",
+      nav: false,
+      sitemapGroup: "tools",
     });
   });
 
@@ -117,6 +133,7 @@ describe("public route map", () => {
         "/perm/company/[slug]",
         "/tools",
         "/tools/eb2-eb3-china-priority-date-calculator",
+        "/tools/company-immigration-score",
         "/visa-bulletin",
         "/visa-bulletin/[year]/[month]",
       ]),

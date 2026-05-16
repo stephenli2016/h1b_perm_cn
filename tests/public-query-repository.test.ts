@@ -169,6 +169,8 @@ describe("public query repository", () => {
       expect(result.data.employer.slug).toBe(slug);
       expect(result.data.fiscalYears.length).toBeGreaterThan(0);
       expect(result.data.interpretationNoteZh).toContain("不代表个案批准");
+      expect(result.data.immigrationSignal.labelZh).toBe("公开数据友好度信号");
+      expect(result.data.immigrationSignal.dimensions).toHaveLength(6);
     }
 
     const permOnly = repo.getCompanyProfileBySlug({
@@ -192,6 +194,12 @@ describe("public query repository", () => {
       noindex: false,
       matchedThresholds: ["recent_perm_count_3"],
     });
+    expect(permOnly.data.immigrationSignal).toMatchObject({
+      band: "visible_activity",
+      lowSample: {
+        flagged: false,
+      },
+    });
     expect(permOnly.data.wageDistribution).toBeUndefined();
     expect(permOnly.data.permTimeline.map((row) => row.caseStatus)).toEqual([
       "Certified",
@@ -202,6 +210,7 @@ describe("public query repository", () => {
     expect(h1bOnly.data.h1b.total).toBe(2);
     expect(h1bOnly.data.perm.total).toBe(0);
     expect(h1bOnly.data.seo.noindex).toBe(true);
+    expect(h1bOnly.data.immigrationSignal.lowSample.flagged).toBe(true);
     expect(h1bOnly.data.h1bRecentRecords).toHaveLength(2);
     expect(h1bOnly.data.permTimeline).toHaveLength(0);
   });

@@ -1,5 +1,9 @@
 import { localFixtureData } from "@/data/fixtures/local-fixtures";
 import {
+  calculateCompanyImmigrationSignal,
+  type CompanyImmigrationSignal,
+} from "@/lib/company-immigration-signals";
+import {
   calculateCompanyPageMetrics,
   checkVisaBulletinPriorityDate as checkLocalVisaBulletinPriorityDate,
   getCompanyIndexabilityDecision,
@@ -488,6 +492,7 @@ export type PublicCompanyProfilePayload = {
   jobBreakdown: readonly PublicCompanyBreakdownRow[];
   locationBreakdown: readonly PublicCompanyBreakdownRow[];
   wageDistribution?: PublicCompanyWageDistribution;
+  immigrationSignal: CompanyImmigrationSignal;
   relatedCompanies: PublicRelatedEntitiesPayload["relatedEmployers"];
   relatedJobTitles: PublicRelatedEntitiesPayload["relatedJobTitles"];
   relatedLocations: PublicRelatedEntitiesPayload["relatedLocations"];
@@ -830,13 +835,13 @@ export function createPublicQueryRepository(
         const indexability = metrics
           ? getCompanyIndexabilityDecision(metrics)
           : undefined;
+        const aliases = data.employerAliases
+          .filter((alias) => alias.employerId === employer.id)
+          .sort((left, right) => left.rawName.localeCompare(right.rawName));
 
         return success({
           employer,
-          aliases: data.employerAliases
-            .filter((alias) => alias.employerId === employer.id)
-            .map((alias) => alias.rawName)
-            .sort((left, right) => left.localeCompare(right)),
+          aliases: aliases.map((alias) => alias.rawName),
           metrics,
           h1b: summary.h1b,
           perm: summary.perm,
@@ -851,6 +856,17 @@ export function createPublicQueryRepository(
           jobBreakdown: buildJobBreakdown(h1bRecords, permRecords),
           locationBreakdown: buildLocationBreakdown(h1bRecords, permRecords),
           wageDistribution: buildCompanyWageDistribution(h1bRecords),
+          immigrationSignal: calculateCompanyImmigrationSignal({
+            employer,
+            h1bRecords,
+            permRecords,
+            uscisRecords,
+            pwdRecords: data.pwdRecords,
+            aliases,
+            sourceNames: sourceInfo.sourceNames,
+            latestDataDate: sourceInfo.latestDataDate,
+            currentFiscalYear: getLatestPublicFiscalYear(data),
+          }),
           relatedCompanies: related.relatedEmployers,
           relatedJobTitles: related.relatedJobTitles,
           relatedLocations: related.relatedLocations,
@@ -2634,6 +2650,18 @@ function getDataSignature(data: FixtureData) {
     data.visaBulletinMonths.length,
     data.visaBulletinDates.length,
   ].join(":");
+}
+
+function getLatestPublicFiscalYear(data: FixtureData) {
+  const fiscalYears = [
+    ...data.h1bLcaRecords.map((record) => record.fiscalYear),
+    ...data.permRecords.map((record) => record.fiscalYear),
+    ...data.uscisH1BEmployerRecords.map((record) => record.fiscalYear),
+  ];
+
+  return fiscalYears.length > 0
+    ? Math.max(...fiscalYears)
+    : new Date().getUTCFullYear();
 }
 
 function percentile(sortedValues: readonly number[], percentileValue: number) {

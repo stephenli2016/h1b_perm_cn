@@ -18,6 +18,7 @@ Each company page includes:
 - Employer summary and mapped public-record aliases.
 - H-1B/LCA recent-year cards.
 - PERM recent-year cards.
+- Company immigration `公开数据友好度信号` with transparent dimensions and low-sample warning.
 - H-1B wage distribution table when wage samples exist.
 - Recent H-1B LCA records.
 - Job title breakdown.
@@ -53,6 +54,8 @@ Current behavior:
 - Only selected indexable company routes enter `/sitemaps/company-pages.xml`; M16 caps the first launch set at 500 route pages.
 
 See `docs/SEO_INDEXABILITY_AND_SITEMAPS.md` for the M15 quality thresholds and sitemap split behavior. See `docs/COMPANY_PAGE_SCALE_SELECTION.md` for the M16 first-500 route selection and local scale-validation strategy.
+
+M20 adds the company immigration public-data signal. It is displayed on company pages as `公开数据友好度信号` and links to `/tools/company-immigration-score`. It is not a success rate and does not affect legal, filing, hiring, or sponsor conclusions.
 
 ## Compliance Notes
 

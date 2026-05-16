@@ -1,6 +1,7 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 
+import CompanyImmigrationScorePage from "@/app/tools/company-immigration-score/page";
 import { CompanyProfile } from "@/components/company/company-profile";
 import { PageShell } from "@/components/page-shell";
 import { DirectoryFilterForm } from "@/components/search/directory-filter-form";
@@ -182,8 +183,20 @@ describe("M12 UI components", () => {
     expect(html).toContain("Brightline Health");
     expect(html).toContain("暂无 H-1B LCA 记录");
     expect(html).toContain("PERM timeline 与状态");
+    expect(html).toContain("公开数据友好度信号");
+    expect(html).toContain("查看方法说明");
     expect(html).toContain('type="application/ld+json"');
     expect(html).toContain("FAQPage");
     expect(html).toContain("PERM Certified 是否等于绿卡获批");
+  });
+
+  it("renders the company immigration signal methodology page", () => {
+    const html = renderToStaticMarkup(<CompanyImmigrationScorePage />);
+
+    expect(html).toContain("公司职业移民公开数据友好度信号");
+    expect(html).toContain("近期 LCA 活动");
+    expect(html).toContain("低样本规则");
+    expect(html).toContain("不是 H-1B 成功率");
+    expect(html).toContain("Brightline Health");
   });
 });

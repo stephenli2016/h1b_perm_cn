@@ -35,6 +35,12 @@ const plannedTools = [
     meta: "M19",
   },
   {
+    title: "公司职业移民公开数据友好度信号",
+    description: "解释公司页信号分如何按官方公开数据维度生成，不输出成功率。",
+    href: "/tools/company-immigration-score",
+    meta: "M20",
+  },
+  {
     title: "跳槽后 PERM 重办时间线",
     description: "用教育性场景解释流程节点，不收集敏感个案信息。",
     meta: "M21",

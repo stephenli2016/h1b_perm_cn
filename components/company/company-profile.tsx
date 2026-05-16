@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 
+import { CompanyImmigrationSignalPanel } from "@/components/company/company-immigration-signal";
 import { InterpretationPanel } from "@/components/search/interpretation-panel";
 import { SourceNote } from "@/components/source-note";
 import { DataTable, type DataTableColumn } from "@/components/ui/data-table";
@@ -331,6 +332,8 @@ export function CompanyProfile({ mode, profile }: CompanyProfileProps) {
           value={pageSeo.indexable ? "index" : "noindex"}
         />
       </section>
+
+      <CompanyImmigrationSignalPanel signal={profile.immigrationSignal} />
 
       <InterpretationPanel title="如何读这个公司页">
         <p>{profile.interpretationNoteZh}</p>

@@ -96,6 +96,7 @@ describe("M15 SEO indexability and sitemaps", () => {
     expect(listSitemapEntries("tools").map((entry) => entry.url)).toEqual([
       "http://localhost:3000/tools/h1b-wage-level-checker",
       "http://localhost:3000/tools/eb2-eb3-china-priority-date-calculator",
+      "http://localhost:3000/tools/company-immigration-score",
     ]);
     expect(listSitemapEntries("guides")).toEqual([]);
     expect(listSitemapEntries("visa-bulletin")).toEqual([
@@ -142,6 +143,9 @@ describe("M15 SEO indexability and sitemaps", () => {
     );
     expect(renderUrlSet(listSitemapEntries("tools"))).toContain(
       "http://localhost:3000/tools/eb2-eb3-china-priority-date-calculator",
+    );
+    expect(renderUrlSet(listSitemapEntries("tools"))).toContain(
+      "http://localhost:3000/tools/company-immigration-score",
     );
     expect(renderUrlSet(listSitemapEntries("visa-bulletin"))).toContain(
       "http://localhost:3000/visa-bulletin/2026/06",

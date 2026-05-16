@@ -146,6 +146,18 @@ export const publicRoutes = [
     dataPage: true,
   },
   {
+    path: "/tools/company-immigration-score",
+    label: "公司公开数据友好度信号",
+    title: "公司职业移民公开数据友好度信号",
+    description:
+      "解释公司页公开数据友好度信号如何按 H-1B、PERM、跨年记录、来源、职位地点和工资上下文生成。",
+    section: "tools",
+    nav: false,
+    sitemapGroup: "tools",
+    indexing: "indexable",
+    dataPage: true,
+  },
+  {
     path: "/guides",
     label: "指南",
     title: "职业移民中文指南",
