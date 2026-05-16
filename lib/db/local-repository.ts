@@ -7,6 +7,7 @@ import type {
   PermRecord,
   PwdRecord,
   VisaBulletinDate,
+  VisaBulletinMonth,
 } from "@/lib/db/types";
 
 export type EmployerSearchResult = {
@@ -99,6 +100,24 @@ export type VisaBulletinLookupInput = {
   category: VisaBulletinDate["category"];
   chargeabilityArea: VisaBulletinDate["chargeabilityArea"];
   chartType: VisaBulletinDate["chartType"];
+};
+
+export type VisaBulletinPriorityDateInput = VisaBulletinLookupInput & {
+  priorityDate: string;
+};
+
+export type VisaBulletinPriorityDateResult = {
+  status: "current" | "not_current" | "unavailable" | "not_found";
+  canProceedByChart: boolean;
+  month?: VisaBulletinMonth;
+  date?: VisaBulletinDate;
+  messageZh: string;
+};
+
+export type VisaBulletinTableRow = {
+  category: VisaBulletinDate["category"];
+  finalAction?: VisaBulletinDate;
+  datesForFiling?: VisaBulletinDate;
 };
 
 export function getLocalFixtureData(): FixtureData {
@@ -485,6 +504,95 @@ export function getVisaBulletinCutoff(
   );
 
   return date ? { month, date } : undefined;
+}
+
+export function getLatestVisaBulletinMonth(
+  data: FixtureData = localFixtureData,
+) {
+  return [...data.visaBulletinMonths].sort((a, b) =>
+    b.monthKey.localeCompare(a.monthKey),
+  )[0];
+}
+
+export function listVisaBulletinRows(
+  monthKey: string,
+  data: FixtureData = localFixtureData,
+): VisaBulletinTableRow[] {
+  const month = data.visaBulletinMonths.find(
+    (candidate) => candidate.monthKey === monthKey,
+  );
+
+  if (!month) {
+    return [];
+  }
+
+  const records = data.visaBulletinDates.filter(
+    (record) => record.bulletinMonthId === month.id,
+  );
+  const categories: VisaBulletinDate["category"][] = ["EB-1", "EB-2", "EB-3"];
+
+  return categories.map((category) => ({
+    category,
+    finalAction: records.find(
+      (record) =>
+        record.category === category && record.chartType === "final_action",
+    ),
+    datesForFiling: records.find(
+      (record) =>
+        record.category === category && record.chartType === "dates_for_filing",
+    ),
+  }));
+}
+
+export function checkVisaBulletinPriorityDate(
+  input: VisaBulletinPriorityDateInput,
+  data: FixtureData = localFixtureData,
+): VisaBulletinPriorityDateResult {
+  const cutoff = getVisaBulletinCutoff(input, data);
+
+  if (!cutoff) {
+    return {
+      status: "not_found",
+      canProceedByChart: false,
+      messageZh: "未找到对应月份、类别和地区的排期记录。",
+    };
+  }
+
+  if (cutoff.date.cutoffStatus === "current") {
+    return {
+      status: "current",
+      canProceedByChart: true,
+      month: cutoff.month,
+      date: cutoff.date,
+      messageZh:
+        "该类别在所选表格中显示为 Current。仍需确认 USCIS 当月采用哪张表以及个人资格。",
+    };
+  }
+
+  if (
+    cutoff.date.cutoffStatus === "unavailable" ||
+    cutoff.date.cutoffDate === undefined
+  ) {
+    return {
+      status: "unavailable",
+      canProceedByChart: false,
+      month: cutoff.month,
+      date: cutoff.date,
+      messageZh: "该类别在所选表格中显示为 Unavailable。",
+    };
+  }
+
+  const canProceedByChart = input.priorityDate < cutoff.date.cutoffDate;
+
+  return {
+    status: canProceedByChart ? "current" : "not_current",
+    canProceedByChart,
+    month: cutoff.month,
+    date: cutoff.date,
+    messageZh: canProceedByChart
+      ? "优先日早于所选表格日期。公开日期对照通常表示该表下排期已到，但不等于一定可以提交或获批。"
+      : "优先日不早于所选表格日期。按该表格做公开日期对照时，通常还未到。",
+  };
 }
 
 export function listIndexableCompanyCandidates(

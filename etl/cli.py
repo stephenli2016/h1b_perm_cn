@@ -16,6 +16,12 @@ from etl.parsers.uscis_h1b_employer import (
     parse_uscis_h1b_employer_file,
     write_uscis_h1b_employer_jsonl,
 )
+from etl.parsers.visa_bulletin import (
+    parse_uscis_filing_chart_file,
+    parse_visa_bulletin_file,
+    write_uscis_filing_chart_jsonl,
+    write_visa_bulletin_jsonl,
+)
 from etl.run_log import append_run_log, create_run_id, record_from_download_result
 
 
@@ -86,6 +92,47 @@ def main(argv: Sequence[str] | None = None) -> int:
     parse_uscis_h1b_manifest_parser.add_argument("--repo-root", default=".")
     parse_uscis_h1b_manifest_parser.add_argument("--output", required=True)
     parse_uscis_h1b_manifest_parser.add_argument("--fixtures-only", action="store_true")
+
+    parse_visa_bulletin_parser = subparsers.add_parser("parse-visa-bulletin")
+    parse_visa_bulletin_parser.add_argument("--input", required=True)
+    parse_visa_bulletin_parser.add_argument("--source-id", required=True)
+    parse_visa_bulletin_parser.add_argument("--source-url", required=True)
+    parse_visa_bulletin_parser.add_argument("--month-key")
+    parse_visa_bulletin_parser.add_argument("--output", required=True)
+
+    parse_visa_bulletin_manifest_parser = subparsers.add_parser(
+        "parse-visa-bulletin-manifest"
+    )
+    parse_visa_bulletin_manifest_parser.add_argument("--manifest", required=True)
+    parse_visa_bulletin_manifest_parser.add_argument("--repo-root", default=".")
+    parse_visa_bulletin_manifest_parser.add_argument("--output", required=True)
+    parse_visa_bulletin_manifest_parser.add_argument(
+        "--fixtures-only",
+        action="store_true",
+    )
+
+    parse_uscis_filing_chart_parser = subparsers.add_parser(
+        "parse-uscis-filing-chart"
+    )
+    parse_uscis_filing_chart_parser.add_argument("--input", required=True)
+    parse_uscis_filing_chart_parser.add_argument("--source-id", required=True)
+    parse_uscis_filing_chart_parser.add_argument("--month-key")
+    parse_uscis_filing_chart_parser.add_argument(
+        "--fallback-employment-based-chart",
+        choices=["final_action", "dates_for_filing"],
+    )
+    parse_uscis_filing_chart_parser.add_argument("--output", required=True)
+
+    parse_uscis_filing_chart_manifest_parser = subparsers.add_parser(
+        "parse-uscis-filing-chart-manifest"
+    )
+    parse_uscis_filing_chart_manifest_parser.add_argument("--manifest", required=True)
+    parse_uscis_filing_chart_manifest_parser.add_argument("--repo-root", default=".")
+    parse_uscis_filing_chart_manifest_parser.add_argument("--output", required=True)
+    parse_uscis_filing_chart_manifest_parser.add_argument(
+        "--fixtures-only",
+        action="store_true",
+    )
 
     args = parser.parse_args(argv)
 
@@ -431,6 +478,145 @@ def main(argv: Sequence[str] | None = None) -> int:
                                 "records_seen": result.records_seen,
                                 "records_inserted": result.records_inserted,
                                 "duplicate_records": result.duplicate_records,
+                            }
+                            for result in parse_results
+                        ],
+                    },
+                    ensure_ascii=False,
+                    indent=2,
+                )
+            )
+            return 0
+
+        if args.command == "parse-visa-bulletin":
+            result = parse_visa_bulletin_file(
+                args.input,
+                source_file_id=args.source_id,
+                source_url=args.source_url,
+                month_key=args.month_key,
+            )
+            written = write_visa_bulletin_jsonl(args.output, [result])
+            print(
+                json.dumps(
+                    {
+                        "source_file_id": result.source_file_id,
+                        "input_path": result.input_path,
+                        "output": args.output,
+                        "month_key": result.month.month_key,
+                        "records_seen": result.records_seen,
+                        "records_inserted": result.records_inserted,
+                        "records_written": written,
+                    },
+                    ensure_ascii=False,
+                    indent=2,
+                )
+            )
+            return 0
+
+        if args.command == "parse-visa-bulletin-manifest":
+            manifest = load_manifest(args.manifest)
+            repo_root = Path(args.repo_root)
+            visa_bulletin_sources = [
+                source
+                for source in manifest.sources
+                if source.parser_name == "dos_visa_bulletin"
+            ]
+            parse_results = []
+            for source in visa_bulletin_sources:
+                input_path = _source_input_path(source, repo_root, args.fixtures_only)
+                result = parse_visa_bulletin_file(
+                    input_path,
+                    source_file_id=source.id,
+                    source_url=source.official_url,
+                )
+                parse_results.append(result)
+
+            written = write_visa_bulletin_jsonl(args.output, parse_results)
+            print(
+                json.dumps(
+                    {
+                        "parser_name": "dos_visa_bulletin",
+                        "source_count": len(visa_bulletin_sources),
+                        "output": args.output,
+                        "records_seen": sum(
+                            result.records_seen for result in parse_results
+                        ),
+                        "records_inserted": sum(
+                            result.records_inserted for result in parse_results
+                        ),
+                        "records_written": written,
+                        "sources": [
+                            {
+                                "source_file_id": result.source_file_id,
+                                "input_path": result.input_path,
+                                "month_key": result.month.month_key,
+                                "records_seen": result.records_seen,
+                                "records_inserted": result.records_inserted,
+                            }
+                            for result in parse_results
+                        ],
+                    },
+                    ensure_ascii=False,
+                    indent=2,
+                )
+            )
+            return 0
+
+        if args.command == "parse-uscis-filing-chart":
+            result = parse_uscis_filing_chart_file(
+                args.input,
+                source_file_id=args.source_id,
+                month_key=args.month_key,
+                fallback_employment_based_chart=args.fallback_employment_based_chart,
+            )
+            written = write_uscis_filing_chart_jsonl(args.output, [result])
+            print(
+                json.dumps(
+                    {
+                        "source_file_id": result.source_file_id,
+                        "input_path": result.input_path,
+                        "output": args.output,
+                        "month_key": result.selection.month_key,
+                        "employment_based_chart": result.selection.employment_based_chart,
+                        "records_written": written,
+                    },
+                    ensure_ascii=False,
+                    indent=2,
+                )
+            )
+            return 0
+
+        if args.command == "parse-uscis-filing-chart-manifest":
+            manifest = load_manifest(args.manifest)
+            repo_root = Path(args.repo_root)
+            filing_chart_sources = [
+                source
+                for source in manifest.sources
+                if source.parser_name == "uscis_adjustment_filing_chart"
+            ]
+            parse_results = []
+            for source in filing_chart_sources:
+                input_path = _source_input_path(source, repo_root, args.fixtures_only)
+                result = parse_uscis_filing_chart_file(
+                    input_path,
+                    source_file_id=source.id,
+                )
+                parse_results.append(result)
+
+            written = write_uscis_filing_chart_jsonl(args.output, parse_results)
+            print(
+                json.dumps(
+                    {
+                        "parser_name": "uscis_adjustment_filing_chart",
+                        "source_count": len(filing_chart_sources),
+                        "output": args.output,
+                        "records_written": written,
+                        "sources": [
+                            {
+                                "source_file_id": result.source_file_id,
+                                "input_path": result.input_path,
+                                "month_key": result.selection.month_key,
+                                "employment_based_chart": result.selection.employment_based_chart,
                             }
                             for result in parse_results
                         ],

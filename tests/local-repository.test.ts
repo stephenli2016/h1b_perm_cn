@@ -2,10 +2,13 @@ import { describe, expect, it } from "vitest";
 
 import {
   findPrevailingWage,
+  checkVisaBulletinPriorityDate,
   getEmployerBySlug,
   getEmployerImmigrationSummary,
+  getLatestVisaBulletinMonth,
   getLocalFixtureData,
   getVisaBulletinCutoff,
+  listVisaBulletinRows,
   listIndexableCompanyCandidates,
   listPriorityGuidePages,
   lookupPrevailingWage,
@@ -178,14 +181,49 @@ describe("local fixture repository", () => {
       monthKey: "2026-05",
       category: "EB-2",
       chargeabilityArea: "china-mainland",
-      chartType: "dates_for_filing",
+      chartType: "final_action",
     });
 
-    expect(cutoff?.month.uscisFilingChart).toBe("dates_for_filing");
+    expect(cutoff?.month.uscisFilingChart).toBe("final_action");
     expect(cutoff?.date).toMatchObject({
-      cutoffDate: "2021-04-01",
+      cutoffDate: "2021-09-01",
       cutoffStatus: "date",
-      rawValue: "01APR21",
+      rawValue: "01SEP21",
+    });
+  });
+
+  it("lists latest China EB visa bulletin rows and checks priority dates", () => {
+    const latest = getLatestVisaBulletinMonth();
+    const rows = listVisaBulletinRows("2026-06");
+    const current = checkVisaBulletinPriorityDate({
+      monthKey: "2026-06",
+      category: "EB-3",
+      chargeabilityArea: "china-mainland",
+      chartType: "final_action",
+      priorityDate: "2021-07-31",
+    });
+    const notCurrent = checkVisaBulletinPriorityDate({
+      monthKey: "2026-06",
+      category: "EB-3",
+      chargeabilityArea: "china-mainland",
+      chartType: "final_action",
+      priorityDate: "2021-08-01",
+    });
+
+    expect(latest?.monthKey).toBe("2026-06");
+    expect(rows).toHaveLength(3);
+    expect(rows[0]).toMatchObject({
+      category: "EB-1",
+      finalAction: { cutoffDate: "2023-04-01" },
+      datesForFiling: { cutoffDate: "2023-12-01" },
+    });
+    expect(current).toMatchObject({
+      status: "current",
+      canProceedByChart: true,
+    });
+    expect(notCurrent).toMatchObject({
+      status: "not_current",
+      canProceedByChart: false,
     });
   });
 

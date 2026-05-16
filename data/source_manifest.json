@@ -121,9 +121,22 @@
       "required": true
     },
     {
+      "id": "dos_visa_bulletin_2026_04",
+      "source_name": "U.S. Department of State Visa Bulletin",
+      "official_url": "https://travel.state.gov/content/travel/en/legal/visa-law0/visa-bulletin/2026/visa-bulletin-for-april-2026.html",
+      "fiscal_year": 2026,
+      "quarter": null,
+      "expected_file_type": "html",
+      "checksum_sha256": null,
+      "downloaded_path": "data/raw/dos_visa_bulletin_2026_04.html",
+      "fixture_path": "data/fixtures/raw/dos_visa_bulletin_2026_04.html",
+      "parser_name": "dos_visa_bulletin",
+      "required": true
+    },
+    {
       "id": "dos_visa_bulletin_2026_05",
       "source_name": "U.S. Department of State Visa Bulletin",
-      "official_url": "https://travel.state.gov/content/travel/en/legal/visa-law0/visa-bulletin.html",
+      "official_url": "https://travel.state.gov/content/travel/en/legal/visa-law0/visa-bulletin/2026/visa-bulletin-for-may-2026.html",
       "fiscal_year": 2026,
       "quarter": null,
       "expected_file_type": "html",
@@ -131,6 +144,32 @@
       "downloaded_path": "data/raw/dos_visa_bulletin_2026_05.html",
       "fixture_path": "data/fixtures/raw/dos_visa_bulletin_2026_05.html",
       "parser_name": "dos_visa_bulletin",
+      "required": true
+    },
+    {
+      "id": "dos_visa_bulletin_2026_06",
+      "source_name": "U.S. Department of State Visa Bulletin",
+      "official_url": "https://travel.state.gov/content/travel/en/legal/visa-law0/visa-bulletin/2026/visa-bulletin-for-june-2026.html",
+      "fiscal_year": 2026,
+      "quarter": null,
+      "expected_file_type": "html",
+      "checksum_sha256": null,
+      "downloaded_path": "data/raw/dos_visa_bulletin_2026_06.html",
+      "fixture_path": "data/fixtures/raw/dos_visa_bulletin_2026_06.html",
+      "parser_name": "dos_visa_bulletin",
+      "required": true
+    },
+    {
+      "id": "uscis_filing_chart_2026_04",
+      "source_name": "USCIS Adjustment of Status Filing Charts from the Visa Bulletin",
+      "official_url": "https://www.uscis.gov/green-card/green-card-processes-and-procedures/visa-availability-priority-dates/adjustment-of-status-filing-charts-from-the-visa-bulletin",
+      "fiscal_year": 2026,
+      "quarter": null,
+      "expected_file_type": "html",
+      "checksum_sha256": null,
+      "downloaded_path": "data/raw/uscis_filing_chart_2026_04.html",
+      "fixture_path": "data/fixtures/raw/uscis_filing_chart_2026_04.html",
+      "parser_name": "uscis_adjustment_filing_chart",
       "required": true
     },
     {
@@ -143,6 +182,19 @@
       "checksum_sha256": null,
       "downloaded_path": "data/raw/uscis_filing_chart_2026_05.html",
       "fixture_path": "data/fixtures/raw/uscis_filing_chart_2026_05.html",
+      "parser_name": "uscis_adjustment_filing_chart",
+      "required": true
+    },
+    {
+      "id": "uscis_filing_chart_2026_06",
+      "source_name": "USCIS Adjustment of Status Filing Charts from the Visa Bulletin",
+      "official_url": "https://www.uscis.gov/green-card/green-card-processes-and-procedures/visa-availability-priority-dates/adjustment-of-status-filing-charts-from-the-visa-bulletin",
+      "fiscal_year": 2026,
+      "quarter": null,
+      "expected_file_type": "html",
+      "checksum_sha256": null,
+      "downloaded_path": "data/raw/uscis_filing_chart_2026_06.html",
+      "fixture_path": "data/fixtures/raw/uscis_filing_chart_2026_06.html",
       "parser_name": "uscis_adjustment_filing_chart",
       "required": true
     }
