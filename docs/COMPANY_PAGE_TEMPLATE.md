@@ -43,12 +43,16 @@ This is enough to validate missing-section behavior before production data is co
 
 ## SEO Status
 
-M14 keeps company pages `noindex, follow`.
+M15 replaced the temporary M14 blanket `noindex, follow` behavior with route-specific quality decisions.
 
-Reason:
+Current behavior:
 
-- Pages still use local fixture data.
-- M15 owns quality scoring, indexability thresholds, canonical/index metadata, and sitemap inclusion.
+- `/h1b/company/[slug]` is indexable only when the company has enough recent H-1B LCA or USCIS Employer Data Hub signal plus visible page quality signals.
+- `/perm/company/[slug]` is indexable only when the company has enough recent PERM signal plus visible page quality signals.
+- Low-data route pages remain `noindex, follow`.
+- Only indexable company routes enter `/sitemaps/company-pages.xml`.
+
+See `docs/SEO_INDEXABILITY_AND_SITEMAPS.md` for the M15 quality thresholds and sitemap split behavior.
 
 ## Compliance Notes
 
@@ -66,4 +70,4 @@ Public copy states:
 - All records are local fixtures.
 - Tables are intentionally small.
 - No production Supabase-backed pagination exists yet.
-- No pages should enter XML sitemap until M15 quality logic is complete.
+- `brightline-health` is the current high-data fixture for the PERM route only; it validates quality logic but is not a production data sample.

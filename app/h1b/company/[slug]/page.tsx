@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { CompanyProfile } from "@/components/company/company-profile";
 import { PageShell } from "@/components/page-shell";
 import { publicQueryRepository } from "@/lib/db/public-query-repository";
+import { getCompanyPageSeo } from "@/lib/seo/company-quality";
 
 type CompanyPageProps = {
   params: Promise<{
@@ -31,6 +32,7 @@ export async function generateMetadata({
       },
     };
   }
+  const pageSeo = getCompanyPageSeo(result.data.metrics, "h1b");
 
   return {
     title: `${result.data.employer.displayName} H-1B / PERM 公开数据`,
@@ -38,10 +40,7 @@ export async function generateMetadata({
     alternates: {
       canonical: `/h1b/company/${slug}`,
     },
-    robots: {
-      index: false,
-      follow: true,
-    },
+    robots: pageSeo.robots,
   };
 }
 
@@ -60,7 +59,7 @@ export default async function H1BCompanyPage({ params }: CompanyPageProps) {
         { href: "/h1b", label: "H-1B" },
         { label: result.data.employer.displayName },
       ]}
-      description="公司页汇总 H-1B LCA、PERM、工资、职位、地点和数据来源。当前仍使用本地 fixture，M15 前保持 noindex。"
+      description="公司页汇总 H-1B LCA、PERM、工资、职位、地点和数据来源。低数据页面会保持 noindex，达标页面才进入 sitemap。"
       eyebrow="H-1B 公司页"
       title={`${result.data.employer.displayName} 的 H-1B 与 PERM 公开数据信号`}
     >

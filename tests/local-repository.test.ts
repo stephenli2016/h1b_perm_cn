@@ -260,8 +260,19 @@ describe("local fixture repository", () => {
     });
   });
 
-  it("keeps fixture company pages out of indexable launch candidates", () => {
-    expect(listIndexableCompanyCandidates()).toEqual([]);
+  it("keeps low-data fixture company pages noindex while allowing high-data fixtures", () => {
+    const indexable = listIndexableCompanyCandidates();
+
+    expect(indexable.map((candidate) => candidate.employer.slug)).toEqual([
+      "brightline-health",
+    ]);
+    expect(
+      calculateCompanyPageMetrics().find(
+        (candidate) => candidate.employerId === "emp-northstar",
+      ),
+    ).toMatchObject({
+      indexable: false,
+    });
     expect(getEmployerBySlug("missing-employer")).toBeUndefined();
   });
 
@@ -272,8 +283,8 @@ describe("local fixture repository", () => {
       "acme-analytics",
       "northstar-cloud",
       "brightline-health",
-      "lakeside-robotics",
       "cedar-fintech-labs",
+      "lakeside-robotics",
     ]);
     expect(candidates[0]).toMatchObject({
       rank: 1,

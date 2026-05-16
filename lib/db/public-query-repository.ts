@@ -1,6 +1,7 @@
 import { localFixtureData } from "@/data/fixtures/local-fixtures";
 import {
   calculateCompanyPageMetrics,
+  getCompanyIndexabilityDecision,
   getEmployerBySlug as getLocalEmployerBySlug,
   getEmployerImmigrationSummary,
   getLatestVisaBulletinMonth,
@@ -353,8 +354,12 @@ export type PublicCompanyProfilePayload = {
   latestDataDate?: string;
   interpretationNoteZh: string;
   seo: {
-    noindex: true;
-    noindexReasonZh: string;
+    indexable: boolean;
+    noindex: boolean;
+    qualityScore: number;
+    matchedThresholds: readonly string[];
+    noindexReason?: string;
+    noindexReasonZh?: string;
   };
 };
 
@@ -668,6 +673,9 @@ export function createPublicQueryRepository(
           (candidate) => candidate.employerId === employer.id,
         );
         const related = buildRelatedEntities(employer, data);
+        const indexability = metrics
+          ? getCompanyIndexabilityDecision(metrics)
+          : undefined;
 
         return success({
           employer,
@@ -697,9 +705,12 @@ export function createPublicQueryRepository(
           interpretationNoteZh:
             "公司页把 H-1B LCA、PERM 和 USCIS Employer Data Hub 公开记录作为历史活动信号展示，不代表个案批准、实际录用、未来 sponsor 承诺或法律意见。",
           seo: {
-            noindex: true as const,
-            noindexReasonZh:
-              "M14 公司页仍使用本地 fixture 数据；M15 将加入质量评分、robots 和 sitemap 的正式索引逻辑。",
+            indexable: indexability?.indexable ?? false,
+            noindex: !(indexability?.indexable ?? false),
+            qualityScore: metrics?.qualityScore ?? 0,
+            matchedThresholds: indexability?.matchedThresholds ?? [],
+            noindexReason: indexability?.noindexReason,
+            noindexReasonZh: indexability?.noindexReasonZh,
           },
         });
       });

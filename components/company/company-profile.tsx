@@ -21,6 +21,7 @@ import {
   permStatusLabels,
   statusLabel,
 } from "@/lib/directory-search";
+import { getCompanyPageSeo } from "@/lib/seo/company-quality";
 import { getCanonicalUrl, siteConfig } from "@/lib/site";
 
 export type CompanyProfileMode = "h1b" | "perm";
@@ -237,6 +238,7 @@ const wageColumns: DataTableColumn<WageRow>[] = [
 
 export function CompanyProfile({ mode, profile }: CompanyProfileProps) {
   const faqItems = buildFaqItems(profile);
+  const pageSeo = getCompanyPageSeo(profile.metrics, mode);
   const canonicalPath = `/${mode}/company/${profile.employer.slug}`;
   const relatedCompanyItems = profile.relatedCompanies.map((related) => ({
     description:
@@ -320,9 +322,13 @@ export function CompanyProfile({ mode, profile }: CompanyProfileProps) {
           }
         />
         <MetricCard
-          description={profile.seo.noindexReasonZh}
-          label="最新数据日期"
-          value={profile.latestDataDate ?? "待接入"}
+          description={
+            pageSeo.indexable
+              ? "该路由达到 M15 数据量、来源、内链和可见内容阈值，可进入对应 XML sitemap。"
+              : pageSeo.noindexReasonZh
+          }
+          label="页面索引状态"
+          value={pageSeo.indexable ? "index" : "noindex"}
         />
       </section>
 
@@ -439,7 +445,7 @@ export function CompanyProfile({ mode, profile }: CompanyProfileProps) {
       <FaqSection items={faqItems} />
 
       <SourceNote
-        latestDataLabel={`当前页面最新数据日期：${profile.latestDataDate ?? "待接入真实数据"}。公司页在 M15 索引质量逻辑完成前保持 noindex。`}
+        latestDataLabel={`当前页面最新数据日期：${profile.latestDataDate ?? "待接入真实数据"}。当前路由索引状态：${pageSeo.indexable ? "index" : "noindex"}。`}
         names={profile.sourceNames}
       />
 

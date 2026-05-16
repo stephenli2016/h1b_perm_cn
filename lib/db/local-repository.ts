@@ -1,4 +1,9 @@
 import { localFixtureData } from "@/data/fixtures/local-fixtures";
+import {
+  companyPageQualityScore,
+  evaluateCompanyIndexability,
+  type CompanyPageQualityInput,
+} from "@/lib/seo/company-quality";
 import type {
   CompanyPageMetrics,
   Employer,
@@ -9,6 +14,8 @@ import type {
   VisaBulletinDate,
   VisaBulletinMonth,
 } from "@/lib/db/types";
+
+export { companyPageQualityScore } from "@/lib/seo/company-quality";
 
 export type EmployerSearchResult = {
   employer: Employer;
@@ -138,7 +145,9 @@ export type VisaBulletinTableRow = {
 export type CompanyIndexabilityDecision = {
   indexable: boolean;
   noindexReason?: string;
+  noindexReasonZh?: string;
   matchedThresholds: readonly string[];
+  qualityScore: number;
 };
 
 export type CompanyPageCandidate = {
@@ -775,19 +784,38 @@ export function calculateCompanyPageMetrics(
         locationCount,
         latestFiscalYear: Math.max(...fiscalYears, 0),
       };
-      const decision = getCompanyIndexabilityDecision(metricsBase);
+      const sourceIds = new Set([
+        ...h1bRecords.map((record) => record.sourceFileId),
+        ...permRecords.map((record) => record.sourceFileId),
+        ...uscisRecords.map((record) => record.sourceFileId),
+      ]);
+      const sourceFiles = data.sourceFiles.filter((sourceFile) =>
+        sourceIds.has(sourceFile.id),
+      );
+      const professionalSocRecordCount = countProfessionalSocRecords([
+        ...h1bRecords.map((record) => record.socCode),
+        ...permRecords.map((record) => record.socCode),
+      ]);
+      const qualityInput = {
+        ...metricsBase,
+        professionalSocRecordCount,
+        sourceCount: sourceIds.size,
+        hasLatestDataDate: sourceFiles.some((sourceFile) =>
+          Boolean(sourceFile.latestDataDate),
+        ),
+        hasVisibleTables:
+          h1bRecords.length + permRecords.length > 0 &&
+          jobTitleCount > 0 &&
+          locationCount > 0,
+        hasRelatedLinks: h1bRecords.length + permRecords.length > 0,
+      };
+      const decision = getCompanyIndexabilityDecision(qualityInput);
 
       return {
         id: `metric-${employer.slug}`,
         employerId: employer.id,
         ...metricsBase,
-        qualityScore: scoreCompanyPageCandidate({
-          ...metricsBase,
-          professionalSocRecordCount: countProfessionalSocRecords([
-            ...h1bRecords.map((record) => record.socCode),
-            ...permRecords.map((record) => record.socCode),
-          ]),
-        }),
+        qualityScore: companyPageQualityScore(qualityInput),
         indexable: decision.indexable,
         noindexReason: decision.noindexReason,
       };
@@ -803,36 +831,10 @@ export function getCompanyIndexabilityDecision(
     | "uscisRecordCount5y"
     | "jobTitleCount"
     | "locationCount"
-  >,
+  > &
+    Partial<CompanyPageQualityInput>,
 ): CompanyIndexabilityDecision {
-  const matchedThresholds = [
-    metrics.lcaCount5y >= 10 ? "recent_lca_count_10" : undefined,
-    metrics.permCount5y >= 3 ? "recent_perm_count_3" : undefined,
-    metrics.uscisRecordCount5y >= 3 ? "uscis_hub_rows_3" : undefined,
-  ].filter((threshold): threshold is string => Boolean(threshold));
-
-  if (matchedThresholds.length === 0) {
-    return {
-      indexable: false,
-      matchedThresholds,
-      noindexReason:
-        "Does not meet initial data threshold: needs at least 10 recent LCA records, 3 recent PERM records, or 3 USCIS Employer Data Hub rows.",
-    };
-  }
-
-  if (metrics.jobTitleCount === 0 || metrics.locationCount === 0) {
-    return {
-      indexable: false,
-      matchedThresholds,
-      noindexReason:
-        "Has enough volume signal but not enough job-title and location diversity for an indexable company page.",
-    };
-  }
-
-  return {
-    indexable: true,
-    matchedThresholds,
-  };
+  return evaluateCompanyIndexability(metrics);
 }
 
 export function listTopCompanyCandidates(
@@ -922,31 +924,6 @@ function getLatestEmployerFiscalYear(data: FixtureData) {
     ...data.uscisH1BEmployerRecords.map((record) => record.fiscalYear),
     0,
   );
-}
-
-function scoreCompanyPageCandidate(
-  metrics: Pick<
-    CompanyPageMetrics,
-    | "lcaCount5y"
-    | "permCount5y"
-    | "uscisRecordCount5y"
-    | "jobTitleCount"
-    | "locationCount"
-  > & { professionalSocRecordCount: number },
-) {
-  const volumeScore =
-    Math.min(metrics.lcaCount5y * 2, 80) +
-    Math.min(metrics.permCount5y * 8, 80) +
-    Math.min(metrics.uscisRecordCount5y * 5, 25);
-  const diversityScore =
-    Math.min(metrics.jobTitleCount * 3, 30) +
-    Math.min(metrics.locationCount * 2, 20);
-  const chineseUserRelevanceScore =
-    (metrics.permCount5y > 0 ? 10 : 0) +
-    (metrics.lcaCount5y > 0 && metrics.permCount5y > 0 ? 8 : 0) +
-    Math.min(metrics.professionalSocRecordCount, 20);
-
-  return volumeScore + diversityScore + chineseUserRelevanceScore;
 }
 
 function countProfessionalSocRecords(socCodes: readonly string[]) {

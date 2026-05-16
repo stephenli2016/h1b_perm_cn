@@ -168,7 +168,6 @@ describe("public query repository", () => {
       }
       expect(result.data.employer.slug).toBe(slug);
       expect(result.data.fiscalYears.length).toBeGreaterThan(0);
-      expect(result.data.seo.noindex).toBe(true);
       expect(result.data.interpretationNoteZh).toContain("不代表个案批准");
     }
 
@@ -187,15 +186,22 @@ describe("public query repository", () => {
     }
 
     expect(permOnly.data.h1b.total).toBe(0);
-    expect(permOnly.data.perm.total).toBe(2);
+    expect(permOnly.data.perm.total).toBe(3);
+    expect(permOnly.data.seo).toMatchObject({
+      indexable: true,
+      noindex: false,
+      matchedThresholds: ["recent_perm_count_3"],
+    });
     expect(permOnly.data.wageDistribution).toBeUndefined();
     expect(permOnly.data.permTimeline.map((row) => row.caseStatus)).toEqual([
+      "Certified",
       "Withdrawn",
       "Certified",
     ]);
 
     expect(h1bOnly.data.h1b.total).toBe(2);
     expect(h1bOnly.data.perm.total).toBe(0);
+    expect(h1bOnly.data.seo.noindex).toBe(true);
     expect(h1bOnly.data.h1bRecentRecords).toHaveLength(2);
     expect(h1bOnly.data.permTimeline).toHaveLength(0);
   });

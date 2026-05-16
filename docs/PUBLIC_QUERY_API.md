@@ -126,9 +126,11 @@ The payload includes:
 - Wage distribution from annualized H-1B wage fields.
 - Job title and worksite location breakdowns.
 - Related companies, job titles, and locations for internal links.
-- Source names, latest data date, interpretation note, and temporary `noindex` SEO metadata.
+- Source names, latest data date, interpretation note, and company-page SEO metadata.
 
-The method is intentionally combined so H-1B and PERM company pages can share one template while still using route-specific titles, breadcrumbs, and canonical URLs.
+The method is intentionally combined so H-1B and PERM company pages can share one template while still using route-specific titles, breadcrumbs, canonical URLs, and robots metadata.
+
+M15 adds route-specific quality decisions through `getCompanyPageSeo(metrics, mode)`. The profile payload exposes the neutral score and matched thresholds; each route then decides whether the H-1B or PERM page is indexable.
 
 ### `getH1BSummaryByEmployer`
 
@@ -218,4 +220,5 @@ The query layer currently reads local fixture data only. It is ready for pages t
 
 - Small sample sizes.
 - No production Supabase connection yet.
-- Company pages remain noindex until later SEO quality milestones.
+- Only the local high-data fixture can currently satisfy a company-page route threshold; production-scale selection starts in M16.
+- Company routes now use M15 quality logic: low-data routes remain noindex, and only route-specific indexable pages enter the company sitemap.

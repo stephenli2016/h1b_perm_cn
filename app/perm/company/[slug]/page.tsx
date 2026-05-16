@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { CompanyProfile } from "@/components/company/company-profile";
 import { PageShell } from "@/components/page-shell";
 import { publicQueryRepository } from "@/lib/db/public-query-repository";
+import { getCompanyPageSeo } from "@/lib/seo/company-quality";
 
 type CompanyPageProps = {
   params: Promise<{
@@ -31,6 +32,7 @@ export async function generateMetadata({
       },
     };
   }
+  const pageSeo = getCompanyPageSeo(result.data.metrics, "perm");
 
   return {
     title: `${result.data.employer.displayName} PERM / H-1B 公开数据`,
@@ -38,10 +40,7 @@ export async function generateMetadata({
     alternates: {
       canonical: `/perm/company/${slug}`,
     },
-    robots: {
-      index: false,
-      follow: true,
-    },
+    robots: pageSeo.robots,
   };
 }
 
