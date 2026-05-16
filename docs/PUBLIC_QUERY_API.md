@@ -10,7 +10,7 @@ Implementation:
 
 - `lib/db/public-query-repository.ts`
 
-The M11/M13 layer does not build SQL strings and does not perform direct database access. It reads normalized fixture arrays through typed helpers, which keeps the current milestone free of unsafe SQL interpolation.
+The M11/M13/M14 layer does not build SQL strings and does not perform direct database access. It reads normalized fixture arrays through typed helpers, which keeps the current milestone free of unsafe SQL interpolation.
 
 ## Repository Creation
 
@@ -100,6 +100,35 @@ Supported filters match `searchH1BRecords`, with PERM-specific case statuses and
 Returns paginated combined company directory rows for `/companies`.
 
 The query applies the same filters across H-1B LCA and PERM rows, aggregates matched records by employer, and returns H-1B count, PERM count, latest fiscal year, top job titles, top locations, and current company-page indexability signal.
+
+### `listCompanySlugs`
+
+Returns the fixture-backed employer slugs used by dynamic company routes.
+
+M14 uses this to generate static params for:
+
+- `/h1b/company/[slug]`
+- `/perm/company/[slug]`
+
+### `getCompanyProfileBySlug`
+
+Returns the combined company-page payload for one employer.
+
+The payload includes:
+
+- Canonical employer and aliases.
+- H-1B/LCA summary.
+- PERM summary.
+- USCIS Employer Data Hub summary.
+- Fiscal-year summary rows.
+- Recent H-1B LCA rows.
+- PERM timeline rows.
+- Wage distribution from annualized H-1B wage fields.
+- Job title and worksite location breakdowns.
+- Related companies, job titles, and locations for internal links.
+- Source names, latest data date, interpretation note, and temporary `noindex` SEO metadata.
+
+The method is intentionally combined so H-1B and PERM company pages can share one template while still using route-specific titles, breadcrumbs, and canonical URLs.
 
 ### `getH1BSummaryByEmployer`
 

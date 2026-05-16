@@ -1,6 +1,7 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 
+import { CompanyProfile } from "@/components/company/company-profile";
 import { PageShell } from "@/components/page-shell";
 import { DirectoryFilterForm } from "@/components/search/directory-filter-form";
 import { Pagination } from "@/components/search/pagination";
@@ -12,6 +13,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { ErrorState, LoadingState } from "@/components/ui/feedback-state";
 import { MetricCard } from "@/components/ui/metric-card";
 import { RelatedLinks } from "@/components/ui/related-links";
+import { publicQueryRepository } from "@/lib/db/public-query-repository";
 
 type Row = {
   label: string;
@@ -161,5 +163,27 @@ describe("M12 UI components", () => {
     expect(formHtml).toContain("职位 / SOC");
     expect(paginationHtml).toContain("搜索结果分页");
     expect(paginationHtml).toContain("/h1b?employer=Acme");
+  });
+
+  it("renders the company profile template with missing data states and JSON-LD", () => {
+    const result = publicQueryRepository.getCompanyProfileBySlug({
+      slug: "brightline-health",
+    });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) {
+      throw new Error(result.error.messageZh);
+    }
+
+    const html = renderToStaticMarkup(
+      <CompanyProfile mode="perm" profile={result.data} />,
+    );
+
+    expect(html).toContain("Brightline Health");
+    expect(html).toContain("暂无 H-1B LCA 记录");
+    expect(html).toContain("PERM timeline 与状态");
+    expect(html).toContain('type="application/ld+json"');
+    expect(html).toContain("FAQPage");
+    expect(html).toContain("PERM Certified 是否等于绿卡获批");
   });
 });

@@ -271,7 +271,9 @@ describe("local fixture repository", () => {
     expect(candidates.map((candidate) => candidate.employer.slug)).toEqual([
       "acme-analytics",
       "northstar-cloud",
+      "brightline-health",
       "lakeside-robotics",
+      "cedar-fintech-labs",
     ]);
     expect(candidates[0]).toMatchObject({
       rank: 1,

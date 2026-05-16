@@ -9,6 +9,7 @@ import {
   searchEmployers as searchLocalEmployers,
 } from "@/lib/db/local-repository";
 import type {
+  CompanyPageMetrics,
   Employer,
   FixtureData,
   H1BLcaRecord,
@@ -279,6 +280,84 @@ export type PublicCompanyDirectoryPayload = {
   };
 };
 
+export type PublicCompanyFiscalYearSummary = {
+  fiscalYear: number;
+  h1bTotal: number;
+  h1bCertified: number;
+  h1bWithdrawn: number;
+  h1bDenied: number;
+  permTotal: number;
+  permCertified: number;
+  permDenied: number;
+  permWithdrawn: number;
+};
+
+export type PublicCompanyBreakdownRow = {
+  key: string;
+  label: string;
+  socCode?: string;
+  socTitle?: string;
+  city?: string;
+  state?: string;
+  h1bCount: number;
+  permCount: number;
+  totalCount: number;
+};
+
+export type PublicCompanyPermTimelineRow = {
+  id: string;
+  fiscalYear: number;
+  caseNumber: string;
+  caseStatus: PermRecord["caseStatus"];
+  jobTitle: string;
+  socCode: string;
+  socTitle: string;
+  city: string;
+  state: string;
+  wageOfferFrom: number;
+  wageUnit: PermRecord["wageUnit"];
+  priorityDate?: string;
+  receivedDate: string;
+  decisionDate: string;
+};
+
+export type PublicCompanyWageDistribution = {
+  count: number;
+  wageUnit: "Year";
+  min: number;
+  p25: number;
+  median: number;
+  p75: number;
+  max: number;
+  fiscalYears: readonly number[];
+  sampleWarningZh?: string;
+};
+
+export type PublicCompanyProfilePayload = {
+  employer: Employer;
+  aliases: readonly string[];
+  metrics?: CompanyPageMetrics;
+  h1b: PublicH1BSummaryPayload["h1b"];
+  perm: PublicPermSummaryPayload["perm"];
+  uscis: PublicH1BSummaryPayload["uscis"];
+  fiscalYears: readonly PublicCompanyFiscalYearSummary[];
+  h1bRecentRecords: readonly PublicDisclosureRecordRow[];
+  permTimeline: readonly PublicCompanyPermTimelineRow[];
+  jobBreakdown: readonly PublicCompanyBreakdownRow[];
+  locationBreakdown: readonly PublicCompanyBreakdownRow[];
+  wageDistribution?: PublicCompanyWageDistribution;
+  relatedCompanies: PublicRelatedEntitiesPayload["relatedEmployers"];
+  relatedJobTitles: PublicRelatedEntitiesPayload["relatedJobTitles"];
+  relatedLocations: PublicRelatedEntitiesPayload["relatedLocations"];
+  sourceNames: readonly string[];
+  latestDataDate?: string;
+  interpretationNoteZh: string;
+  seo: {
+    noindex: true;
+    noindexReasonZh: string;
+  };
+};
+
 export type PublicQueryRepository = ReturnType<
   typeof createPublicQueryRepository
 >;
@@ -540,6 +619,92 @@ export function createPublicQueryRepository(
       });
     },
 
+    listCompanySlugs() {
+      return data.employers
+        .map((employer) => employer.slug)
+        .sort((left, right) => left.localeCompare(right));
+    },
+
+    getCompanyProfileBySlug(
+      input: PublicEmployerBySlugInput,
+    ): PublicQueryResult<PublicCompanyProfilePayload> {
+      const invalidSlug = validateSlugOrFailure(input.slug);
+      if (invalidSlug) {
+        return invalidSlug;
+      }
+
+      const slug = input.slug.trim();
+      return runCached("getCompanyProfileBySlug", { slug }, () => {
+        const summary = getEmployerImmigrationSummary(slug, data);
+
+        if (!summary) {
+          return failure(
+            "not_found",
+            "未找到对应公司的公开数据页面。",
+            "slug",
+            "请检查公司 URL，或从公司目录重新进入。",
+          );
+        }
+
+        const employer = summary.employer;
+        const h1bRecords = data.h1bLcaRecords.filter(
+          (record) => record.employerId === employer.id,
+        );
+        const permRecords = data.permRecords.filter(
+          (record) => record.employerId === employer.id,
+        );
+        const uscisRecords = data.uscisH1BEmployerRecords.filter(
+          (record) => record.employerId === employer.id,
+        );
+        const sourceInfo = summarizeSourceFiles(
+          [
+            ...h1bRecords.map((record) => record.sourceFileId),
+            ...permRecords.map((record) => record.sourceFileId),
+            ...uscisRecords.map((record) => record.sourceFileId),
+          ],
+          data,
+        );
+        const metrics = calculateCompanyPageMetrics(data).find(
+          (candidate) => candidate.employerId === employer.id,
+        );
+        const related = buildRelatedEntities(employer, data);
+
+        return success({
+          employer,
+          aliases: data.employerAliases
+            .filter((alias) => alias.employerId === employer.id)
+            .map((alias) => alias.rawName)
+            .sort((left, right) => left.localeCompare(right)),
+          metrics,
+          h1b: summary.h1b,
+          perm: summary.perm,
+          uscis: summary.uscis,
+          fiscalYears: buildCompanyFiscalYears(h1bRecords, permRecords),
+          h1bRecentRecords: h1bRecords
+            .map((record) => toH1BDirectoryRow(record, data))
+            .filter((row): row is PublicDisclosureRecordRow => Boolean(row))
+            .sort(compareDirectoryRows)
+            .slice(0, 8),
+          permTimeline: buildPermTimeline(permRecords),
+          jobBreakdown: buildJobBreakdown(h1bRecords, permRecords),
+          locationBreakdown: buildLocationBreakdown(h1bRecords, permRecords),
+          wageDistribution: buildCompanyWageDistribution(h1bRecords),
+          relatedCompanies: related.relatedEmployers,
+          relatedJobTitles: related.relatedJobTitles,
+          relatedLocations: related.relatedLocations,
+          sourceNames: sourceInfo.sourceNames,
+          latestDataDate: sourceInfo.latestDataDate,
+          interpretationNoteZh:
+            "公司页把 H-1B LCA、PERM 和 USCIS Employer Data Hub 公开记录作为历史活动信号展示，不代表个案批准、实际录用、未来 sponsor 承诺或法律意见。",
+          seo: {
+            noindex: true as const,
+            noindexReasonZh:
+              "M14 公司页仍使用本地 fixture 数据；M15 将加入质量评分、robots 和 sitemap 的正式索引逻辑。",
+          },
+        });
+      });
+    },
+
     getEmployerBySlug(
       input: PublicEmployerBySlugInput,
     ): PublicQueryResult<Employer> {
@@ -750,74 +915,7 @@ export function createPublicQueryRepository(
           return failure("not_found", "未找到相关实体对应公司。", "slug");
         }
 
-        const currentRecords = recordsForEmployer(employer.id, data);
-        const currentJobTitles = new Set(
-          currentRecords.map((record) =>
-            normalizeEmployerName(record.jobTitle),
-          ),
-        );
-        const currentSocCodes = new Set(
-          currentRecords.map((record) => record.socCode).filter(Boolean),
-        );
-        const currentLocations = new Set(
-          currentRecords.map((record) =>
-            normalizeLocationText(`${record.city}, ${record.state}`),
-          ),
-        );
-        const relatedEmployers = data.employers
-          .filter((candidate) => candidate.id !== employer.id)
-          .map((candidate) => {
-            const candidateRecords = recordsForEmployer(candidate.id, data);
-            const sharedSignals = new Set<string>();
-            let score = 0;
-
-            for (const record of candidateRecords) {
-              if (
-                currentJobTitles.has(normalizeEmployerName(record.jobTitle))
-              ) {
-                sharedSignals.add(`职位: ${record.jobTitle}`);
-                score += 2;
-              }
-              if (currentSocCodes.has(record.socCode)) {
-                sharedSignals.add(`SOC: ${record.socCode}`);
-                score += 2;
-              }
-              if (
-                currentLocations.has(
-                  normalizeLocationText(`${record.city}, ${record.state}`),
-                )
-              ) {
-                sharedSignals.add(`地点: ${record.city}, ${record.state}`);
-                score += 1;
-              }
-            }
-
-            return {
-              employer: candidate,
-              sharedSignals: [...sharedSignals].sort(),
-              score,
-            };
-          })
-          .filter((candidate) => candidate.score > 0)
-          .sort(
-            (left, right) =>
-              right.score - left.score ||
-              left.employer.displayName.localeCompare(
-                right.employer.displayName,
-              ),
-          )
-          .slice(0, 5);
-
-        return success({
-          employer,
-          relatedEmployers,
-          relatedJobTitles: topCounts(
-            currentRecords.map((record) => record.jobTitle),
-          ),
-          relatedLocations: topCounts(
-            currentRecords.map((record) => `${record.city}, ${record.state}`),
-          ),
-        });
+        return success(buildRelatedEntities(employer, data));
       });
     },
 
@@ -1336,6 +1434,279 @@ function compareCompanyDirectoryResults(
     right.qualityScore - left.qualityScore ||
     left.employer.displayName.localeCompare(right.employer.displayName)
   );
+}
+
+function buildCompanyFiscalYears(
+  h1bRecords: readonly H1BLcaRecord[],
+  permRecords: readonly PermRecord[],
+): PublicCompanyFiscalYearSummary[] {
+  const fiscalYears = uniqueSorted([
+    ...h1bRecords.map((record) => record.fiscalYear),
+    ...permRecords.map((record) => record.fiscalYear),
+  ]);
+
+  return fiscalYears.map((fiscalYear) => {
+    const yearH1BRecords = h1bRecords.filter(
+      (record) => record.fiscalYear === fiscalYear,
+    );
+    const yearPermRecords = permRecords.filter(
+      (record) => record.fiscalYear === fiscalYear,
+    );
+
+    return {
+      fiscalYear,
+      h1bTotal: yearH1BRecords.length,
+      h1bCertified: countH1BStatusForRows(yearH1BRecords, "CERTIFIED"),
+      h1bWithdrawn: countH1BStatusForRows(yearH1BRecords, "WITHDRAWN"),
+      h1bDenied: countH1BStatusForRows(yearH1BRecords, "DENIED"),
+      permTotal: yearPermRecords.length,
+      permCertified: countPermStatusForRows(yearPermRecords, "Certified"),
+      permDenied: countPermStatusForRows(yearPermRecords, "Denied"),
+      permWithdrawn: countPermStatusForRows(yearPermRecords, "Withdrawn"),
+    };
+  });
+}
+
+function buildJobBreakdown(
+  h1bRecords: readonly H1BLcaRecord[],
+  permRecords: readonly PermRecord[],
+): PublicCompanyBreakdownRow[] {
+  const rows = new Map<string, PublicCompanyBreakdownRow>();
+
+  for (const record of h1bRecords) {
+    addBreakdownRecord(rows, {
+      key: `${normalizeEmployerName(record.jobTitle)}:${record.socCode}`,
+      label: record.jobTitle,
+      socCode: record.socCode,
+      socTitle: record.socTitle,
+      source: "h1b",
+    });
+  }
+
+  for (const record of permRecords) {
+    addBreakdownRecord(rows, {
+      key: `${normalizeEmployerName(record.jobTitle)}:${record.socCode}`,
+      label: record.jobTitle,
+      socCode: record.socCode,
+      socTitle: record.socTitle,
+      source: "perm",
+    });
+  }
+
+  return sortCompanyBreakdowns([...rows.values()]);
+}
+
+function buildLocationBreakdown(
+  h1bRecords: readonly H1BLcaRecord[],
+  permRecords: readonly PermRecord[],
+): PublicCompanyBreakdownRow[] {
+  const rows = new Map<string, PublicCompanyBreakdownRow>();
+
+  for (const record of h1bRecords) {
+    addBreakdownRecord(rows, {
+      key: normalizeLocationText(
+        `${record.worksiteCity}, ${record.worksiteState}`,
+      ),
+      label: `${record.worksiteCity}, ${record.worksiteState}`,
+      city: record.worksiteCity,
+      state: record.worksiteState,
+      source: "h1b",
+    });
+  }
+
+  for (const record of permRecords) {
+    addBreakdownRecord(rows, {
+      key: normalizeLocationText(
+        `${record.worksiteCity}, ${record.worksiteState}`,
+      ),
+      label: `${record.worksiteCity}, ${record.worksiteState}`,
+      city: record.worksiteCity,
+      state: record.worksiteState,
+      source: "perm",
+    });
+  }
+
+  return sortCompanyBreakdowns([...rows.values()]);
+}
+
+function addBreakdownRecord(
+  rows: Map<string, PublicCompanyBreakdownRow>,
+  input: {
+    key: string;
+    label: string;
+    socCode?: string;
+    socTitle?: string;
+    city?: string;
+    state?: string;
+    source: "h1b" | "perm";
+  },
+) {
+  const existing = rows.get(input.key) ?? {
+    key: input.key,
+    label: input.label,
+    socCode: input.socCode,
+    socTitle: input.socTitle,
+    city: input.city,
+    state: input.state,
+    h1bCount: 0,
+    permCount: 0,
+    totalCount: 0,
+  };
+
+  rows.set(input.key, {
+    ...existing,
+    h1bCount: existing.h1bCount + (input.source === "h1b" ? 1 : 0),
+    permCount: existing.permCount + (input.source === "perm" ? 1 : 0),
+    totalCount: existing.totalCount + 1,
+  });
+}
+
+function sortCompanyBreakdowns(
+  rows: readonly PublicCompanyBreakdownRow[],
+): PublicCompanyBreakdownRow[] {
+  return [...rows].sort(
+    (left, right) =>
+      right.totalCount - left.totalCount ||
+      left.label.localeCompare(right.label),
+  );
+}
+
+function buildPermTimeline(
+  records: readonly PermRecord[],
+): PublicCompanyPermTimelineRow[] {
+  return [...records]
+    .sort(
+      (left, right) =>
+        right.decisionDate.localeCompare(left.decisionDate) ||
+        left.caseNumber.localeCompare(right.caseNumber),
+    )
+    .slice(0, 8)
+    .map((record) => ({
+      id: record.id,
+      fiscalYear: record.fiscalYear,
+      caseNumber: record.caseNumber,
+      caseStatus: record.caseStatus,
+      jobTitle: record.jobTitle,
+      socCode: record.socCode,
+      socTitle: record.socTitle,
+      city: record.worksiteCity,
+      state: record.worksiteState,
+      wageOfferFrom: record.wageOfferFrom,
+      wageUnit: record.wageUnit,
+      priorityDate: record.priorityDate,
+      receivedDate: record.receivedDate,
+      decisionDate: record.decisionDate,
+    }));
+}
+
+function buildCompanyWageDistribution(
+  records: readonly H1BLcaRecord[],
+): PublicCompanyWageDistribution | undefined {
+  const wages = records
+    .map((record) => record.annualizedWageFrom)
+    .filter((wage) => Number.isFinite(wage))
+    .sort((left, right) => left - right);
+
+  if (wages.length === 0) {
+    return undefined;
+  }
+
+  return {
+    count: wages.length,
+    wageUnit: "Year",
+    min: wages[0]!,
+    p25: percentile(wages, 0.25),
+    median: percentile(wages, 0.5),
+    p75: percentile(wages, 0.75),
+    max: wages.at(-1)!,
+    fiscalYears: uniqueSorted(records.map((record) => record.fiscalYear)),
+    sampleWarningZh:
+      wages.length < 3
+        ? "样本少于 3 条，只能作为非常粗略的公开数据参考。"
+        : undefined,
+  };
+}
+
+function buildRelatedEntities(
+  employer: Employer,
+  data: FixtureData,
+): PublicRelatedEntitiesPayload {
+  const currentRecords = recordsForEmployer(employer.id, data);
+  const currentJobTitles = new Set(
+    currentRecords.map((record) => normalizeEmployerName(record.jobTitle)),
+  );
+  const currentSocCodes = new Set(
+    currentRecords.map((record) => record.socCode).filter(Boolean),
+  );
+  const currentLocations = new Set(
+    currentRecords.map((record) =>
+      normalizeLocationText(`${record.city}, ${record.state}`),
+    ),
+  );
+  const relatedEmployers = data.employers
+    .filter((candidate) => candidate.id !== employer.id)
+    .map((candidate) => {
+      const candidateRecords = recordsForEmployer(candidate.id, data);
+      const sharedSignals = new Set<string>();
+      let score = 0;
+
+      for (const record of candidateRecords) {
+        if (currentJobTitles.has(normalizeEmployerName(record.jobTitle))) {
+          sharedSignals.add(`职位: ${record.jobTitle}`);
+          score += 2;
+        }
+        if (currentSocCodes.has(record.socCode)) {
+          sharedSignals.add(`SOC: ${record.socCode}`);
+          score += 2;
+        }
+        if (
+          currentLocations.has(
+            normalizeLocationText(`${record.city}, ${record.state}`),
+          )
+        ) {
+          sharedSignals.add(`地点: ${record.city}, ${record.state}`);
+          score += 1;
+        }
+      }
+
+      return {
+        employer: candidate,
+        sharedSignals: [...sharedSignals].sort(),
+        score,
+      };
+    })
+    .filter((candidate) => candidate.score > 0)
+    .sort(
+      (left, right) =>
+        right.score - left.score ||
+        left.employer.displayName.localeCompare(right.employer.displayName),
+    )
+    .slice(0, 5);
+
+  return {
+    employer,
+    relatedEmployers,
+    relatedJobTitles: topCounts(
+      currentRecords.map((record) => record.jobTitle),
+    ),
+    relatedLocations: topCounts(
+      currentRecords.map((record) => `${record.city}, ${record.state}`),
+    ),
+  };
+}
+
+function countH1BStatusForRows(
+  records: readonly H1BLcaRecord[],
+  status: H1BLcaRecord["caseStatus"],
+) {
+  return records.filter((record) => record.caseStatus === status).length;
+}
+
+function countPermStatusForRows(
+  records: readonly PermRecord[],
+  status: PermRecord["caseStatus"],
+) {
+  return records.filter((record) => record.caseStatus === status).length;
 }
 
 function recordsForEmployer(

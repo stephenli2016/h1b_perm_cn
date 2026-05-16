@@ -138,8 +138,66 @@ describe("public query repository", () => {
     });
     expect(result.data.records).toHaveLength(1);
     expect(result.data.records[0]?.employer.slug).toBe("acme-analytics");
-    expect(result.data.availableFilters.states).toEqual(["CA", "TX", "WA"]);
+    expect(result.data.availableFilters.states).toEqual([
+      "CA",
+      "NY",
+      "TX",
+      "WA",
+    ]);
     expect(result.data.seo.noindex).toBe(true);
+  });
+
+  it("builds company profiles for five fixture companies with varied data shapes", () => {
+    const repo = createPublicQueryRepository({ cacheEnabled: false });
+    const slugs = repo.listCompanySlugs();
+
+    expect(slugs).toEqual([
+      "acme-analytics",
+      "brightline-health",
+      "cedar-fintech-labs",
+      "lakeside-robotics",
+      "northstar-cloud",
+    ]);
+
+    for (const slug of slugs) {
+      const result = repo.getCompanyProfileBySlug({ slug });
+
+      expect(result.ok).toBe(true);
+      if (!result.ok) {
+        throw new Error(result.error.messageZh);
+      }
+      expect(result.data.employer.slug).toBe(slug);
+      expect(result.data.fiscalYears.length).toBeGreaterThan(0);
+      expect(result.data.seo.noindex).toBe(true);
+      expect(result.data.interpretationNoteZh).toContain("不代表个案批准");
+    }
+
+    const permOnly = repo.getCompanyProfileBySlug({
+      slug: "brightline-health",
+    });
+    const h1bOnly = repo.getCompanyProfileBySlug({
+      slug: "cedar-fintech-labs",
+    });
+
+    expect(permOnly.ok).toBe(true);
+    expect(h1bOnly.ok).toBe(true);
+
+    if (!permOnly.ok || !h1bOnly.ok) {
+      throw new Error("expected varied fixture profiles to resolve");
+    }
+
+    expect(permOnly.data.h1b.total).toBe(0);
+    expect(permOnly.data.perm.total).toBe(2);
+    expect(permOnly.data.wageDistribution).toBeUndefined();
+    expect(permOnly.data.permTimeline.map((row) => row.caseStatus)).toEqual([
+      "Withdrawn",
+      "Certified",
+    ]);
+
+    expect(h1bOnly.data.h1b.total).toBe(2);
+    expect(h1bOnly.data.perm.total).toBe(0);
+    expect(h1bOnly.data.h1bRecentRecords).toHaveLength(2);
+    expect(h1bOnly.data.permTimeline).toHaveLength(0);
   });
 
   it("searches PERM disclosure records by job/SOC and status", () => {
