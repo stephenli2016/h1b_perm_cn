@@ -65,6 +65,8 @@ M12 wires representative components into:
 - `/tools/h1b-wage-level-checker`
 - `/tools/eb2-eb3-china-priority-date-calculator`
 - `/tools/company-immigration-score`
+- `/tools/h1b-transfer-risk-checklist`
+- `/tools/perm-restart-timeline-estimator`
 - `/visa-bulletin/[year]/[month]`
 
 Later milestones will reuse the same components in search, company pages, tools, and guide templates.

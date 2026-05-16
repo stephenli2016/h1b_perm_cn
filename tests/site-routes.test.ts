@@ -23,6 +23,10 @@ const requiredM19Routes = [
   "/visa-bulletin/[year]/[month]",
 ] as const;
 const requiredM20Routes = ["/tools/company-immigration-score"] as const;
+const requiredM21Routes = [
+  "/tools/h1b-transfer-risk-checklist",
+  "/tools/perm-restart-timeline-estimator",
+] as const;
 
 describe("public route map", () => {
   it("contains every M02 route", () => {
@@ -86,6 +90,20 @@ describe("public route map", () => {
     });
   });
 
+  it("adds the M21 transfer and PERM restart tools as indexable routes", () => {
+    const routePaths = publicRoutes.map((route) => route.path);
+
+    expect(routePaths).toEqual(expect.arrayContaining([...requiredM21Routes]));
+    for (const path of requiredM21Routes) {
+      expect(publicRoutes.find((route) => route.path === path)).toMatchObject({
+        dataPage: true,
+        indexing: "indexable",
+        nav: false,
+        sitemapGroup: "tools",
+      });
+    }
+  });
+
   it("adds the M13 combined company directory without crowding primary nav", () => {
     const companiesRoute = publicRoutes.find(
       (route) => route.path === "/companies",
@@ -132,8 +150,11 @@ describe("public route map", () => {
         "/perm",
         "/perm/company/[slug]",
         "/tools",
+        "/tools/h1b-wage-level-checker",
         "/tools/eb2-eb3-china-priority-date-calculator",
         "/tools/company-immigration-score",
+        "/tools/h1b-transfer-risk-checklist",
+        "/tools/perm-restart-timeline-estimator",
         "/visa-bulletin",
         "/visa-bulletin/[year]/[month]",
       ]),

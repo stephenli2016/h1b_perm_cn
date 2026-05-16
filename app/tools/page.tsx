@@ -41,8 +41,15 @@ const plannedTools = [
     meta: "M20",
   },
   {
+    title: "H-1B Transfer 风险清单",
+    description: "用教育性场景核对换雇主前应问 HR、律师和新雇主的问题。",
+    href: "/tools/h1b-transfer-risk-checklist",
+    meta: "M21",
+  },
+  {
     title: "跳槽后 PERM 重办时间线",
     description: "用教育性场景解释流程节点，不收集敏感个案信息。",
+    href: "/tools/perm-restart-timeline-estimator",
     meta: "M21",
   },
 ];

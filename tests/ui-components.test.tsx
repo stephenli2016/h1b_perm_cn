@@ -2,6 +2,8 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 
 import CompanyImmigrationScorePage from "@/app/tools/company-immigration-score/page";
+import H1BTransferRiskChecklistPage from "@/app/tools/h1b-transfer-risk-checklist/page";
+import PermRestartTimelineEstimatorPage from "@/app/tools/perm-restart-timeline-estimator/page";
 import { CompanyProfile } from "@/components/company/company-profile";
 import { PageShell } from "@/components/page-shell";
 import { DirectoryFilterForm } from "@/components/search/directory-filter-form";
@@ -198,5 +200,45 @@ describe("M12 UI components", () => {
     expect(html).toContain("低样本规则");
     expect(html).toContain("不是 H-1B 成功率");
     expect(html).toContain("Brightline Health");
+  });
+
+  it("renders the H-1B transfer checklist without sensitive data fields", async () => {
+    const html = renderToStaticMarkup(
+      await H1BTransferRiskChecklistPage({
+        searchParams: Promise.resolve({
+          companyDataFocus: "h1b",
+          scenario: "cap-exempt-to-cap-subject",
+          startTiming: "not-sure",
+        }),
+      }),
+    );
+
+    expect(html).toContain("H-1B Transfer 风险清单");
+    expect(html).toContain("Cap-exempt");
+    expect(html).toContain("不收集敏感信息");
+    expect(html).toContain("/h1b");
+    expect(html).not.toContain('name="receiptNumber"');
+    expect(html).not.toContain('name="i94"');
+    expect(html).not.toContain('name="salary"');
+  });
+
+  it("renders the PERM restart timeline without sensitive data fields", async () => {
+    const html = renderToStaticMarkup(
+      await PermRestartTimelineEstimatorPage({
+        searchParams: Promise.resolve({
+          companyDataFocus: "perm",
+          scenario: "new-employer",
+          stage: "filed-pending",
+        }),
+      }),
+    );
+
+    expect(html).toContain("跳槽后 PERM 重办时间线估算器");
+    expect(html).toContain("ETA-9089 / PERM filing");
+    expect(html).toContain("不收集敏感信息");
+    expect(html).toContain("/perm");
+    expect(html).not.toContain('name="priorityDate"');
+    expect(html).not.toContain('name="receiptNumber"');
+    expect(html).not.toContain('name="employerName"');
   });
 });

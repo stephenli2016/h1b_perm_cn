@@ -158,6 +158,30 @@ export const publicRoutes = [
     dataPage: true,
   },
   {
+    path: "/tools/h1b-transfer-risk-checklist",
+    label: "H-1B Transfer 风险清单",
+    title: "H-1B Transfer 风险清单",
+    description:
+      "用通用教育性场景核对 H-1B 换雇主前应问 HR、律师和新雇主 immigration team 的问题。",
+    section: "tools",
+    nav: false,
+    sitemapGroup: "tools",
+    indexing: "indexable",
+    dataPage: true,
+  },
+  {
+    path: "/tools/perm-restart-timeline-estimator",
+    label: "PERM 重启时间线",
+    title: "跳槽后 PERM 重办时间线估算器",
+    description:
+      "用通用教育性场景理解跳槽、换职位或换地点后 PERM 可能涉及的重新规划节点。",
+    section: "tools",
+    nav: false,
+    sitemapGroup: "tools",
+    indexing: "indexable",
+    dataPage: true,
+  },
+  {
     path: "/guides",
     label: "指南",
     title: "职业移民中文指南",

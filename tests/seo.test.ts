@@ -97,6 +97,8 @@ describe("M15 SEO indexability and sitemaps", () => {
       "http://localhost:3000/tools/h1b-wage-level-checker",
       "http://localhost:3000/tools/eb2-eb3-china-priority-date-calculator",
       "http://localhost:3000/tools/company-immigration-score",
+      "http://localhost:3000/tools/h1b-transfer-risk-checklist",
+      "http://localhost:3000/tools/perm-restart-timeline-estimator",
     ]);
     expect(listSitemapEntries("guides")).toEqual([]);
     expect(listSitemapEntries("visa-bulletin")).toEqual([
@@ -146,6 +148,12 @@ describe("M15 SEO indexability and sitemaps", () => {
     );
     expect(renderUrlSet(listSitemapEntries("tools"))).toContain(
       "http://localhost:3000/tools/company-immigration-score",
+    );
+    expect(renderUrlSet(listSitemapEntries("tools"))).toContain(
+      "http://localhost:3000/tools/h1b-transfer-risk-checklist",
+    );
+    expect(renderUrlSet(listSitemapEntries("tools"))).toContain(
+      "http://localhost:3000/tools/perm-restart-timeline-estimator",
     );
     expect(renderUrlSet(listSitemapEntries("visa-bulletin"))).toContain(
       "http://localhost:3000/visa-bulletin/2026/06",
