@@ -15,6 +15,21 @@ export type EmployerSearchResult = {
   matchedAliases: string[];
 };
 
+export type EmployerAliasResolution = {
+  rawName: string;
+  normalizedName: string;
+  employer?: Employer;
+  alias?: {
+    rawName: string;
+    sourceSystem: string;
+    confidenceScore: number;
+    reviewStatus: string;
+  };
+  confidenceScore: number;
+  reviewStatus: "auto" | "manual" | "needs_review" | "unmatched";
+  matchMethod: "alias" | "canonical_name" | "unmatched";
+};
+
 export type EmployerImmigrationSummary = {
   employer: Employer;
   metrics?: CompanyPageMetrics;
@@ -120,18 +135,49 @@ export type VisaBulletinTableRow = {
   datesForFiling?: VisaBulletinDate;
 };
 
+export type CompanyIndexabilityDecision = {
+  indexable: boolean;
+  noindexReason?: string;
+  matchedThresholds: readonly string[];
+};
+
+export type CompanyPageCandidate = {
+  employer: Employer;
+  metrics: CompanyPageMetrics;
+  rank: number;
+  aliasCount: number;
+  minAliasConfidence: number | undefined;
+};
+
+export type CompanyCandidateOptions = {
+  currentFiscalYear?: number;
+  recentYearWindow?: number;
+  limit?: number;
+  includeNoindex?: boolean;
+};
+
 export function getLocalFixtureData(): FixtureData {
   return localFixtureData;
 }
 
 export function normalizeEmployerName(value: string) {
-  return value
+  const withoutDiacritics = value
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "");
+
+  return withoutDiacritics
     .toLowerCase()
     .replace(/&/g, " and ")
     .replace(
-      /\b(incorporated|inc|llc|l\.l\.c|corp|corporation|co|company)\b/g,
+      /\b(limited liability company|incorporated|corporation|company|limited)\b/g,
       " ",
     )
+    .replace(
+      /\b(l\.?\s*l\.?\s*c\.?|l\.?\s*l\.?\s*p\.?|l\.?\s*p\.?|p\.?\s*l\.?\s*l\.?\s*c\.?|p\.?\s*c\.?)\b/g,
+      " ",
+    )
+    .replace(/\b(inc|llc|corp|co|ltd|llp|lp|pllc|pc|na)\b/g, " ")
+    .replace(/\bthe\b/g, " ")
     .replace(/[^a-z0-9]+/g, " ")
     .replace(/\s+/g, " ")
     .trim();
@@ -142,6 +188,64 @@ export function getEmployerBySlug(
   data: FixtureData = localFixtureData,
 ) {
   return data.employers.find((employer) => employer.slug === slug);
+}
+
+export function resolveEmployerAlias(
+  rawName: string,
+  data: FixtureData = localFixtureData,
+): EmployerAliasResolution {
+  const normalizedName = normalizeEmployerName(rawName);
+
+  if (!normalizedName) {
+    return {
+      rawName,
+      normalizedName,
+      confidenceScore: 0,
+      reviewStatus: "unmatched",
+      matchMethod: "unmatched",
+    };
+  }
+
+  const alias = data.employerAliases.find(
+    (candidate) => candidate.normalizedName === normalizedName,
+  );
+
+  if (alias) {
+    return {
+      rawName,
+      normalizedName,
+      employer: data.employers.find(
+        (employer) => employer.id === alias.employerId,
+      ),
+      alias,
+      confidenceScore: alias.confidenceScore,
+      reviewStatus: alias.reviewStatus,
+      matchMethod: "alias",
+    };
+  }
+
+  const employer = data.employers.find(
+    (candidate) => candidate.normalizedName === normalizedName,
+  );
+
+  if (employer) {
+    return {
+      rawName,
+      normalizedName,
+      employer,
+      confidenceScore: 0.92,
+      reviewStatus: "auto",
+      matchMethod: "canonical_name",
+    };
+  }
+
+  return {
+    rawName,
+    normalizedName,
+    confidenceScore: 0,
+    reviewStatus: "unmatched",
+    matchMethod: "unmatched",
+  };
 }
 
 export function searchEmployers(
@@ -210,7 +314,7 @@ export function getEmployerImmigrationSummary(
 
   return {
     employer,
-    metrics: data.companyPageMetrics.find(
+    metrics: calculateCompanyPageMetrics(data).find(
       (metrics) => metrics.employerId === employer.id,
     ),
     h1b: {
@@ -598,8 +702,8 @@ export function checkVisaBulletinPriorityDate(
 export function listIndexableCompanyCandidates(
   data: FixtureData = localFixtureData,
 ) {
-  return data.companyPageMetrics
-    .filter((metrics) => metrics.indexable)
+  return calculateCompanyPageMetrics(data)
+    .filter((metrics) => getCompanyIndexabilityDecision(metrics).indexable)
     .map((metrics) => ({
       metrics,
       employer: data.employers.find(
@@ -612,6 +716,157 @@ export function listIndexableCompanyCandidates(
       ): candidate is { metrics: CompanyPageMetrics; employer: Employer } =>
         Boolean(candidate.employer),
     );
+}
+
+export function calculateCompanyPageMetrics(
+  data: FixtureData = localFixtureData,
+  options: CompanyCandidateOptions = {},
+): CompanyPageMetrics[] {
+  const recentYearWindow = options.recentYearWindow ?? 5;
+  const currentFiscalYear =
+    options.currentFiscalYear ?? getLatestEmployerFiscalYear(data);
+  const oldestFiscalYear = currentFiscalYear - recentYearWindow + 1;
+
+  return data.employers
+    .map((employer) => {
+      const h1bRecords = data.h1bLcaRecords.filter(
+        (record) =>
+          record.employerId === employer.id &&
+          record.fiscalYear >= oldestFiscalYear &&
+          record.fiscalYear <= currentFiscalYear,
+      );
+      const permRecords = data.permRecords.filter(
+        (record) =>
+          record.employerId === employer.id &&
+          record.fiscalYear >= oldestFiscalYear &&
+          record.fiscalYear <= currentFiscalYear,
+      );
+      const uscisRecords = data.uscisH1BEmployerRecords.filter(
+        (record) =>
+          record.employerId === employer.id &&
+          record.fiscalYear >= oldestFiscalYear &&
+          record.fiscalYear <= currentFiscalYear,
+      );
+      const fiscalYears = [
+        ...h1bRecords.map((record) => record.fiscalYear),
+        ...permRecords.map((record) => record.fiscalYear),
+        ...uscisRecords.map((record) => record.fiscalYear),
+      ];
+      const jobTitleCount = new Set([
+        ...h1bRecords.map((record) => normalizeTextKey(record.jobTitle)),
+        ...permRecords.map((record) => normalizeTextKey(record.jobTitle)),
+      ]).size;
+      const locationCount = new Set([
+        ...h1bRecords.map((record) =>
+          normalizeLocationKey(record.worksiteCity, record.worksiteState),
+        ),
+        ...permRecords.map((record) =>
+          normalizeLocationKey(record.worksiteCity, record.worksiteState),
+        ),
+        ...uscisRecords.map((record) =>
+          normalizeLocationKey(record.city, record.state),
+        ),
+      ]).size;
+      const metricsBase = {
+        lcaCount5y: h1bRecords.length,
+        permCount5y: permRecords.length,
+        uscisRecordCount5y: uscisRecords.length,
+        jobTitleCount,
+        locationCount,
+        latestFiscalYear: Math.max(...fiscalYears, 0),
+      };
+      const decision = getCompanyIndexabilityDecision(metricsBase);
+
+      return {
+        id: `metric-${employer.slug}`,
+        employerId: employer.id,
+        ...metricsBase,
+        qualityScore: scoreCompanyPageCandidate({
+          ...metricsBase,
+          professionalSocRecordCount: countProfessionalSocRecords([
+            ...h1bRecords.map((record) => record.socCode),
+            ...permRecords.map((record) => record.socCode),
+          ]),
+        }),
+        indexable: decision.indexable,
+        noindexReason: decision.noindexReason,
+      };
+    })
+    .sort(compareCompanyMetrics);
+}
+
+export function getCompanyIndexabilityDecision(
+  metrics: Pick<
+    CompanyPageMetrics,
+    | "lcaCount5y"
+    | "permCount5y"
+    | "uscisRecordCount5y"
+    | "jobTitleCount"
+    | "locationCount"
+  >,
+): CompanyIndexabilityDecision {
+  const matchedThresholds = [
+    metrics.lcaCount5y >= 10 ? "recent_lca_count_10" : undefined,
+    metrics.permCount5y >= 3 ? "recent_perm_count_3" : undefined,
+    metrics.uscisRecordCount5y >= 3 ? "uscis_hub_rows_3" : undefined,
+  ].filter((threshold): threshold is string => Boolean(threshold));
+
+  if (matchedThresholds.length === 0) {
+    return {
+      indexable: false,
+      matchedThresholds,
+      noindexReason:
+        "Does not meet initial data threshold: needs at least 10 recent LCA records, 3 recent PERM records, or 3 USCIS Employer Data Hub rows.",
+    };
+  }
+
+  if (metrics.jobTitleCount === 0 || metrics.locationCount === 0) {
+    return {
+      indexable: false,
+      matchedThresholds,
+      noindexReason:
+        "Has enough volume signal but not enough job-title and location diversity for an indexable company page.",
+    };
+  }
+
+  return {
+    indexable: true,
+    matchedThresholds,
+  };
+}
+
+export function listTopCompanyCandidates(
+  data: FixtureData = localFixtureData,
+  options: CompanyCandidateOptions = {},
+): CompanyPageCandidate[] {
+  const includeNoindex = options.includeNoindex ?? true;
+  const limit = options.limit ?? 2000;
+  const ranked = calculateCompanyPageMetrics(data, options)
+    .filter((metrics) => includeNoindex || metrics.indexable)
+    .slice(0, limit)
+    .map((metrics, index) => {
+      const aliases = data.employerAliases.filter(
+        (alias) => alias.employerId === metrics.employerId,
+      );
+
+      return {
+        employer: data.employers.find(
+          (employer) => employer.id === metrics.employerId,
+        ),
+        metrics,
+        rank: index + 1,
+        aliasCount: aliases.length,
+        minAliasConfidence:
+          aliases.length > 0
+            ? Math.min(...aliases.map((alias) => alias.confidenceScore))
+            : undefined,
+      };
+    });
+
+  return ranked.filter(
+    (candidate): candidate is CompanyPageCandidate =>
+      candidate.employer !== undefined,
+  );
 }
 
 export function listPriorityGuidePages(
@@ -658,6 +913,72 @@ function topCounts(values: readonly string[]) {
     .map(([value, count]) => ({ value, count }))
     .sort((a, b) => b.count - a.count)
     .slice(0, 5);
+}
+
+function getLatestEmployerFiscalYear(data: FixtureData) {
+  return Math.max(
+    ...data.h1bLcaRecords.map((record) => record.fiscalYear),
+    ...data.permRecords.map((record) => record.fiscalYear),
+    ...data.uscisH1BEmployerRecords.map((record) => record.fiscalYear),
+    0,
+  );
+}
+
+function scoreCompanyPageCandidate(
+  metrics: Pick<
+    CompanyPageMetrics,
+    | "lcaCount5y"
+    | "permCount5y"
+    | "uscisRecordCount5y"
+    | "jobTitleCount"
+    | "locationCount"
+  > & { professionalSocRecordCount: number },
+) {
+  const volumeScore =
+    Math.min(metrics.lcaCount5y * 2, 80) +
+    Math.min(metrics.permCount5y * 8, 80) +
+    Math.min(metrics.uscisRecordCount5y * 5, 25);
+  const diversityScore =
+    Math.min(metrics.jobTitleCount * 3, 30) +
+    Math.min(metrics.locationCount * 2, 20);
+  const chineseUserRelevanceScore =
+    (metrics.permCount5y > 0 ? 10 : 0) +
+    (metrics.lcaCount5y > 0 && metrics.permCount5y > 0 ? 8 : 0) +
+    Math.min(metrics.professionalSocRecordCount, 20);
+
+  return volumeScore + diversityScore + chineseUserRelevanceScore;
+}
+
+function countProfessionalSocRecords(socCodes: readonly string[]) {
+  return socCodes.filter((socCode) =>
+    /^(11|13|15|17|19|23|27|29)-/.test(socCode),
+  ).length;
+}
+
+function compareCompanyMetrics(
+  left: CompanyPageMetrics,
+  right: CompanyPageMetrics,
+) {
+  return (
+    right.qualityScore - left.qualityScore ||
+    right.lcaCount5y - left.lcaCount5y ||
+    right.permCount5y - left.permCount5y ||
+    left.employerId.localeCompare(right.employerId)
+  );
+}
+
+function normalizeTextKey(value: string) {
+  return value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+}
+
+function normalizeLocationKey(city: string, state: string) {
+  return `${city.toLowerCase()}-${state.toUpperCase()}`.replace(
+    /[^a-z0-9-]+/g,
+    "",
+  );
 }
 
 function locationKey(value: string | undefined) {

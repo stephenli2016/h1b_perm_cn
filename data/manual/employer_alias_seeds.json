@@ -1,0 +1,30 @@
+{
+  "description": "Manual employer alias seeds are exact-match canonicalization aids only. They do not create public company pages unless official source records contain a matching raw employer name.",
+  "seeds": [
+    {
+      "canonical_name": "Amazon.com Services LLC",
+      "display_name": "Amazon.com Services",
+      "slug": "amazon-com-services",
+      "confidence_score": 1,
+      "aliases": [
+        "AMAZON.COM SERVICES LLC",
+        "AMAZON COM SERVICES LLC",
+        "AMAZON.COM SERVICES, LLC"
+      ]
+    },
+    {
+      "canonical_name": "Google LLC",
+      "display_name": "Google",
+      "slug": "google",
+      "confidence_score": 1,
+      "aliases": ["GOOGLE LLC", "GOOGLE INC", "GOOGLE INC."]
+    },
+    {
+      "canonical_name": "Microsoft Corporation",
+      "display_name": "Microsoft",
+      "slug": "microsoft",
+      "confidence_score": 1,
+      "aliases": ["MICROSOFT CORPORATION", "MICROSOFT CORP", "MICROSOFT CORP."]
+    }
+  ]
+}

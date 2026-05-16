@@ -327,6 +327,10 @@ Important columns:
 - `indexable`
 - `noindex_reason`
 
+M10 note:
+
+`company_page_metrics` can be produced by the local TypeScript fixture helper or by the ETL command `build-company-candidates`. M10 indexability is a data-readiness signal only; later SEO milestones still decide sitemap inclusion and final page-level indexation after visible content quality checks.
+
 Indexes:
 
 - `idx_company_page_metrics_indexable`

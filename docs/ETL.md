@@ -58,6 +58,7 @@ pnpm etl:pwd:fixtures
 pnpm etl:uscis:h1b:fixtures
 pnpm etl:visa:bulletin:fixtures
 pnpm etl:uscis:filing-chart:fixtures
+pnpm etl:companies:fixtures
 pnpm etl:test
 ```
 
@@ -72,3 +73,5 @@ M07 adds `parse-pwd` and `parse-pwd-manifest` for OFLC Prevailing Wage disclosur
 M08 adds `parse-uscis-h1b` and `parse-uscis-h1b-manifest` for USCIS H-1B Employer Data Hub CSV files and local HTML table fixtures. The fixture command writes normalized JSONL to `data/normalized/uscis_h1b_employer_records.jsonl`, which is ignored as generated local output.
 
 M09 adds `parse-visa-bulletin`, `parse-visa-bulletin-manifest`, `parse-uscis-filing-chart`, and `parse-uscis-filing-chart-manifest` for Department of State Visa Bulletin pages and USCIS adjustment-of-status filing chart selections. Fixture commands write normalized JSONL to `data/normalized/visa_bulletin_dates.jsonl` and `data/normalized/uscis_filing_charts.jsonl`, both ignored as generated local output.
+
+M10 adds `build-company-candidates` for deterministic employer canonicalization, auditable alias output, company quality scoring, and initial noindex/indexable data-readiness decisions. The fixture command writes `data/normalized/employers.jsonl`, `data/normalized/employer_aliases.jsonl`, and `data/normalized/company_page_candidates.jsonl`, all ignored as generated local output. Methodology lives in `docs/EMPLOYER_CANONICALIZATION.md`.

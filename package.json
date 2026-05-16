@@ -24,6 +24,7 @@
     "etl:uscis:h1b:fixtures": "python3 -m etl.cli parse-uscis-h1b-manifest --manifest data/source_manifest.json --output data/normalized/uscis_h1b_employer_records.jsonl --fixtures-only",
     "etl:visa:bulletin:fixtures": "python3 -m etl.cli parse-visa-bulletin-manifest --manifest data/source_manifest.json --output data/normalized/visa_bulletin_dates.jsonl --fixtures-only",
     "etl:uscis:filing-chart:fixtures": "python3 -m etl.cli parse-uscis-filing-chart-manifest --manifest data/source_manifest.json --output data/normalized/uscis_filing_charts.jsonl --fixtures-only",
+    "etl:companies:fixtures": "python3 -m etl.cli build-company-candidates --lca data/normalized/h1b_lca_records.jsonl --perm data/normalized/perm_records.jsonl --uscis-h1b data/normalized/uscis_h1b_employer_records.jsonl --manual-aliases data/manual/employer_alias_seeds.json --employers-output data/normalized/employers.jsonl --aliases-output data/normalized/employer_aliases.jsonl --output data/normalized/company_page_candidates.jsonl",
     "etl:test": "python3 -m unittest discover -s tests/etl -p 'test_*.py'",
     "format": "prettier --check .",
     "format:write": "prettier --write ."

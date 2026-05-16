@@ -1,8 +1,10 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  calculateCompanyPageMetrics,
   findPrevailingWage,
   checkVisaBulletinPriorityDate,
+  getCompanyIndexabilityDecision,
   getEmployerBySlug,
   getEmployerImmigrationSummary,
   getLatestVisaBulletinMonth,
@@ -11,9 +13,11 @@ import {
   listVisaBulletinRows,
   listIndexableCompanyCandidates,
   listPriorityGuidePages,
+  listTopCompanyCandidates,
   lookupPrevailingWage,
   matchWageAmountToLevels,
   normalizeEmployerName,
+  resolveEmployerAlias,
   searchEmployers,
   summarizeUscisH1BEmployerData,
 } from "@/lib/db/local-repository";
@@ -21,9 +25,38 @@ import {
 describe("local fixture repository", () => {
   it("normalizes employer names for deterministic matching", () => {
     expect(normalizeEmployerName("ACME ANALYTICS, LLC")).toBe("acme analytics");
+    expect(normalizeEmployerName("The Acme Analytics, L.L.C.")).toBe(
+      "acme analytics",
+    );
     expect(normalizeEmployerName("Northstar Cloud Inc.")).toBe(
       "northstar cloud",
     );
+    expect(normalizeEmployerName("AT&T Services Incorporated")).toBe(
+      "at and t services",
+    );
+  });
+
+  it("resolves aliases audibly without fuzzy low-confidence merges", () => {
+    const aliasMatch = resolveEmployerAlias("ACME ANALYTICS, LLC");
+    const variantMatch = resolveEmployerAlias("Acme Analytics L.L.C.");
+    const unmatched = resolveEmployerAlias("Acme Analytics Holdings LLC");
+
+    expect(aliasMatch).toMatchObject({
+      matchMethod: "alias",
+      confidenceScore: 0.98,
+      reviewStatus: "auto",
+    });
+    expect(aliasMatch.employer?.slug).toBe("acme-analytics");
+    expect(variantMatch).toMatchObject({
+      matchMethod: "alias",
+      confidenceScore: 0.98,
+      reviewStatus: "auto",
+    });
+    expect(unmatched).toMatchObject({
+      matchMethod: "unmatched",
+      confidenceScore: 0,
+      reviewStatus: "unmatched",
+    });
   });
 
   it("searches canonical names and aliases", () => {
@@ -230,6 +263,64 @@ describe("local fixture repository", () => {
   it("keeps fixture company pages out of indexable launch candidates", () => {
     expect(listIndexableCompanyCandidates()).toEqual([]);
     expect(getEmployerBySlug("missing-employer")).toBeUndefined();
+  });
+
+  it("generates ranked top-company candidates from fixture records", () => {
+    const candidates = listTopCompanyCandidates();
+
+    expect(candidates.map((candidate) => candidate.employer.slug)).toEqual([
+      "acme-analytics",
+      "northstar-cloud",
+      "lakeside-robotics",
+    ]);
+    expect(candidates[0]).toMatchObject({
+      rank: 1,
+      aliasCount: 2,
+      metrics: {
+        lcaCount5y: 3,
+        permCount5y: 1,
+        uscisRecordCount5y: 1,
+        jobTitleCount: 3,
+        locationCount: 2,
+        indexable: false,
+      },
+    });
+    expect(candidates[0]?.metrics.noindexReason).toContain(
+      "Does not meet initial data threshold",
+    );
+  });
+
+  it("marks company candidates indexable only after data thresholds are met", () => {
+    const data = getLocalFixtureData();
+    const baseRecord = data.h1bLcaRecords[0]!;
+    const boostedData = {
+      ...data,
+      h1bLcaRecords: [
+        ...data.h1bLcaRecords,
+        ...Array.from({ length: 7 }, (_, index) => ({
+          ...baseRecord,
+          id: `lca-acme-extra-${index}`,
+          sourceRecordId: `fixture-lca-extra-${index}`,
+          sourceRecordFingerprint: `fixture-lca-extra-${index}`,
+          jobTitle: index % 2 === 0 ? "Software Engineer" : "Data Engineer",
+          worksiteCity: index % 2 === 0 ? "Seattle" : "Austin",
+          worksiteState: index % 2 === 0 ? "WA" : "TX",
+        })),
+      ],
+    };
+    const metrics = calculateCompanyPageMetrics(boostedData).find(
+      (candidate) => candidate.employerId === "emp-acme",
+    );
+
+    expect(metrics).toMatchObject({
+      lcaCount5y: 10,
+      indexable: true,
+      noindexReason: undefined,
+    });
+    expect(getCompanyIndexabilityDecision(metrics!)).toMatchObject({
+      indexable: true,
+      matchedThresholds: ["recent_lca_count_10"],
+    });
   });
 
   it("exposes priority guide fixtures for content planning", () => {

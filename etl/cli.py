@@ -7,6 +7,12 @@ from pathlib import Path
 from typing import Sequence
 
 from etl.downloader import download_manifest
+from etl.employer_canonicalization import (
+    build_company_canonicalization,
+    load_manual_alias_seeds,
+    load_source_records_from_jsonl,
+    write_jsonl,
+)
 from etl.fingerprint import fingerprint_file
 from etl.manifest import ManifestError, SourceEntry, load_manifest
 from etl.parsers.oflc_lca import parse_lca_file, write_lca_jsonl
@@ -133,6 +139,19 @@ def main(argv: Sequence[str] | None = None) -> int:
         "--fixtures-only",
         action="store_true",
     )
+
+    build_company_candidates_parser = subparsers.add_parser(
+        "build-company-candidates"
+    )
+    build_company_candidates_parser.add_argument("--lca", required=True)
+    build_company_candidates_parser.add_argument("--perm", required=True)
+    build_company_candidates_parser.add_argument("--uscis-h1b", required=True)
+    build_company_candidates_parser.add_argument("--manual-aliases")
+    build_company_candidates_parser.add_argument("--employers-output", required=True)
+    build_company_candidates_parser.add_argument("--aliases-output", required=True)
+    build_company_candidates_parser.add_argument("--output", required=True)
+    build_company_candidates_parser.add_argument("--recent-years", type=int, default=5)
+    build_company_candidates_parser.add_argument("--limit", type=int, default=2000)
 
     args = parser.parse_args(argv)
 
@@ -620,6 +639,56 @@ def main(argv: Sequence[str] | None = None) -> int:
                             }
                             for result in parse_results
                         ],
+                    },
+                    ensure_ascii=False,
+                    indent=2,
+                )
+            )
+            return 0
+
+        if args.command == "build-company-candidates":
+            lca_records = load_source_records_from_jsonl(
+                args.lca,
+                source_system="oflc_lca",
+            )
+            perm_records = load_source_records_from_jsonl(
+                args.perm,
+                source_system="oflc_perm",
+            )
+            uscis_records = load_source_records_from_jsonl(
+                args.uscis_h1b,
+                source_system="uscis_h1b_hub",
+            )
+            result = build_company_canonicalization(
+                [*lca_records, *perm_records, *uscis_records],
+                manual_alias_seeds=load_manual_alias_seeds(args.manual_aliases),
+                recent_year_window=args.recent_years,
+                limit=args.limit,
+            )
+            employers_written = write_jsonl(args.employers_output, result.employers)
+            aliases_written = write_jsonl(args.aliases_output, result.aliases)
+            candidates_written = write_jsonl(args.output, result.candidates)
+
+            print(
+                json.dumps(
+                    {
+                        "parser_name": "employer_canonicalization",
+                        "latest_fiscal_year": result.latest_fiscal_year,
+                        "recent_year_window": result.recent_year_window,
+                        "employer_count": len(result.employers),
+                        "alias_count": len(result.aliases),
+                        "candidate_count": len(result.candidates),
+                        "indexable_count": sum(
+                            1 for candidate in result.candidates if candidate.indexable
+                        ),
+                        "employers_written": employers_written,
+                        "aliases_written": aliases_written,
+                        "candidates_written": candidates_written,
+                        "outputs": {
+                            "employers": args.employers_output,
+                            "aliases": args.aliases_output,
+                            "candidates": args.output,
+                        },
                     },
                     ensure_ascii=False,
                     indent=2,
