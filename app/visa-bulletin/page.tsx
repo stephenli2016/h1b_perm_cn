@@ -2,6 +2,10 @@ import type { Metadata } from "next";
 
 import { PageShell } from "@/components/page-shell";
 import { SourceNote } from "@/components/source-note";
+import { DataTable, type DataTableColumn } from "@/components/ui/data-table";
+import { DisclaimerBox } from "@/components/ui/disclaimer-box";
+import { EmptyState } from "@/components/ui/empty-state";
+import { MetricCard } from "@/components/ui/metric-card";
 import {
   getLatestVisaBulletinMonth,
   listVisaBulletinRows,
@@ -23,83 +27,83 @@ export const metadata: Metadata = {
 export default function VisaBulletinPage() {
   const latestMonth = getLatestVisaBulletinMonth();
   const rows = latestMonth ? listVisaBulletinRows(latestMonth.monthKey) : [];
+  const tableColumns: DataTableColumn<(typeof rows)[number]>[] = [
+    {
+      key: "category",
+      header: "类别",
+      render: (row) => (
+        <span className="font-medium text-slate-950">{row.category}</span>
+      ),
+    },
+    {
+      key: "final-action",
+      header: "Final Action Date",
+      render: (row) => formatCutoff(row.finalAction),
+    },
+    {
+      key: "dates-for-filing",
+      header: "Dates for Filing",
+      render: (row) => formatCutoff(row.datesForFiling),
+    },
+    {
+      key: "selected-chart",
+      header: "当月 I-485 对照表",
+      render: (row) => {
+        const selected =
+          latestMonth?.uscisFilingChart === "dates_for_filing"
+            ? row.datesForFiling
+            : row.finalAction;
+
+        return (
+          <span className="font-medium text-slate-950">
+            {formatCutoff(selected)}
+          </span>
+        );
+      },
+    },
+  ];
 
   return (
     <PageShell
+      breadcrumbs={[{ href: "/", label: "首页" }, { label: "排期" }]}
       description="中国大陆出生 EB-1、EB-2、EB-3 的 Department of State Visa Bulletin fixture 数据，以及 USCIS 当月 filing chart 选择。"
       eyebrow="Visa Bulletin"
       title="中国职业移民排期"
     >
       {latestMonth ? (
         <section className="space-y-4">
-          <div className="grid gap-3 border-y border-slate-200 py-4 text-sm text-slate-700 md:grid-cols-3">
-            <div>
-              <div className="font-medium text-slate-950">月份</div>
-              <div>{latestMonth.monthKey}</div>
-            </div>
-            <div>
-              <div className="font-medium text-slate-950">
-                USCIS filing chart
-              </div>
-              <div>{chartLabelZh(latestMonth.uscisFilingChart)}</div>
-            </div>
-            <div>
-              <div className="font-medium text-slate-950">最近来源日期</div>
-              <div>{latestMonth.publishedAt}</div>
-            </div>
+          <div className="grid gap-4 md:grid-cols-3">
+            <MetricCard label="月份" value={latestMonth.monthKey} />
+            <MetricCard
+              label="USCIS filing chart"
+              value={chartLabelZh(latestMonth.uscisFilingChart)}
+            />
+            <MetricCard label="最近来源日期" value={latestMonth.publishedAt} />
           </div>
 
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[640px] border-collapse text-left text-sm">
-              <thead>
-                <tr className="border-b border-slate-200 text-slate-600">
-                  <th className="py-3 pr-4 font-medium">类别</th>
-                  <th className="px-4 py-3 font-medium">Final Action Date</th>
-                  <th className="px-4 py-3 font-medium">Dates for Filing</th>
-                  <th className="px-4 py-3 font-medium">当月 I-485 对照表</th>
-                </tr>
-              </thead>
-              <tbody>
-                {rows.map((row) => {
-                  const selected =
-                    latestMonth.uscisFilingChart === "final_action"
-                      ? row.finalAction
-                      : row.datesForFiling;
+          <DataTable
+            caption={`${latestMonth.monthKey} 中国大陆出生 EB 排期表`}
+            columns={tableColumns}
+            emptyDescription="当前月份 fixture 没有可展示的排期行。"
+            emptyTitle="暂无排期数据"
+            getRowKey={(row) => row.category}
+            rows={rows}
+          />
 
-                  return (
-                    <tr
-                      className="border-b border-slate-100 text-slate-800"
-                      key={row.category}
-                    >
-                      <td className="py-3 pr-4 font-medium text-slate-950">
-                        {row.category}
-                      </td>
-                      <td className="px-4 py-3">
-                        {formatCutoff(row.finalAction)}
-                      </td>
-                      <td className="px-4 py-3">
-                        {formatCutoff(row.datesForFiling)}
-                      </td>
-                      <td className="px-4 py-3 font-medium text-slate-950">
-                        {formatCutoff(selected)}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-
-          <p className="max-w-3xl text-sm leading-6 text-slate-600">
-            日期对照只表示公开表格中的 cut-off date。是否能提交 I-485 还要看
-            USCIS
-            当月选择、个人类别、chargeability、身份和案件事实。本站内容仅供信息参考，不构成法律、移民、税务或职业建议。
-          </p>
+          <DisclaimerBox compact>
+            <p>
+              日期对照只表示公开表格中的 cut-off date。是否能提交 I-485 还要看
+              USCIS
+              当月选择、个人类别、chargeability、身份和案件事实。本站内容仅供信息参考，不构成法律、移民、税务或职业建议。
+            </p>
+          </DisclaimerBox>
         </section>
       ) : (
-        <p className="text-sm text-slate-600">
-          暂无本地 Visa Bulletin fixture。
-        </p>
+        <EmptyState
+          description="请先运行 Visa Bulletin fixture ETL，或在后续里程碑接入官方刷新流程。"
+          title="暂无本地 Visa Bulletin fixture"
+          tone="warning"
+        />
       )}
 
       <section className="mt-8 grid gap-4 md:grid-cols-2">

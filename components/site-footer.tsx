@@ -23,6 +23,7 @@ export function SiteFooter() {
               {group.links.map((link) => (
                 <li key={link.path}>
                   <Link
+                    className="rounded-sm underline-offset-4 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--focus)]"
                     href={"samplePath" in link ? link.samplePath : link.path}
                   >
                     {link.label}
