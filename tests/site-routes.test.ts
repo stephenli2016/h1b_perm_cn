@@ -24,6 +24,19 @@ describe("public route map", () => {
     expect(routePaths).toEqual(expect.arrayContaining([...requiredM02Routes]));
   });
 
+  it("adds the M13 combined company directory without crowding primary nav", () => {
+    const companiesRoute = publicRoutes.find(
+      (route) => route.path === "/companies",
+    );
+
+    expect(companiesRoute).toMatchObject({
+      dataPage: true,
+      indexing: "noindex-until-data",
+      nav: false,
+      sitemapGroup: "data-directory",
+    });
+  });
+
   it("keeps the Chinese primary navigation focused", () => {
     expect(primaryNavItems.map((item) => item.label)).toEqual([
       "首页",

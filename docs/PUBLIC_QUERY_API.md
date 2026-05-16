@@ -10,7 +10,7 @@ Implementation:
 
 - `lib/db/public-query-repository.ts`
 
-The M11 layer does not build SQL strings and does not perform direct database access. It reads normalized fixture arrays through typed helpers, which keeps the current milestone free of unsafe SQL interpolation.
+The M11/M13 layer does not build SQL strings and does not perform direct database access. It reads normalized fixture arrays through typed helpers, which keeps the current milestone free of unsafe SQL interpolation.
 
 ## Repository Creation
 
@@ -71,6 +71,35 @@ Validation:
 
 - Slug must contain only lowercase letters, numbers, and hyphens.
 - Path fragments such as `../` are rejected before lookup.
+
+### `searchH1BRecords`
+
+Returns paginated H-1B LCA directory rows for `/h1b`.
+
+Supported filters:
+
+- `employer`
+- `fiscalYear`
+- `state`
+- `city`
+- `jobOrSoc`
+- `caseStatus`
+- `page`
+- `pageSize`
+
+The payload includes normalized filters, pagination metadata, available filter options, source names, latest data date, a Chinese interpretation note, and an SEO object that keeps directory and filter URLs `noindex`.
+
+### `searchPermRecords`
+
+Returns paginated PERM directory rows for `/perm`.
+
+Supported filters match `searchH1BRecords`, with PERM-specific case statuses and PERM interpretation copy.
+
+### `searchCompanyDirectory`
+
+Returns paginated combined company directory rows for `/companies`.
+
+The query applies the same filters across H-1B LCA and PERM rows, aggregates matched records by employer, and returns H-1B count, PERM count, latest fiscal year, top job titles, top locations, and current company-page indexability signal.
 
 ### `getH1BSummaryByEmployer`
 
@@ -143,6 +172,10 @@ This is intentionally simple and server-process local. Later production work can
 M11 validates public inputs before lookup:
 
 - Slugs reject path traversal and unsupported characters.
+- Directory text filters are length-limited.
+- Directory pages must be positive integers.
+- Directory fiscal years must be four-digit years in a bounded range.
+- Directory case statuses must be supported by the selected dataset.
 - Month keys must be `YYYY-MM`.
 - SOC codes must match `NN-NNNN`.
 - State codes must be two uppercase letters after normalization.

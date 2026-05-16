@@ -111,6 +111,116 @@ describe("public query repository", () => {
     });
   });
 
+  it("searches and paginates H-1B disclosure records with filters", () => {
+    const repo = createPublicQueryRepository({ cacheEnabled: false });
+    const result = repo.searchH1BRecords({
+      state: "wa",
+      page: 2,
+      pageSize: 1,
+    });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) {
+      throw new Error(result.error.messageZh);
+    }
+
+    expect(result.data.filters).toMatchObject({
+      state: "WA",
+      hasActiveFilters: true,
+    });
+    expect(result.data.pagination).toMatchObject({
+      page: 2,
+      pageSize: 1,
+      totalResults: 2,
+      totalPages: 2,
+      hasPreviousPage: true,
+      hasNextPage: false,
+    });
+    expect(result.data.records).toHaveLength(1);
+    expect(result.data.records[0]?.employer.slug).toBe("acme-analytics");
+    expect(result.data.availableFilters.states).toEqual(["CA", "TX", "WA"]);
+    expect(result.data.seo.noindex).toBe(true);
+  });
+
+  it("searches PERM disclosure records by job/SOC and status", () => {
+    const repo = createPublicQueryRepository({ cacheEnabled: false });
+    const result = repo.searchPermRecords({
+      caseStatus: "certified",
+      jobOrSoc: "17-2141",
+    });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) {
+      throw new Error(result.error.messageZh);
+    }
+
+    expect(result.data.pagination.totalResults).toBe(1);
+    expect(result.data.records[0]).toMatchObject({
+      caseStatus: "Certified",
+      socCode: "17-2141",
+      employer: {
+        slug: "lakeside-robotics",
+      },
+    });
+    expect(result.data.interpretationNoteZh).toContain("不等于 I-140");
+  });
+
+  it("searches the combined company directory", () => {
+    const repo = createPublicQueryRepository({ cacheEnabled: false });
+    const result = repo.searchCompanyDirectory({
+      employer: "cloud",
+      jobOrSoc: "15-1252",
+    });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) {
+      throw new Error(result.error.messageZh);
+    }
+
+    expect(result.data.pagination.totalResults).toBe(1);
+    expect(result.data.results[0]).toMatchObject({
+      employer: {
+        slug: "northstar-cloud",
+      },
+      h1bRecordCount: 1,
+      permRecordCount: 1,
+      matchedRecordCount: 2,
+    });
+    expect(result.data.results[0]?.topLocations[0]).toEqual({
+      value: "Austin, TX",
+      count: 2,
+    });
+  });
+
+  it("rejects invalid directory filters with friendly errors", () => {
+    const repo = createPublicQueryRepository({ cacheEnabled: false });
+    const invalidState = repo.searchH1BRecords({ state: "Washington" });
+    const invalidStatus = repo.searchPermRecords({ caseStatus: "APPROVED" });
+    const invalidPage = repo.searchCompanyDirectory({ page: 0 });
+
+    expect(invalidState).toMatchObject({
+      ok: false,
+      error: {
+        code: "invalid_input",
+        field: "state",
+      },
+    });
+    expect(invalidStatus).toMatchObject({
+      ok: false,
+      error: {
+        code: "invalid_input",
+        field: "caseStatus",
+      },
+    });
+    expect(invalidPage).toMatchObject({
+      ok: false,
+      error: {
+        code: "invalid_input",
+        field: "page",
+      },
+    });
+  });
+
   it("returns wage distribution by employer, job, and location filters", () => {
     const repo = createPublicQueryRepository({ cacheEnabled: false });
     const result = repo.getWageDistribution({

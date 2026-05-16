@@ -2,6 +2,8 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 
 import { PageShell } from "@/components/page-shell";
+import { DirectoryFilterForm } from "@/components/search/directory-filter-form";
+import { Pagination } from "@/components/search/pagination";
 import { SiteHeader } from "@/components/site-header";
 import { Breadcrumbs } from "@/components/ui/breadcrumbs";
 import { DataTable, type DataTableColumn } from "@/components/ui/data-table";
@@ -126,5 +128,38 @@ describe("M12 UI components", () => {
     expect(disclaimerHtml).toContain("查看完整免责声明");
     expect(relatedHtml).toContain("相关链接");
     expect(relatedHtml).toContain("相关指南");
+  });
+
+  it("renders directory filters and pagination with GET-friendly controls", () => {
+    const formHtml = renderToStaticMarkup(
+      <DirectoryFilterForm
+        action="/h1b"
+        caseStatuses={["CERTIFIED"]}
+        fiscalYears={[2025]}
+        states={["WA"]}
+        submitLabel="搜索 H-1B 记录"
+        values={{ employer: "Acme" }}
+      />,
+    );
+    const paginationHtml = renderToStaticMarkup(
+      <Pagination
+        basePath="/h1b"
+        currentParams={{ employer: "Acme", page: "2" }}
+        pagination={{
+          hasNextPage: true,
+          hasPreviousPage: true,
+          page: 2,
+          pageSize: 2,
+          totalPages: 3,
+          totalResults: 5,
+        }}
+      />,
+    );
+
+    expect(formHtml).toContain('method="get"');
+    expect(formHtml).toContain('name="employer"');
+    expect(formHtml).toContain("职位 / SOC");
+    expect(paginationHtml).toContain("搜索结果分页");
+    expect(paginationHtml).toContain("/h1b?employer=Acme");
   });
 });

@@ -13,6 +13,7 @@ export const siteConfig = {
 
 export type RouteSection =
   | "home"
+  | "companies"
   | "h1b"
   | "perm"
   | "tools"
@@ -47,6 +48,18 @@ export const publicRoutes = [
     sitemapGroup: "core",
     indexing: "indexable",
     dataPage: false,
+  },
+  {
+    path: "/companies",
+    label: "公司目录",
+    title: "公司目录",
+    description:
+      "合并查看 H-1B LCA、PERM 和 USCIS Employer Data Hub 的雇主公开数据信号。",
+    section: "companies",
+    nav: false,
+    sitemapGroup: "data-directory",
+    indexing: "noindex-until-data",
+    dataPage: true,
   },
   {
     path: "/h1b",
@@ -185,7 +198,9 @@ export const footerNavGroups = [
   {
     title: "数据入口",
     links: publicRoutes.filter((route) =>
-      ["h1b", "perm", "tools", "visa-bulletin"].includes(route.section),
+      ["companies", "h1b", "perm", "tools", "visa-bulletin"].includes(
+        route.section,
+      ),
     ),
   },
   {

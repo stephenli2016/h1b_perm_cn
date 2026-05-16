@@ -10,34 +10,31 @@ import { DataTable, type DataTableColumn } from "@/components/ui/data-table";
 import { DisclaimerBox } from "@/components/ui/disclaimer-box";
 import { ErrorState } from "@/components/ui/feedback-state";
 import { MetricCard } from "@/components/ui/metric-card";
-import type { PublicDisclosureRecordRow } from "@/lib/db/public-query-repository";
+import type { PublicCompanyDirectoryResult } from "@/lib/db/public-query-repository";
 import { publicQueryRepository } from "@/lib/db/public-query-repository";
 import {
   activeFilterCount,
-  formatCurrency,
-  h1bStatusLabels,
+  combinedStatusLabels,
   parseDirectorySearchParams,
-  statusLabel,
   type RawSearchParams,
 } from "@/lib/directory-search";
 import { siteConfig } from "@/lib/site";
 
-type H1BPageProps = {
+type CompaniesPageProps = {
   searchParams?: Promise<RawSearchParams>;
 };
 
 export async function generateMetadata({
   searchParams,
-}: H1BPageProps): Promise<Metadata> {
+}: CompaniesPageProps): Promise<Metadata> {
   const parsed = parseDirectorySearchParams(await searchParams);
   const filterCount = activeFilterCount(parsed.values);
 
   return {
-    title: filterCount > 0 ? "H-1B 公司搜索结果" : "H-1B 公司数据库",
-    description:
-      "按雇主、年份、州/城市、职位/SOC 和 case status 查询本地 H-1B LCA fixture 记录。",
+    title: filterCount > 0 ? "公司目录搜索结果" : "公司目录",
+    description: "合并查看本地 H-1B LCA 与 PERM fixture 中的公司公开数据信号。",
     alternates: {
-      canonical: "/h1b",
+      canonical: "/companies",
     },
     robots: {
       index: false,
@@ -46,68 +43,79 @@ export async function generateMetadata({
   };
 }
 
-const h1bColumns: DataTableColumn<PublicDisclosureRecordRow>[] = [
+const companyColumns: DataTableColumn<PublicCompanyDirectoryResult>[] = [
   {
     key: "employer",
-    header: "雇主",
+    header: "公司",
     render: (row) => (
       <div>
-        <Link
-          className="font-semibold text-[var(--accent-strong)] underline-offset-4 hover:underline"
-          href={row.companyHref}
-        >
+        <p className="font-semibold text-slate-950">
           {row.employer.displayName}
-        </Link>
-        <p className="mt-1 text-xs text-[var(--muted)]">{row.caseNumber}</p>
+        </p>
+        <div className="mt-2 flex flex-wrap gap-2 text-xs">
+          <Link
+            className="rounded-md border border-[var(--line)] px-2 py-1 font-semibold"
+            href={`/h1b/company/${row.employer.slug}`}
+          >
+            H-1B 页
+          </Link>
+          <Link
+            className="rounded-md border border-[var(--line)] px-2 py-1 font-semibold"
+            href={`/perm/company/${row.employer.slug}`}
+          >
+            PERM 页
+          </Link>
+        </div>
       </div>
     ),
   },
   {
-    key: "year-status",
-    header: "年份 / 状态",
+    key: "records",
+    header: "匹配记录",
     render: (row) => (
       <div>
-        <p className="font-medium">FY{row.fiscalYear}</p>
+        <p className="font-medium">{row.matchedRecordCount} 条</p>
         <p className="mt-1 text-xs text-[var(--muted)]">
-          {statusLabel(row.caseStatus, h1bStatusLabels)}
+          H-1B {row.h1bRecordCount} · PERM {row.permRecordCount}
         </p>
       </div>
     ),
   },
   {
-    key: "job",
-    header: "职位 / SOC",
-    render: (row) => (
-      <div>
-        <p className="font-medium">{row.jobTitle}</p>
-        <p className="mt-1 text-xs text-[var(--muted)]">
-          {row.socCode} · {row.socTitle}
-        </p>
-      </div>
-    ),
+    key: "latest-year",
+    header: "最新 FY",
+    render: (row) => `FY${row.latestFiscalYear}`,
   },
   {
-    key: "location",
-    header: "Worksite",
-    render: (row) => `${row.city}, ${row.state}`,
+    key: "top-job",
+    header: "主要职位",
+    render: (row) => row.topJobTitles[0]?.value ?? "暂无",
   },
   {
-    key: "wage",
-    header: "年化工资",
-    align: "right",
-    render: (row) => formatCurrency(row.wageAmount, row.wageUnit),
+    key: "top-location",
+    header: "主要地点",
+    render: (row) => row.topLocations[0]?.value ?? "暂无",
   },
   {
-    key: "decision",
-    header: "Decision date",
-    render: (row) => row.decisionDate,
+    key: "indexing",
+    header: "页面索引",
+    render: (row) =>
+      row.indexable ? (
+        <span className="font-medium text-[var(--accent-strong)]">
+          达到阈值
+        </span>
+      ) : (
+        <span className="text-[var(--muted)]">noindex</span>
+      ),
   },
 ];
 
-export default async function H1BPage({ searchParams }: H1BPageProps) {
+export default async function CompaniesPage({
+  searchParams,
+}: CompaniesPageProps) {
   const parsed = parseDirectorySearchParams(await searchParams);
-  const result = publicQueryRepository.searchH1BRecords(parsed.input);
-  const filterOptions = publicQueryRepository.searchH1BRecords({
+  const result = publicQueryRepository.searchCompanyDirectory(parsed.input);
+  const filterOptions = publicQueryRepository.searchCompanyDirectory({
     pageSize: 1,
   });
   const availableFilters = filterOptions.ok
@@ -116,19 +124,19 @@ export default async function H1BPage({ searchParams }: H1BPageProps) {
 
   return (
     <PageShell
-      breadcrumbs={[{ href: "/", label: "首页" }, { label: "H-1B" }]}
-      description="按雇主、年份、地区、职位/SOC 和 case status 查看本地 H-1B LCA fixture 记录。生产数据接入前，本目录和筛选 URL 均保持 noindex。"
+      breadcrumbs={[{ href: "/", label: "首页" }, { label: "公司目录" }]}
+      description="把 H-1B LCA 与 PERM fixture 中的雇主记录合并成公司目录，方便从一个入口查看公开数据活动信号。筛选 URL 默认 noindex。"
       eyebrow={siteConfig.tagline}
-      title="H-1B 公司数据库"
+      title="公司目录"
     >
       <div className="space-y-6">
         <DirectoryFilterForm
-          action="/h1b"
-          caseStatusLabels={h1bStatusLabels}
+          action="/companies"
+          caseStatusLabels={combinedStatusLabels}
           caseStatuses={availableFilters.caseStatuses}
           fiscalYears={availableFilters.fiscalYears}
           states={availableFilters.states}
-          submitLabel="搜索 H-1B 记录"
+          submitLabel="搜索公司"
           values={parsed.values}
         />
 
@@ -136,12 +144,12 @@ export default async function H1BPage({ searchParams }: H1BPageProps) {
           <>
             <section className="grid gap-4 md:grid-cols-3">
               <MetricCard
-                description="基于当前筛选条件的 LCA 记录数。"
-                label="匹配记录"
+                description="基于当前筛选条件聚合后的公司数。"
+                label="匹配公司"
                 value={result.data.pagination.totalResults}
               />
               <MetricCard
-                description="筛选 URL 默认 noindex，避免参数组合造成 SEO 垃圾页。"
+                description="目录与筛选参数组合在正式数据质量达标前不开放索引。"
                 label="索引策略"
                 value="noindex"
               />
@@ -153,27 +161,26 @@ export default async function H1BPage({ searchParams }: H1BPageProps) {
             </section>
 
             <DataTable
-              caption="H-1B LCA 搜索结果"
-              columns={h1bColumns}
-              emptyDescription="当前筛选条件没有匹配的 H-1B LCA fixture 记录。可以减少筛选条件或回到全部记录。"
-              emptyTitle="没有找到 H-1B 记录"
-              getRowKey={(row) => row.id}
-              rows={result.data.records}
+              caption="公司目录搜索结果"
+              columns={companyColumns}
+              emptyDescription="当前筛选条件没有匹配公司。可以减少筛选条件或回到全部公司。"
+              emptyTitle="没有找到公司"
+              getRowKey={(row) => row.employer.id}
+              rows={result.data.results}
             />
 
             <Pagination
-              basePath="/h1b"
+              basePath="/companies"
               currentParams={parsed.currentParams}
               pagination={result.data.pagination}
             />
 
-            <InterpretationPanel title="如何解读 H-1B 搜索结果">
+            <InterpretationPanel title="如何解读公司目录">
               <p>
-                LCA 是劳工条件申请记录，Certified LCA
-                只表示该劳工条件申请在公开数据中显示为 certified，不等于 H-1B
-                petition 批准、雇主实际录用或未来 sponsor
-                承诺。工资字段使用公开记录中的年化展示，仍需结合
-                SOC、worksite、职位职责和当年 prevailing wage 理解。
+                这里的公司匹配来自 H-1B LCA 和 PERM
+                公开记录的聚合。记录数量、职位和地点分布可以作为历史活动信号，但不能直接推出雇主当前招聘政策、未来
+                sponsor 承诺或个案结果。公司页是否 index
+                仍会按数据量和质量阈值单独判断。
               </p>
             </InterpretationPanel>
           </>
@@ -192,6 +199,7 @@ export default async function H1BPage({ searchParams }: H1BPageProps) {
           }
           names={[
             "DOL OFLC LCA / H-1B disclosure data",
+            "DOL OFLC PERM disclosure data",
             "USCIS H-1B Employer Data Hub",
           ]}
         />
