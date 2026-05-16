@@ -103,12 +103,16 @@ The query applies the same filters across H-1B LCA and PERM rows, aggregates mat
 
 ### `listCompanySlugs`
 
-Returns the fixture-backed employer slugs used by dynamic company routes.
+Returns all fixture-backed employer slugs that can render through dynamic company routes.
 
-M14 uses this to generate static params for:
+### `listCompanyStaticSlugs`
+
+Returns mode-specific company slugs selected for static pre-generation:
 
 - `/h1b/company/[slug]`
 - `/perm/company/[slug]`
+
+M16 uses this method to pre-generate only selected indexable route pages, capped at 500 by default. Other valid company slugs can still render dynamically and stay `noindex` when they do not meet route-specific quality thresholds.
 
 ### `getCompanyProfileBySlug`
 
@@ -220,5 +224,6 @@ The query layer currently reads local fixture data only. It is ready for pages t
 
 - Small sample sizes.
 - No production Supabase connection yet.
-- Only the local high-data fixture can currently satisfy a company-page route threshold; production-scale selection starts in M16.
-- Company routes now use M15 quality logic: low-data routes remain noindex, and only route-specific indexable pages enter the company sitemap.
+- Only the local high-data fixture can currently satisfy a default company-page route threshold.
+- M16 scale behavior is validated with generated local fixtures only; production-scale official data is still required before launching 500 real company pages.
+- Company routes use M15/M16 quality and selection logic: low-data routes remain noindex, and only selected route-specific indexable pages enter the company sitemap.

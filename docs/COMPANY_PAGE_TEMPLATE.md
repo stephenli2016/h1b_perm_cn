@@ -50,9 +50,9 @@ Current behavior:
 - `/h1b/company/[slug]` is indexable only when the company has enough recent H-1B LCA or USCIS Employer Data Hub signal plus visible page quality signals.
 - `/perm/company/[slug]` is indexable only when the company has enough recent PERM signal plus visible page quality signals.
 - Low-data route pages remain `noindex, follow`.
-- Only indexable company routes enter `/sitemaps/company-pages.xml`.
+- Only selected indexable company routes enter `/sitemaps/company-pages.xml`; M16 caps the first launch set at 500 route pages.
 
-See `docs/SEO_INDEXABILITY_AND_SITEMAPS.md` for the M15 quality thresholds and sitemap split behavior.
+See `docs/SEO_INDEXABILITY_AND_SITEMAPS.md` for the M15 quality thresholds and sitemap split behavior. See `docs/COMPANY_PAGE_SCALE_SELECTION.md` for the M16 first-500 route selection and local scale-validation strategy.
 
 ## Compliance Notes
 

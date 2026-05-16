@@ -12,8 +12,12 @@ type CompanyPageProps = {
   }>;
 };
 
+export const dynamicParams = true;
+
 export function generateStaticParams() {
-  return publicQueryRepository.listCompanySlugs().map((slug) => ({ slug }));
+  return publicQueryRepository
+    .listCompanyStaticSlugs("perm")
+    .map((slug) => ({ slug }));
 }
 
 export async function generateMetadata({

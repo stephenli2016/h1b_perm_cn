@@ -1,6 +1,6 @@
-# SEO Indexability and Sitemaps — M15
+# SEO Indexability and Sitemaps — M15/M16
 
-Milestone: M15 — Company page quality scoring, noindex, and sitemap logic
+Milestones: M15 — Company page quality scoring, noindex, and sitemap logic; M16 — Generate first 500 high-quality company pages
 
 ## Purpose
 
@@ -63,6 +63,8 @@ M15 adds XML sitemap route handlers:
 
 Current tools, guides, and visa bulletin routes remain `noindex-until-data`, so their split sitemaps return empty `<urlset>` shells until later content/data milestones make them indexable.
 
+M16 adds `selectCompanyPageRoutes(data)`, which caps `/sitemaps/company-pages.xml` at the first 500 selected indexable route pages. The same selector is used for company route static params, while `dynamicParams = true` keeps low-data company pages accessible on demand with `noindex`.
+
 ## Validation Coverage
 
 `tests/seo.test.ts` covers:
@@ -73,3 +75,5 @@ Current tools, guides, and visa bulletin routes remain `noindex-until-data`, so 
 - Company sitemap inclusion/exclusion.
 - Empty split sitemaps for noindex-until-data route groups.
 - Sitemap XML rendering.
+
+`tests/company-page-scale.test.ts` covers the M16 500-page generated fixture validation, route pre-generation limit, sitemap limit, duplicate-fingerprint check, and selection performance budget.

@@ -18,6 +18,11 @@ import type {
   VisaBulletinDate,
   VisaBulletinMonth,
 } from "@/lib/db/types";
+import {
+  listCompanyStaticSlugs as selectCompanyStaticSlugs,
+  INITIAL_COMPANY_PAGE_TARGET,
+} from "@/lib/seo/company-page-selection";
+import type { CompanyPageMode } from "@/lib/seo/company-quality";
 
 const DEFAULT_CACHE_TTL_MS = 5 * 60 * 1000;
 const SLUG_PATTERN = /^[a-z0-9](?:[a-z0-9-]{0,78}[a-z0-9])?$/;
@@ -628,6 +633,13 @@ export function createPublicQueryRepository(
       return data.employers
         .map((employer) => employer.slug)
         .sort((left, right) => left.localeCompare(right));
+    },
+
+    listCompanyStaticSlugs(
+      mode: CompanyPageMode,
+      limit = INITIAL_COMPANY_PAGE_TARGET,
+    ) {
+      return selectCompanyStaticSlugs(data, mode, limit);
     },
 
     getCompanyProfileBySlug(

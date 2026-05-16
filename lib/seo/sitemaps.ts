@@ -1,10 +1,9 @@
 import { localFixtureData } from "@/data/fixtures/local-fixtures";
-import { calculateCompanyPageMetrics } from "@/lib/db/local-repository";
-import type { FixtureData, SourceFile } from "@/lib/db/types";
+import type { FixtureData } from "@/lib/db/types";
 import {
-  getCompanyPageSeo,
-  type CompanyPageMode,
-} from "@/lib/seo/company-quality";
+  selectCompanyPageRoutes,
+  INITIAL_COMPANY_PAGE_TARGET,
+} from "@/lib/seo/company-page-selection";
 import { getCanonicalUrl, publicRoutes } from "@/lib/site";
 
 export type SitemapKind =
@@ -109,69 +108,14 @@ function listStaticRouteEntries(
 }
 
 function listCompanyPageEntries(data: FixtureData): SitemapEntry[] {
-  const sourceFilesByEmployer = new Map<string, SourceFile[]>();
-
-  for (const employer of data.employers) {
-    const sourceIds = new Set([
-      ...data.h1bLcaRecords
-        .filter((record) => record.employerId === employer.id)
-        .map((record) => record.sourceFileId),
-      ...data.permRecords
-        .filter((record) => record.employerId === employer.id)
-        .map((record) => record.sourceFileId),
-      ...data.uscisH1BEmployerRecords
-        .filter((record) => record.employerId === employer.id)
-        .map((record) => record.sourceFileId),
-    ]);
-
-    sourceFilesByEmployer.set(
-      employer.id,
-      data.sourceFiles.filter((sourceFile) => sourceIds.has(sourceFile.id)),
-    );
-  }
-
-  return calculateCompanyPageMetrics(data).flatMap((metrics) => {
-    const employer = data.employers.find(
-      (candidate) => candidate.id === metrics.employerId,
-    );
-
-    if (!employer) {
-      return [];
-    }
-
-    return (["h1b", "perm"] as const).flatMap((mode) => {
-      const pageSeo = getCompanyPageSeo(metrics, mode);
-
-      if (!pageSeo.indexable) {
-        return [];
-      }
-
-      return [
-        {
-          url: getCanonicalUrl(`/${mode}/company/${employer.slug}`),
-          lastModified: latestSourceDate(
-            sourceFilesByEmployer.get(employer.id) ?? [],
-          ),
-          changeFrequency: "monthly" as const,
-          priority: mode === preferredCompanyMode(metrics) ? 0.8 : 0.65,
-        },
-      ];
-    });
-  });
-}
-
-function preferredCompanyMode(
-  metrics: Parameters<typeof getCompanyPageSeo>[0],
-): CompanyPageMode {
-  return metrics && metrics.permCount5y >= metrics.lcaCount5y ? "perm" : "h1b";
-}
-
-function latestSourceDate(sourceFiles: readonly SourceFile[]) {
-  return sourceFiles
-    .map((sourceFile) => sourceFile.latestDataDate)
-    .filter((date): date is string => Boolean(date))
-    .sort()
-    .at(-1);
+  return selectCompanyPageRoutes(data, {
+    limit: INITIAL_COMPANY_PAGE_TARGET,
+  }).map((candidate) => ({
+    url: candidate.url,
+    lastModified: candidate.latestDataDate,
+    changeFrequency: "monthly" as const,
+    priority: candidate.rank <= 100 ? 0.8 : 0.65,
+  }));
 }
 
 function renderUrlEntry(entry: SitemapEntry) {

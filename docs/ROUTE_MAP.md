@@ -27,7 +27,7 @@ Initial sitemap groups:
 
 - `core`: `/`, `/about`
 - `data-directory`: `/h1b`, `/perm`
-- `company-pages`: high-quality `/h1b/company/[slug]` and `/perm/company/[slug]` pages only after M10/M15 quality logic
+- `company-pages`: first selected high-quality `/h1b/company/[slug]` and `/perm/company/[slug]` pages after M15/M16 quality and selection logic
 - `tools`: `/tools` and future implemented tool pages from `docs/CONTENT_GUIDE_50_TOPICS.md`
 - `guides`: `/guides` and future implemented guide pages from `docs/CONTENT_GUIDE_50_TOPICS.md`
 - `visa-bulletin`: `/visa-bulletin` and future monthly pages if official data exists
@@ -37,7 +37,7 @@ Initial sitemap groups:
 
 - Placeholder and thin data pages are `noindex` until they include official data, source dates, useful explanations, and internal links.
 - Company pages are indexable only when they meet the quality thresholds in `docs/DATA_AND_SEO_POLICY.md`.
-- Dynamic company pages are not included in the sitemap until the company selection and noindex logic milestones are complete.
+- Dynamic company pages enter the company sitemap only when they pass route-specific quality checks and are selected within the current launch cap.
 - Public visible content must match any future structured data.
 
 ## Current Navigation
