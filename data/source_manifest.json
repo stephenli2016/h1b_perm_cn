@@ -1,7 +1,7 @@
 {
   "manifest_version": 1,
   "updated_at": "2026-05-17",
-  "description": "Official-source ETL manifest with production backfill coverage for DOL LCA FY2021-FY2026 Q2, LCA Appendix A/Worksites FY2021-FY2026 Q2, DOL PERM FY2021-FY2026 Q2, DOL Prevailing Wage case disclosure FY2021-FY2026 Q2, USCIS H-1B Employer Data Hub FY2020-FY2023, FLAG wage lookup, BLS OEWS metadata, Visa Bulletin history, and USCIS filing chart history.",
+  "description": "Official-source ETL manifest with production backfill coverage for DOL LCA FY2021-FY2026 Q2, LCA Appendix A/Worksites FY2021-FY2026 Q2, DOL PERM FY2021-FY2026 Q2, DOL Prevailing Wage case disclosure FY2021-FY2026 Q2, USCIS H-1B Employer Data Hub FY2020-FY2023, FLAG wage lookup, BLS OEWS metadata, Census NAICS metadata, O*NET/SOC occupational metadata, Visa Bulletin history, and USCIS filing chart history.",
   "sources": [
     {
       "id": "oflc_lca_fy2026_q2",
@@ -665,6 +665,58 @@
       "fixture_path": "data/fixtures/raw/flag_wage_downloads_2025_2026.html",
       "parser_name": "flag_wage_downloads_index",
       "required": false
+    },
+    {
+      "id": "census_naics_2022_structure",
+      "source_name": "U.S. Census Bureau 2022 NAICS Structure with Change Indicator",
+      "official_url": "https://www.census.gov/naics/2022NAICS/2022_NAICS_Structure.xlsx",
+      "fiscal_year": 2022,
+      "quarter": null,
+      "expected_file_type": "xlsx",
+      "checksum_sha256": null,
+      "downloaded_path": "data/raw/census_naics_2022_structure.xlsx",
+      "fixture_path": "data/fixtures/raw/census_naics_2022_structure.csv",
+      "parser_name": "census_naics_structure",
+      "required": true
+    },
+    {
+      "id": "onet_occupation_data_30_2",
+      "source_name": "O*NET 30.2 Occupation Data",
+      "official_url": "https://www.onetcenter.org/dl_files/database/db_30_2_text/Occupation%20Data.txt",
+      "fiscal_year": 2026,
+      "quarter": null,
+      "expected_file_type": "txt",
+      "checksum_sha256": null,
+      "downloaded_path": "data/raw/onet_occupation_data_30_2.txt",
+      "fixture_path": "data/fixtures/raw/onet_occupation_data_30_2.txt",
+      "parser_name": "onet_occupation_data",
+      "required": true
+    },
+    {
+      "id": "onet_job_zones_30_2",
+      "source_name": "O*NET 30.2 Job Zones",
+      "official_url": "https://www.onetcenter.org/dl_files/database/db_30_2_text/Job%20Zones.txt",
+      "fiscal_year": 2026,
+      "quarter": null,
+      "expected_file_type": "txt",
+      "checksum_sha256": null,
+      "downloaded_path": "data/raw/onet_job_zones_30_2.txt",
+      "fixture_path": "data/fixtures/raw/onet_job_zones_30_2.txt",
+      "parser_name": "onet_job_zones",
+      "required": true
+    },
+    {
+      "id": "onet_job_zone_reference_30_2",
+      "source_name": "O*NET 30.2 Job Zone Reference",
+      "official_url": "https://www.onetcenter.org/dl_files/database/db_30_2_text/Job%20Zone%20Reference.txt",
+      "fiscal_year": 2026,
+      "quarter": null,
+      "expected_file_type": "txt",
+      "checksum_sha256": null,
+      "downloaded_path": "data/raw/onet_job_zone_reference_30_2.txt",
+      "fixture_path": "data/fixtures/raw/onet_job_zone_reference_30_2.txt",
+      "parser_name": "onet_job_zone_reference",
+      "required": true
     },
     {
       "id": "bls_oews_occupation_metadata_2025",

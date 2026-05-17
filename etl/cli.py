@@ -21,11 +21,13 @@ from etl.parsers.bls_oews import (
     iter_bls_oews_area_records,
     iter_bls_oews_occupation_records,
 )
+from etl.parsers.naics import iter_naics_industry_records
 from etl.parsers.oflc_lca import parse_lca_file, write_lca_jsonl
 from etl.parsers.oflc_lca_supplemental import (
     iter_lca_appendix_a_records,
     iter_lca_worksite_records,
 )
+from etl.parsers.onet import iter_onet_job_zone_records, iter_onet_occupation_records
 from etl.parsers.oflc_perm import parse_perm_file, write_perm_jsonl
 from etl.parsers.oflc_pwd_case import iter_pwd_case_records
 from etl.parsers.oflc_pwd import parse_pwd_file, write_pwd_jsonl
@@ -157,6 +159,43 @@ def main(argv: Sequence[str] | None = None) -> int:
         action="store_true",
     )
     parse_bls_oews_areas_manifest_parser.add_argument(
+        "--omit-raw-record-json",
+        action="store_true",
+    )
+
+    parse_naics_manifest_parser = subparsers.add_parser("parse-naics-manifest")
+    parse_naics_manifest_parser.add_argument("--manifest", required=True)
+    parse_naics_manifest_parser.add_argument("--repo-root", default=".")
+    parse_naics_manifest_parser.add_argument("--output", required=True)
+    parse_naics_manifest_parser.add_argument("--fixtures-only", action="store_true")
+    parse_naics_manifest_parser.add_argument("--omit-raw-record-json", action="store_true")
+
+    parse_onet_occupations_manifest_parser = subparsers.add_parser(
+        "parse-onet-occupations-manifest"
+    )
+    parse_onet_occupations_manifest_parser.add_argument("--manifest", required=True)
+    parse_onet_occupations_manifest_parser.add_argument("--repo-root", default=".")
+    parse_onet_occupations_manifest_parser.add_argument("--output", required=True)
+    parse_onet_occupations_manifest_parser.add_argument(
+        "--fixtures-only",
+        action="store_true",
+    )
+    parse_onet_occupations_manifest_parser.add_argument(
+        "--omit-raw-record-json",
+        action="store_true",
+    )
+
+    parse_onet_job_zones_manifest_parser = subparsers.add_parser(
+        "parse-onet-job-zones-manifest"
+    )
+    parse_onet_job_zones_manifest_parser.add_argument("--manifest", required=True)
+    parse_onet_job_zones_manifest_parser.add_argument("--repo-root", default=".")
+    parse_onet_job_zones_manifest_parser.add_argument("--output", required=True)
+    parse_onet_job_zones_manifest_parser.add_argument(
+        "--fixtures-only",
+        action="store_true",
+    )
+    parse_onet_job_zones_manifest_parser.add_argument(
         "--omit-raw-record-json",
         action="store_true",
     )
@@ -801,6 +840,191 @@ def main(argv: Sequence[str] | None = None) -> int:
             )
             return 0
 
+        if args.command == "parse-naics-manifest":
+            manifest = load_manifest(args.manifest)
+            repo_root = Path(args.repo_root)
+            sources = [
+                source
+                for source in manifest.sources
+                if source.parser_name == "census_naics_structure"
+            ]
+            output_path = Path(args.output)
+            _reset_jsonl_output(output_path)
+            source_summaries = []
+            total_seen = 0
+            total_written = 0
+            total_duplicates = 0
+            for source in sources:
+                input_path = _source_input_path(source, repo_root, args.fixtures_only)
+                summary = _append_unique_dataclass_jsonl(
+                    output_path,
+                    iter_naics_industry_records(
+                        input_path,
+                        source_file_id=source.id,
+                        release_year=source.fiscal_year or 0,
+                    ),
+                    omit_raw_record_json=args.omit_raw_record_json,
+                )
+                summary.update({"source_file_id": source.id, "input_path": str(input_path)})
+                source_summaries.append(summary)
+                total_seen += int(summary["records_seen"])
+                total_written += int(summary["records_written"])
+                total_duplicates += int(summary["duplicate_records"])
+
+            print(
+                json.dumps(
+                    {
+                        "parser_name": "census_naics_structure",
+                        "source_count": len(sources),
+                        "output": args.output,
+                        "records_seen": total_seen,
+                        "records_inserted": total_written,
+                        "duplicate_records": total_duplicates,
+                        "records_written": total_written,
+                        "sources": source_summaries,
+                    },
+                    ensure_ascii=False,
+                    indent=2,
+                )
+            )
+            return 0
+
+        if args.command == "parse-onet-occupations-manifest":
+            manifest = load_manifest(args.manifest)
+            repo_root = Path(args.repo_root)
+            sources = [
+                source
+                for source in manifest.sources
+                if source.parser_name == "onet_occupation_data"
+            ]
+            output_path = Path(args.output)
+            _reset_jsonl_output(output_path)
+            source_summaries = []
+            total_seen = 0
+            total_written = 0
+            total_duplicates = 0
+            for source in sources:
+                input_path = _source_input_path(source, repo_root, args.fixtures_only)
+                summary = _append_unique_dataclass_jsonl(
+                    output_path,
+                    iter_onet_occupation_records(
+                        input_path,
+                        source_file_id=source.id,
+                        release_version=_release_version_from_source_id(source.id)
+                        or str(source.fiscal_year or ""),
+                    ),
+                    omit_raw_record_json=args.omit_raw_record_json,
+                )
+                summary.update({"source_file_id": source.id, "input_path": str(input_path)})
+                source_summaries.append(summary)
+                total_seen += int(summary["records_seen"])
+                total_written += int(summary["records_written"])
+                total_duplicates += int(summary["duplicate_records"])
+
+            print(
+                json.dumps(
+                    {
+                        "parser_name": "onet_occupation_data",
+                        "source_count": len(sources),
+                        "output": args.output,
+                        "records_seen": total_seen,
+                        "records_inserted": total_written,
+                        "duplicate_records": total_duplicates,
+                        "records_written": total_written,
+                        "sources": source_summaries,
+                    },
+                    ensure_ascii=False,
+                    indent=2,
+                )
+            )
+            return 0
+
+        if args.command == "parse-onet-job-zones-manifest":
+            manifest = load_manifest(args.manifest)
+            repo_root = Path(args.repo_root)
+            job_zone_sources = [
+                source
+                for source in manifest.sources
+                if source.parser_name == "onet_job_zones"
+            ]
+            reference_sources = [
+                source
+                for source in manifest.sources
+                if source.parser_name == "onet_job_zone_reference"
+            ]
+            occupation_sources = [
+                source
+                for source in manifest.sources
+                if source.parser_name == "onet_occupation_data"
+            ]
+            if not reference_sources:
+                raise FileNotFoundError("manifest has no onet_job_zone_reference source")
+            reference_source = reference_sources[0]
+            reference_path = _source_input_path(
+                reference_source,
+                repo_root,
+                args.fixtures_only,
+            )
+            occupation_path = (
+                _source_input_path(occupation_sources[0], repo_root, args.fixtures_only)
+                if occupation_sources
+                else None
+            )
+
+            output_path = Path(args.output)
+            _reset_jsonl_output(output_path)
+            source_summaries = []
+            total_seen = 0
+            total_written = 0
+            total_duplicates = 0
+            for source in job_zone_sources:
+                input_path = _source_input_path(source, repo_root, args.fixtures_only)
+                summary = _append_unique_dataclass_jsonl(
+                    output_path,
+                    iter_onet_job_zone_records(
+                        input_path,
+                        job_zone_reference_path=reference_path,
+                        occupation_data_path=occupation_path,
+                        source_file_id=source.id,
+                        release_version=_release_version_from_source_id(source.id)
+                        or str(source.fiscal_year or ""),
+                    ),
+                    omit_raw_record_json=args.omit_raw_record_json,
+                )
+                summary.update(
+                    {
+                        "source_file_id": source.id,
+                        "input_path": str(input_path),
+                        "reference_source_file_id": reference_source.id,
+                        "reference_input_path": str(reference_path),
+                        "occupation_input_path": str(occupation_path)
+                        if occupation_path
+                        else None,
+                    }
+                )
+                source_summaries.append(summary)
+                total_seen += int(summary["records_seen"])
+                total_written += int(summary["records_written"])
+                total_duplicates += int(summary["duplicate_records"])
+
+            print(
+                json.dumps(
+                    {
+                        "parser_name": "onet_job_zones",
+                        "source_count": len(job_zone_sources),
+                        "output": args.output,
+                        "records_seen": total_seen,
+                        "records_inserted": total_written,
+                        "duplicate_records": total_duplicates,
+                        "records_written": total_written,
+                        "sources": source_summaries,
+                    },
+                    ensure_ascii=False,
+                    indent=2,
+                )
+            )
+            return 0
+
         if args.command == "parse-uscis-h1b":
             result = parse_uscis_h1b_employer_file(
                 args.input,
@@ -1136,6 +1360,13 @@ def _month_key_from_source_id(source_id: str) -> str | None:
     if not match:
         return None
     return f"{match.group(1)}-{match.group(2)}"
+
+
+def _release_version_from_source_id(source_id: str) -> str | None:
+    match = re.search(r"_(\d{2})_(\d)$", source_id)
+    if not match:
+        return None
+    return f"{match.group(1)}.{match.group(2)}"
 
 
 def _reset_jsonl_output(path: Path) -> None:

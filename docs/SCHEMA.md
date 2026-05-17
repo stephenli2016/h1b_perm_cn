@@ -500,6 +500,87 @@ Indexes:
 - `idx_bls_oews_area_code`
 - `idx_bls_oews_area_name`
 
+### `naics_industries`
+
+Official U.S. Census Bureau NAICS structure rows used to label industry codes
+from USCIS and OFLC/PWD records.
+
+Important columns:
+
+- `source_file_id`
+- `source_record_id`
+- `source_record_fingerprint`
+- `release_year`
+- `naics_code`
+- `industry_title`
+- `classification_level`
+- `sector_code`
+- `sector_title`
+- `change_indicator`
+- `trilateral`
+- `raw_record_json`
+
+Indexes:
+
+- `idx_naics_industries_code`
+- `idx_naics_industries_sector`
+
+### `onet_occupations`
+
+Official O*NET-SOC occupation metadata used to label SOC/O*NET codes with
+occupation titles, descriptions, and SOC major groups.
+
+Important columns:
+
+- `source_file_id`
+- `source_record_id`
+- `source_record_fingerprint`
+- `release_version`
+- `onet_soc_code`
+- `soc_code`
+- `occupation_title`
+- `description`
+- `job_family_code`
+- `job_family_title`
+- `raw_record_json`
+
+Indexes:
+
+- `idx_onet_occupations_soc_code`
+- `idx_onet_occupations_onet_soc_code`
+
+### `onet_job_zones`
+
+Official O*NET Job Zone metadata used to provide general education,
+experience, training, and SVP context by O*NET-SOC occupation. This is
+occupational context only and must not be presented as a legal conclusion about
+any specific PERM or H-1B role.
+
+Important columns:
+
+- `source_file_id`
+- `source_record_id`
+- `source_record_fingerprint`
+- `release_version`
+- `onet_soc_code`
+- `soc_code`
+- `occupation_title`
+- `job_zone`
+- `job_zone_name`
+- `experience`
+- `education`
+- `job_training`
+- `examples`
+- `svp_range`
+- `date_updated`
+- `domain_source`
+- `raw_record_json`
+
+Indexes:
+
+- `idx_onet_job_zones_soc_code`
+- `idx_onet_job_zones_job_zone`
+
 ### `company_page_metrics`
 
 Stores quality and indexability metrics for programmatic company pages.

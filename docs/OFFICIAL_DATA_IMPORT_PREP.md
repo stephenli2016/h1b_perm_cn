@@ -22,6 +22,10 @@ Latest local preparation run: 2026-05-17.
   `https://travel.state.gov/content/travel/en/legal/visa-law0/visa-bulletin.html`
 - USCIS Adjustment of Status filing charts:
   `https://www.uscis.gov/green-card/green-card-processes-and-procedures/visa-availability-priority-dates/adjustment-of-status-filing-charts-from-the-visa-bulletin`
+- U.S. Census Bureau NAICS reference files:
+  `https://www.census.gov/naics/`
+- O\*NET Resource Center:
+  `https://www.onetcenter.org/database.html`
 
 Do not use competitor databases, attorney-blog scraped datasets, Reddit/forum
 tables, or paid third-party copies as data inputs.
@@ -33,10 +37,10 @@ does not currently have a free Supabase project slot for a dedicated production
 database. Until that changes, prepare data locally and keep Vercel in
 `LOCAL_DATA_MODE=fixture` with `PRELAUNCH_NOINDEX=true`.
 
-As of the latest local run, all 106 manifest sources have been downloaded from
+As of the latest local run, all 110 manifest sources have been downloaded from
 official URLs into `data/raw/`. These raw files are intentionally gitignored.
-The manifest now covers the seven highest-priority enrichment gaps requested
-before Supabase import:
+The manifest now covers the high-priority enrichment gaps requested before
+Supabase import:
 
 - USCIS H-1B Employer Data Hub official CSVs available from FY2020-FY2023, with
   FY2024/FY2025 documented as not yet available from the official archive.
@@ -46,6 +50,9 @@ before Supabase import:
 - Department of State Visa Bulletin history from 2024-07 through 2026-06.
 - USCIS adjustment-of-status filing chart history from 2024-07 through 2026-06.
 - BLS OEWS occupation and area metadata for official SOC/area labels.
+- U.S. Census 2022 NAICS structure for official industry labels.
+- O*NET 30.2 Occupation Data and Job Zones for official O*NET/SOC occupational
+  context.
 
 ## Local Preparation Commands
 
@@ -85,6 +92,8 @@ pnpm production:data:parse:perm
 pnpm production:data:parse:pwd
 pnpm production:data:parse:pwd-cases
 pnpm production:data:parse:bls-oews
+pnpm production:data:parse:naics
+pnpm production:data:parse:onet
 pnpm production:data:parse:uscis
 python3 -m etl.cli parse-visa-bulletin-manifest --manifest data/source_manifest.json --output data/normalized/visa_bulletin_dates.jsonl
 python3 -m etl.cli parse-uscis-filing-chart-manifest --manifest data/source_manifest.json --output data/normalized/uscis_filing_charts.jsonl
@@ -134,6 +143,9 @@ The generated CSV package covers:
 - `visa_bulletin_dates`
 - `bls_oews_occupations`
 - `bls_oews_areas`
+- `naics_industries`
+- `onet_occupations`
+- `onet_job_zones`
 - `company_page_metrics`
 
 Latest generated row counts:
@@ -141,7 +153,7 @@ Latest generated row counts:
 | Table                        |      Rows |
 | ---------------------------- | --------: |
 | `locations`                  |   143,022 |
-| `source_files`               |       106 |
+| `source_files`               |       110 |
 | `employers`                  |   236,586 |
 | `employer_aliases`           |   415,179 |
 | `h1b_lca_records`            | 3,464,585 |
@@ -155,6 +167,9 @@ Latest generated row counts:
 | `visa_bulletin_dates`        |       144 |
 | `bls_oews_occupations`       |     1,104 |
 | `bls_oews_areas`             |       583 |
+| `naics_industries`           |     2,125 |
+| `onet_occupations`           |     1,016 |
+| `onet_job_zones`             |       923 |
 | `company_page_metrics`       |     2,000 |
 
 The package intentionally does not auto-run against production. Review the
@@ -165,6 +180,10 @@ project exists and the schema migration has been applied.
 ZIP. DOL PWD case disclosure files are loaded separately into
 `pwd_case_records` because wage lookup rows and PWD case determinations answer
 different product questions.
+
+`naics_industries` and `onet_*` tables provide labels and occupational context
+only. They should be shown as official classification metadata, not as legal
+advice or proof that a role satisfies immigration requirements.
 
 ## Data Quality Gates Before Public Launch
 

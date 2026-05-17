@@ -322,6 +322,61 @@ CREATE TABLE IF NOT EXISTS public.bls_oews_areas (
   created_at timestamptz NOT NULL DEFAULT now()
 );
 
+CREATE TABLE IF NOT EXISTS public.naics_industries (
+  id text PRIMARY KEY,
+  source_file_id text NOT NULL REFERENCES public.source_files(id),
+  source_record_id text NOT NULL,
+  source_record_fingerprint text NOT NULL UNIQUE,
+  release_year integer NOT NULL,
+  naics_code text NOT NULL,
+  industry_title text NOT NULL,
+  classification_level text NOT NULL,
+  sector_code text,
+  sector_title text,
+  change_indicator text,
+  trilateral boolean,
+  raw_record_json jsonb,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS public.onet_occupations (
+  id text PRIMARY KEY,
+  source_file_id text NOT NULL REFERENCES public.source_files(id),
+  source_record_id text NOT NULL,
+  source_record_fingerprint text NOT NULL UNIQUE,
+  release_version text NOT NULL,
+  onet_soc_code text NOT NULL,
+  soc_code text NOT NULL,
+  occupation_title text NOT NULL,
+  description text,
+  job_family_code text,
+  job_family_title text,
+  raw_record_json jsonb,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS public.onet_job_zones (
+  id text PRIMARY KEY,
+  source_file_id text NOT NULL REFERENCES public.source_files(id),
+  source_record_id text NOT NULL,
+  source_record_fingerprint text NOT NULL UNIQUE,
+  release_version text NOT NULL,
+  onet_soc_code text NOT NULL,
+  soc_code text NOT NULL,
+  occupation_title text NOT NULL,
+  job_zone integer NOT NULL,
+  job_zone_name text,
+  experience text,
+  education text,
+  job_training text,
+  examples text,
+  svp_range text,
+  date_updated text,
+  domain_source text,
+  raw_record_json jsonb,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+
 CREATE TABLE IF NOT EXISTS public.company_page_metrics (
   id text PRIMARY KEY,
   employer_id text NOT NULL UNIQUE REFERENCES public.employers(id) ON DELETE CASCADE,
@@ -429,6 +484,13 @@ CREATE INDEX IF NOT EXISTS idx_bls_oews_occupation_code ON public.bls_oews_occup
 CREATE INDEX IF NOT EXISTS idx_bls_oews_area_code ON public.bls_oews_areas(area_code);
 CREATE INDEX IF NOT EXISTS idx_bls_oews_area_name ON public.bls_oews_areas(area_name);
 
+CREATE INDEX IF NOT EXISTS idx_naics_industries_code ON public.naics_industries(naics_code);
+CREATE INDEX IF NOT EXISTS idx_naics_industries_sector ON public.naics_industries(sector_code);
+CREATE INDEX IF NOT EXISTS idx_onet_occupations_soc_code ON public.onet_occupations(soc_code);
+CREATE INDEX IF NOT EXISTS idx_onet_occupations_onet_soc_code ON public.onet_occupations(onet_soc_code);
+CREATE INDEX IF NOT EXISTS idx_onet_job_zones_soc_code ON public.onet_job_zones(soc_code);
+CREATE INDEX IF NOT EXISTS idx_onet_job_zones_job_zone ON public.onet_job_zones(job_zone);
+
 CREATE INDEX IF NOT EXISTS idx_company_page_metrics_indexable ON public.company_page_metrics(indexable, quality_score);
 CREATE INDEX IF NOT EXISTS idx_company_page_metrics_latest_year ON public.company_page_metrics(latest_fiscal_year);
 
@@ -454,6 +516,9 @@ ALTER TABLE public.visa_bulletin_months ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.visa_bulletin_dates ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.bls_oews_occupations ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.bls_oews_areas ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.naics_industries ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.onet_occupations ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.onet_job_zones ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.company_page_metrics ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.guide_pages ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.correction_requests ENABLE ROW LEVEL SECURITY;

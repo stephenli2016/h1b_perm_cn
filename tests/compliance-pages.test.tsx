@@ -47,6 +47,8 @@ describe("M24 legal, source, and correction workflow pages", () => {
     const allowedHosts = new Set([
       "www.dol.gov",
       "flag.dol.gov",
+      "www.census.gov",
+      "www.onetcenter.org",
       "www.uscis.gov",
       "travel.state.gov",
     ]);

@@ -1,0 +1,4 @@
+O*NET-SOC Code	Title	Job Zone	Date	Domain Source
+15-1252.00	Software Developers	4	02/2026	Analyst
+15-1211.00	Computer Systems Analysts	4	02/2026	Analyst
+11-3021.00	Computer and Information Systems Managers	4	02/2026	Analyst

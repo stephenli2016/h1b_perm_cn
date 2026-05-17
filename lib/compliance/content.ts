@@ -65,6 +65,33 @@ export const officialSources = [
     lastVerified: "2026-05-17",
   },
   {
+    id: "census-naics",
+    nameZh: "U.S. Census Bureau NAICS Reference Files",
+    nameEn: "North American Industry Classification System",
+    agency: "U.S. Census Bureau",
+    url: "https://www.census.gov/naics/",
+    coversZh: "2022 NAICS 行业分类结构、代码和英文行业名称。",
+    useZh:
+      "用于把 USCIS / PWD 等公开数据中的 NAICS code 解释为行业名称和行业层级。",
+    cautionZh:
+      "NAICS 是统计分类信号，不代表雇主主营业务、岗位内容或移民个案结论。",
+    lastVerified: "2026-05-17",
+  },
+  {
+    id: "onet-resource-center",
+    nameZh: "O*NET Resource Center",
+    nameEn: "O*NET Database",
+    agency: "U.S. Department of Labor, Employment and Training Administration",
+    url: "https://www.onetcenter.org/database.html",
+    coversZh:
+      "O*NET-SOC occupation title、description、Job Zone 和职业准备程度说明。",
+    useZh:
+      "用于给 SOC 职业代码补充职业标题、职业族群、Job Zone、教育/经验/培训上下文。",
+    cautionZh:
+      "O*NET 是职业分类和一般职业要求信息，不是某个雇主职位的实际招聘要求或法律判断。",
+    lastVerified: "2026-05-17",
+  },
+  {
     id: "uscis-h1b-employer-data-hub",
     nameZh: "USCIS H-1B Employer Data Hub Files",
     nameEn: "USCIS H-1B Employer Data Hub Files",

@@ -312,6 +312,61 @@ CREATE TABLE IF NOT EXISTS bls_oews_areas (
   created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE IF NOT EXISTS naics_industries (
+  id TEXT PRIMARY KEY,
+  source_file_id TEXT NOT NULL REFERENCES source_files(id),
+  source_record_id TEXT NOT NULL,
+  source_record_fingerprint TEXT NOT NULL UNIQUE,
+  release_year INTEGER NOT NULL,
+  naics_code TEXT NOT NULL,
+  industry_title TEXT NOT NULL,
+  classification_level TEXT NOT NULL,
+  sector_code TEXT,
+  sector_title TEXT,
+  change_indicator TEXT,
+  trilateral INTEGER,
+  raw_record_json TEXT,
+  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS onet_occupations (
+  id TEXT PRIMARY KEY,
+  source_file_id TEXT NOT NULL REFERENCES source_files(id),
+  source_record_id TEXT NOT NULL,
+  source_record_fingerprint TEXT NOT NULL UNIQUE,
+  release_version TEXT NOT NULL,
+  onet_soc_code TEXT NOT NULL,
+  soc_code TEXT NOT NULL,
+  occupation_title TEXT NOT NULL,
+  description TEXT,
+  job_family_code TEXT,
+  job_family_title TEXT,
+  raw_record_json TEXT,
+  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS onet_job_zones (
+  id TEXT PRIMARY KEY,
+  source_file_id TEXT NOT NULL REFERENCES source_files(id),
+  source_record_id TEXT NOT NULL,
+  source_record_fingerprint TEXT NOT NULL UNIQUE,
+  release_version TEXT NOT NULL,
+  onet_soc_code TEXT NOT NULL,
+  soc_code TEXT NOT NULL,
+  occupation_title TEXT NOT NULL,
+  job_zone INTEGER NOT NULL,
+  job_zone_name TEXT,
+  experience TEXT,
+  education TEXT,
+  job_training TEXT,
+  examples TEXT,
+  svp_range TEXT,
+  date_updated TEXT,
+  domain_source TEXT,
+  raw_record_json TEXT,
+  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
 CREATE TABLE IF NOT EXISTS company_page_metrics (
   id TEXT PRIMARY KEY,
   employer_id TEXT NOT NULL UNIQUE REFERENCES employers(id) ON DELETE CASCADE,
@@ -418,6 +473,13 @@ CREATE INDEX IF NOT EXISTS idx_visa_bulletin_dates_lookup ON visa_bulletin_dates
 CREATE INDEX IF NOT EXISTS idx_bls_oews_occupation_code ON bls_oews_occupations(occupation_code);
 CREATE INDEX IF NOT EXISTS idx_bls_oews_area_code ON bls_oews_areas(area_code);
 CREATE INDEX IF NOT EXISTS idx_bls_oews_area_name ON bls_oews_areas(area_name);
+
+CREATE INDEX IF NOT EXISTS idx_naics_industries_code ON naics_industries(naics_code);
+CREATE INDEX IF NOT EXISTS idx_naics_industries_sector ON naics_industries(sector_code);
+CREATE INDEX IF NOT EXISTS idx_onet_occupations_soc_code ON onet_occupations(soc_code);
+CREATE INDEX IF NOT EXISTS idx_onet_occupations_onet_soc_code ON onet_occupations(onet_soc_code);
+CREATE INDEX IF NOT EXISTS idx_onet_job_zones_soc_code ON onet_job_zones(soc_code);
+CREATE INDEX IF NOT EXISTS idx_onet_job_zones_job_zone ON onet_job_zones(job_zone);
 
 CREATE INDEX IF NOT EXISTS idx_company_page_metrics_indexable ON company_page_metrics(indexable, quality_score);
 CREATE INDEX IF NOT EXISTS idx_company_page_metrics_latest_year ON company_page_metrics(latest_fiscal_year);

@@ -33,8 +33,19 @@ class ManifestTests(unittest.TestCase):
         raw = _valid_source_entry()
         raw["official_url"] = "https://example.com/not-official.csv"
 
-        with self.assertRaisesRegex(ManifestError, "official .gov"):
+        with self.assertRaisesRegex(ManifestError, "official .gov host or approved"):
             SourceEntry.from_dict(raw)
+
+    def test_allows_approved_onet_resource_center_host(self) -> None:
+        raw = _valid_source_entry()
+        raw["official_url"] = "https://www.onetcenter.org/dl_files/database/example.txt"
+        raw["expected_file_type"] = "txt"
+        raw["downloaded_path"] = "data/raw/example.txt"
+        raw["fixture_path"] = "data/fixtures/raw/example.txt"
+
+        source = SourceEntry.from_dict(raw)
+
+        self.assertEqual(source.official_url, raw["official_url"])
 
     def test_rejects_duplicate_source_ids(self) -> None:
         raw_manifest = {

@@ -1,0 +1,4 @@
+O*NET-SOC Code	Title	Description
+15-1252.00	Software Developers	Research, design, and develop computer and network software or specialized utility programs.
+15-1211.00	Computer Systems Analysts	Analyze science, engineering, business, and other data processing problems to develop and implement solutions.
+11-3021.00	Computer and Information Systems Managers	Plan, direct, or coordinate activities in fields such as electronic data processing and information systems.

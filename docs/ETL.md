@@ -83,6 +83,12 @@ M09 adds `parse-visa-bulletin`, `parse-visa-bulletin-manifest`, `parse-uscis-fil
 
 Post-M29 production enrichment adds `parse-lca-worksites-manifest`, `parse-lca-appendix-a-manifest`, `parse-pwd-case-manifest`, `parse-bls-oews-occupations-manifest`, and `parse-bls-oews-areas-manifest` for supplemental LCA worksites/Appendix A, PWD case disclosure, and official BLS OEWS metadata.
 
+Post-M30 data enrichment adds `parse-naics-manifest`,
+`parse-onet-occupations-manifest`, and `parse-onet-job-zones-manifest` for U.S.
+Census NAICS industry labels and O*NET/SOC occupation/Job Zone metadata.
+O*NET downloads come from `www.onetcenter.org`, which is allowlisted as the
+official DOL/ETA O\*NET Resource Center referenced by DOL.
+
 M10 adds `build-company-candidates` for deterministic employer canonicalization, auditable alias output, company quality scoring, and initial noindex/indexable data-readiness decisions. The fixture command writes `data/normalized/employers.jsonl`, `data/normalized/employer_aliases.jsonl`, and `data/normalized/company_page_candidates.jsonl`, all ignored as generated local output. Methodology lives in `docs/EMPLOYER_CANONICALIZATION.md`.
 
 ## M25 Data Freshness CLI
@@ -144,6 +150,8 @@ pnpm production:data:download
 pnpm production:data:parse:lca
 pnpm production:data:parse:perm
 pnpm production:data:parse:pwd
+pnpm production:data:parse:naics
+pnpm production:data:parse:onet
 pnpm production:data:parse:uscis
 pnpm production:data:companies
 pnpm production:data:prepare

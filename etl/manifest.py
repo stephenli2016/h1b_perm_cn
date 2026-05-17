@@ -9,6 +9,9 @@ from urllib.parse import urlparse
 
 
 ALLOWED_FILE_TYPES = {"csv", "html", "json", "pdf", "txt", "xlsx", "zip"}
+ALLOWED_NON_GOV_OFFICIAL_HOSTS = {
+    "www.onetcenter.org",
+}
 REQUIRED_SOURCE_FIELDS = {
     "id",
     "source_name",
@@ -160,8 +163,11 @@ def _validate_official_url(url: str) -> None:
 
     if parsed.scheme != "https":
         raise ManifestError(f"official_url must use https: {url}")
-    if not host.endswith(".gov"):
-        raise ManifestError(f"official_url must point to an official .gov host: {url}")
+    if not host.endswith(".gov") and host not in ALLOWED_NON_GOV_OFFICIAL_HOSTS:
+        raise ManifestError(
+            "official_url must point to an official .gov host or approved official "
+            f"partner host: {url}"
+        )
 
 
 def _resolve_repo_path(repo_root: Path | str, value: str) -> Path:

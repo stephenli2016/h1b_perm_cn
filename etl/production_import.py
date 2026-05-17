@@ -29,6 +29,9 @@ POSTGRES_IMPORT_TABLES = (
     "visa_bulletin_dates",
     "bls_oews_occupations",
     "bls_oews_areas",
+    "naics_industries",
+    "onet_occupations",
+    "onet_job_zones",
     "company_page_metrics",
 )
 
@@ -81,6 +84,18 @@ def prepare_postgres_import_package(
     bls_oews_areas_path = _optional_normalized_input_path(
         normalized_path,
         "bls_oews_areas.jsonl",
+    )
+    naics_industries_path = _optional_normalized_input_path(
+        normalized_path,
+        "naics_industries.jsonl",
+    )
+    onet_occupations_path = _optional_normalized_input_path(
+        normalized_path,
+        "onet_occupations.jsonl",
+    )
+    onet_job_zones_path = _optional_normalized_input_path(
+        normalized_path,
+        "onet_job_zones.jsonl",
     )
     employers = _read_jsonl(normalized_path / "employers.jsonl")
     aliases = _read_jsonl(normalized_path / "employer_aliases.jsonl")
@@ -256,6 +271,18 @@ def prepare_postgres_import_package(
     table_counts["bls_oews_areas"] = _write_csv(
         csv_dir / "bls_oews_areas.csv",
         (_build_bls_oews_area_row(record) for record in _iter_optional_jsonl(bls_oews_areas_path)),
+    )
+    table_counts["naics_industries"] = _write_csv(
+        csv_dir / "naics_industries.csv",
+        (_build_naics_industry_row(record) for record in _iter_optional_jsonl(naics_industries_path)),
+    )
+    table_counts["onet_occupations"] = _write_csv(
+        csv_dir / "onet_occupations.csv",
+        (_build_onet_occupation_row(record) for record in _iter_optional_jsonl(onet_occupations_path)),
+    )
+    table_counts["onet_job_zones"] = _write_csv(
+        csv_dir / "onet_job_zones.csv",
+        (_build_onet_job_zone_row(record) for record in _iter_optional_jsonl(onet_job_zones_path)),
     )
     table_counts["company_page_metrics"] = _write_csv(
         csv_dir / "company_page_metrics.csv",
@@ -869,6 +896,89 @@ def _build_bls_oews_area_row(record: dict[str, object]) -> dict[str, object | No
     }
 
 
+def _build_naics_industry_row(record: dict[str, object]) -> dict[str, object | None]:
+    source_record_id = _as_str(record.get("source_record_id")) or _as_str(record.get("naics_code"))
+    source_scoped_id = ":".join(
+        [
+            _as_str(record.get("source_file_id")) or "",
+            source_record_id or "",
+        ]
+    )
+    return {
+        "id": f"naics-{_stable_id(source_scoped_id)}",
+        "source_file_id": record.get("source_file_id"),
+        "source_record_id": source_record_id,
+        "source_record_fingerprint": record.get("source_record_fingerprint"),
+        "release_year": record.get("release_year"),
+        "naics_code": record.get("naics_code"),
+        "industry_title": record.get("industry_title"),
+        "classification_level": record.get("classification_level"),
+        "sector_code": record.get("sector_code"),
+        "sector_title": record.get("sector_title"),
+        "change_indicator": record.get("change_indicator"),
+        "trilateral": record.get("trilateral"),
+        "raw_record_json": _json_cell(record.get("raw_record_json")),
+    }
+
+
+def _build_onet_occupation_row(record: dict[str, object]) -> dict[str, object | None]:
+    source_record_id = _as_str(record.get("source_record_id")) or _as_str(
+        record.get("onet_soc_code")
+    )
+    source_scoped_id = ":".join(
+        [
+            _as_str(record.get("source_file_id")) or "",
+            source_record_id or "",
+        ]
+    )
+    return {
+        "id": f"onet-occ-{_stable_id(source_scoped_id)}",
+        "source_file_id": record.get("source_file_id"),
+        "source_record_id": source_record_id,
+        "source_record_fingerprint": record.get("source_record_fingerprint"),
+        "release_version": record.get("release_version"),
+        "onet_soc_code": record.get("onet_soc_code"),
+        "soc_code": record.get("soc_code"),
+        "occupation_title": record.get("occupation_title"),
+        "description": record.get("description"),
+        "job_family_code": record.get("job_family_code"),
+        "job_family_title": record.get("job_family_title"),
+        "raw_record_json": _json_cell(record.get("raw_record_json")),
+    }
+
+
+def _build_onet_job_zone_row(record: dict[str, object]) -> dict[str, object | None]:
+    source_record_id = _as_str(record.get("source_record_id")) or _as_str(
+        record.get("onet_soc_code")
+    )
+    source_scoped_id = ":".join(
+        [
+            _as_str(record.get("source_file_id")) or "",
+            source_record_id or "",
+        ]
+    )
+    return {
+        "id": f"onet-zone-{_stable_id(source_scoped_id)}",
+        "source_file_id": record.get("source_file_id"),
+        "source_record_id": source_record_id,
+        "source_record_fingerprint": record.get("source_record_fingerprint"),
+        "release_version": record.get("release_version"),
+        "onet_soc_code": record.get("onet_soc_code"),
+        "soc_code": record.get("soc_code"),
+        "occupation_title": record.get("occupation_title"),
+        "job_zone": record.get("job_zone"),
+        "job_zone_name": record.get("job_zone_name"),
+        "experience": record.get("experience"),
+        "education": record.get("education"),
+        "job_training": record.get("job_training"),
+        "examples": record.get("examples"),
+        "svp_range": record.get("svp_range"),
+        "date_updated": record.get("date_updated"),
+        "domain_source": record.get("domain_source"),
+        "raw_record_json": _json_cell(record.get("raw_record_json")),
+    }
+
+
 def _build_uscis_rows(
     records: Sequence[dict[str, object]],
     employer_id_by_normalized_name: dict[str, str],
@@ -1179,6 +1289,12 @@ def _latest_data_date(source: SourceEntry) -> str | None:
     if source.parser_name.startswith("bls_oews_") and source.fiscal_year:
         return f"{source.fiscal_year}-05-01"
 
+    if source.parser_name == "census_naics_structure" and source.fiscal_year:
+        return f"{source.fiscal_year}-01-01"
+
+    if source.parser_name.startswith("onet_") and source.fiscal_year:
+        return f"{source.fiscal_year}-02-01"
+
     if source.fiscal_year and source.quarter:
         quarter_end_month_day = {
             "Q1": (12, 31),
@@ -1468,6 +1584,55 @@ POSTGRES_COLUMNS: dict[str, list[str]] = {
         "display_level",
         "selectable",
         "sort_sequence",
+        "raw_record_json",
+    ],
+    "naics_industries": [
+        "id",
+        "source_file_id",
+        "source_record_id",
+        "source_record_fingerprint",
+        "release_year",
+        "naics_code",
+        "industry_title",
+        "classification_level",
+        "sector_code",
+        "sector_title",
+        "change_indicator",
+        "trilateral",
+        "raw_record_json",
+    ],
+    "onet_occupations": [
+        "id",
+        "source_file_id",
+        "source_record_id",
+        "source_record_fingerprint",
+        "release_version",
+        "onet_soc_code",
+        "soc_code",
+        "occupation_title",
+        "description",
+        "job_family_code",
+        "job_family_title",
+        "raw_record_json",
+    ],
+    "onet_job_zones": [
+        "id",
+        "source_file_id",
+        "source_record_id",
+        "source_record_fingerprint",
+        "release_version",
+        "onet_soc_code",
+        "soc_code",
+        "occupation_title",
+        "job_zone",
+        "job_zone_name",
+        "experience",
+        "education",
+        "job_training",
+        "examples",
+        "svp_range",
+        "date_updated",
+        "domain_source",
         "raw_record_json",
     ],
     "company_page_metrics": [

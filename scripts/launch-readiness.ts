@@ -92,6 +92,8 @@ const allowedOfficialHosts = new Set([
   "download.bls.gov",
   "www.dol.gov",
   "flag.dol.gov",
+  "www.census.gov",
+  "www.onetcenter.org",
   "www.uscis.gov",
   "travel.state.gov",
 ]);

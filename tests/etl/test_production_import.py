@@ -34,6 +34,9 @@ class ProductionImportPackageTests(unittest.TestCase):
             self.assertGreater(package.table_counts["visa_bulletin_months"], 0)
             self.assertGreater(package.table_counts["bls_oews_occupations"], 0)
             self.assertGreater(package.table_counts["bls_oews_areas"], 0)
+            self.assertGreater(package.table_counts["naics_industries"], 0)
+            self.assertGreater(package.table_counts["onet_occupations"], 0)
+            self.assertGreater(package.table_counts["onet_job_zones"], 0)
 
             with (output_dir / "csv" / "h1b_lca_records.csv").open(
                 "r",
@@ -50,6 +53,8 @@ class ProductionImportPackageTests(unittest.TestCase):
             self.assertIn("\\copy public.locations", load_sql)
             self.assertIn("\\copy public.pwd_case_records", load_sql)
             self.assertIn("\\copy public.bls_oews_areas", load_sql)
+            self.assertIn("\\copy public.naics_industries", load_sql)
+            self.assertIn("\\copy public.onet_job_zones", load_sql)
             self.assertIn("\\copy public.company_page_metrics", load_sql)
 
 
@@ -345,6 +350,67 @@ def _write_minimal_normalized_inputs(normalized_dir: Path) -> None:
                 "selectable": True,
                 "sort_sequence": 1,
                 "raw_record_json": {"AREA_CODE": "42660"},
+            }
+        ],
+    )
+    _write_jsonl(
+        normalized_dir / "naics_industries.jsonl.gz",
+        [
+            {
+                "source_file_id": "census_naics_2022_structure",
+                "source_record_id": "541511",
+                "source_record_fingerprint": "naics-fingerprint",
+                "release_year": 2022,
+                "naics_code": "541511",
+                "industry_title": "Custom Computer Programming Services",
+                "classification_level": "national_industry",
+                "sector_code": "54",
+                "sector_title": "Professional, Scientific, and Technical Services",
+                "change_indicator": None,
+                "trilateral": None,
+                "raw_record_json": {"NAICS_CODE": "541511"},
+            }
+        ],
+    )
+    _write_jsonl(
+        normalized_dir / "onet_occupations.jsonl.gz",
+        [
+            {
+                "source_file_id": "onet_occupation_data_30_2",
+                "source_record_id": "15-1252.00",
+                "source_record_fingerprint": "onet-occ-fingerprint",
+                "release_version": "30.2",
+                "onet_soc_code": "15-1252.00",
+                "soc_code": "15-1252",
+                "occupation_title": "Software Developers",
+                "description": "Research, design, and develop software.",
+                "job_family_code": "15",
+                "job_family_title": "Computer and Mathematical Occupations",
+                "raw_record_json": {"O_NET_SOC_CODE": "15-1252.00"},
+            }
+        ],
+    )
+    _write_jsonl(
+        normalized_dir / "onet_job_zones.jsonl.gz",
+        [
+            {
+                "source_file_id": "onet_job_zones_30_2",
+                "source_record_id": "15-1252.00:zone-4",
+                "source_record_fingerprint": "onet-zone-fingerprint",
+                "release_version": "30.2",
+                "onet_soc_code": "15-1252.00",
+                "soc_code": "15-1252",
+                "occupation_title": "Software Developers",
+                "job_zone": 4,
+                "job_zone_name": "Job Zone 4: Considerable Preparation Needed",
+                "experience": "A considerable amount of work-related skill is needed.",
+                "education": "Most occupations require a bachelor's degree.",
+                "job_training": "Several years of work-related experience may be needed.",
+                "examples": "Software developers and systems analysts.",
+                "svp_range": "7.0 to < 8.0",
+                "date_updated": "02/2026",
+                "domain_source": "Analyst",
+                "raw_record_json": {"JOB_ZONE": "4"},
             }
         ],
     )
