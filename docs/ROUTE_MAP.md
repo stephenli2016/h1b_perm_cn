@@ -27,7 +27,15 @@ This document is the first public information architecture draft for VisaRadar C
 | `/about`                                        | Product purpose and data principles                 | `core`           | Indexable                                                 |
 | `/disclaimer`                                   | Legal and immigration advice boundary               | `compliance`     | Indexable                                                 |
 | `/privacy`                                      | Privacy principles and sensitive-data warning       | `compliance`     | Indexable                                                 |
+| `/terms`                                        | MVP usage terms draft and acceptable-use boundary   | `compliance`     | Indexable; draft pending owner/legal review               |
 | `/corrections`                                  | Correction/removal request path                     | `compliance`     | Indexable                                                 |
+| `/corrections/received`                         | Local correction stub confirmation page             | n/a              | Noindex; not included in sitemaps                         |
+| `/sources`                                      | Official source registry and source-use policy      | `compliance`     | Indexable; draft pending owner/legal review               |
+| `/methodology/lca`                              | LCA/H-1B disclosure data methodology                | `compliance`     | Indexable; draft pending owner/legal review               |
+| `/methodology/perm`                             | PERM disclosure data methodology                    | `compliance`     | Indexable; draft pending owner/legal review               |
+| `/methodology/wage`                             | Prevailing wage and wage-level methodology          | `compliance`     | Indexable; draft pending owner/legal review               |
+| `/methodology/visa-bulletin`                    | Visa Bulletin and USCIS filing chart methodology    | `compliance`     | Indexable; draft pending owner/legal review               |
+| `/methodology/employer-signal`                  | Employer public-data signal methodology             | `compliance`     | Indexable; draft pending owner/legal review               |
 | `/robots.txt`                                   | Crawl policy and sitemap index pointer              | n/a              | Allows public crawl; not a sitemap URL                    |
 | `/404`                                          | Not-found recovery experience                       | n/a              | Noindex                                                   |
 
@@ -41,7 +49,7 @@ Initial sitemap groups:
 - `tools`: after M22 this includes `/tools` and all 12 tool pages from `docs/CONTENT_GUIDE_50_TOPICS.md`. Five interactive tool routes keep their custom pages; seven remaining tool routes use the M22 shared content renderer.
 - `guides`: after M22 this includes `/guides` and all 38 guide pages from `docs/CONTENT_GUIDE_50_TOPICS.md`.
 - `visa-bulletin`: fixture-backed monthly pages such as `/visa-bulletin/2026/06`; the `/visa-bulletin` directory shell remains noindex until production data refresh is available
-- `compliance`: `/disclaimer`, `/privacy`, `/corrections`
+- `compliance`: `/disclaimer`, `/privacy`, `/terms`, `/corrections`, `/sources`, and the five M24 methodology pages
 
 ## Indexing Rules
 
@@ -51,6 +59,8 @@ Initial sitemap groups:
 - Interactive tool query-result URLs are `noindex, follow` and canonicalize back to the base tool route.
 - Public visible content must match structured data. M23 supports `BreadcrumbList`, `WebSite`, `WebPage`, `CollectionPage`, `AboutPage`, `Article`, `WebApplication`, `Dataset`, and visible `FAQPage` only.
 - `robots.txt` does not block filter/query URLs because page-level `noindex` must be crawlable to work.
+- M24 correction confirmation URLs such as `/corrections/received?status=received&id=...` are `noindex, follow` and never enter XML sitemaps.
+- M24 legal and methodology pages are indexable so users and crawlers can inspect source/method boundaries, but all legal copy is explicitly marked as draft pending owner/legal review before production launch.
 
 ## Current Navigation
 
@@ -64,4 +74,4 @@ Primary navigation links:
 - 排期
 - 关于
 
-Footer navigation also exposes compliance pages: 免责声明、隐私、纠错.
+Footer navigation also exposes method/source pages and compliance pages: 数据来源、LCA 方法、PERM 方法、工资方法、排期方法、雇主信号方法、免责声明、隐私、使用条款、纠错.

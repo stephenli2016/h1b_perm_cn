@@ -376,6 +376,13 @@ Indexes:
 - `idx_correction_requests_status`
 - `idx_correction_requests_employer_id`
 
+M24 local workflow:
+
+- `/corrections` renders a correction request form with minimal fields: request type, optional page URL, optional employer/page title, optional official source URL, optional email, and description.
+- `/corrections/request` is a local stub. It validates type/description/acknowledgement, redirects to `/corrections/received`, and does not write to the database or send email.
+- `/corrections/received` is noindex and only shows a public stub ID; it does not echo submitted description, source URL, page URL, or email.
+- Production persistence should use `correction_requests` after owner/legal review of retention, access control, email notification, and privacy handling.
+
 ## Local Fixture Mode
 
 Fixture data lives in:

@@ -148,7 +148,11 @@ function pageTypeForRoute(route: PublicRoute): SeoPageType {
   if (route.section === "guides") {
     return "article";
   }
-  if (route.section === "compliance" || route.section === "about") {
+  if (
+    route.section === "compliance" ||
+    route.section === "methodology" ||
+    route.section === "about"
+  ) {
     return "compliance";
   }
   if (route.dataPage) {

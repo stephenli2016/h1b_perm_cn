@@ -19,6 +19,7 @@ export type RouteSection =
   | "tools"
   | "guides"
   | "visa-bulletin"
+  | "methodology"
   | "compliance"
   | "about";
 
@@ -252,6 +253,18 @@ export const publicRoutes = [
     dataPage: false,
   },
   {
+    path: "/terms",
+    label: "使用条款",
+    title: "使用条款",
+    description:
+      "MVP 阶段使用条款草案，说明本站的公开数据定位、可接受使用、纠错路径和责任边界。",
+    section: "compliance",
+    nav: false,
+    sitemapGroup: "compliance",
+    indexing: "indexable",
+    dataPage: false,
+  },
+  {
     path: "/corrections",
     label: "纠错",
     title: "数据纠错与移除请求",
@@ -261,6 +274,78 @@ export const publicRoutes = [
     sitemapGroup: "compliance",
     indexing: "indexable",
     dataPage: false,
+  },
+  {
+    path: "/sources",
+    label: "数据来源",
+    title: "数据来源",
+    description:
+      "列出本站 MVP 使用或计划使用的官方数据来源、用途、覆盖边界和谨慎解释方式。",
+    section: "methodology",
+    nav: false,
+    sitemapGroup: "compliance",
+    indexing: "indexable",
+    dataPage: false,
+  },
+  {
+    path: "/methodology/lca",
+    label: "LCA 方法",
+    title: "LCA / H-1B 公开数据方法说明",
+    description:
+      "解释本站如何使用 DOL OFLC LCA disclosure data 呈现 H-1B 雇主、职位、地点和工资信号。",
+    section: "methodology",
+    nav: false,
+    sitemapGroup: "compliance",
+    indexing: "indexable",
+    dataPage: true,
+  },
+  {
+    path: "/methodology/perm",
+    label: "PERM 方法",
+    title: "PERM 公开数据方法说明",
+    description:
+      "解释本站如何使用 DOL OFLC PERM disclosure data 呈现雇主绿卡/PERM 历史信号。",
+    section: "methodology",
+    nav: false,
+    sitemapGroup: "compliance",
+    indexing: "indexable",
+    dataPage: true,
+  },
+  {
+    path: "/methodology/wage",
+    label: "工资方法",
+    title: "Prevailing Wage / 工资数据方法说明",
+    description:
+      "解释本站如何使用 DOL/FLAG wage data 和 OFLC wage records 呈现 H-1B 工资背景。",
+    section: "methodology",
+    nav: false,
+    sitemapGroup: "compliance",
+    indexing: "indexable",
+    dataPage: true,
+  },
+  {
+    path: "/methodology/visa-bulletin",
+    label: "排期方法",
+    title: "Visa Bulletin / 排期方法说明",
+    description:
+      "解释本站如何使用 DOS Visa Bulletin 和 USCIS filing chart 页面呈现中国职业移民排期。",
+    section: "methodology",
+    nav: false,
+    sitemapGroup: "compliance",
+    indexing: "indexable",
+    dataPage: true,
+  },
+  {
+    path: "/methodology/employer-signal",
+    label: "雇主信号方法",
+    title: "雇主公开数据友好度信号方法说明",
+    description:
+      "解释本站如何把 H-1B、PERM、USCIS Employer Data Hub 和工资上下文组合成谨慎的雇主公开数据信号。",
+    section: "methodology",
+    nav: false,
+    sitemapGroup: "compliance",
+    indexing: "indexable",
+    dataPage: true,
   },
 ] as const satisfies readonly PublicRoute[];
 
@@ -280,6 +365,10 @@ export const footerNavGroups = [
     links: publicRoutes.filter((route) =>
       ["guides", "about"].includes(route.section),
     ),
+  },
+  {
+    title: "方法与来源",
+    links: publicRoutes.filter((route) => route.section === "methodology"),
   },
   {
     title: "合规",

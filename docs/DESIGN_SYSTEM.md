@@ -30,6 +30,10 @@ States and compliance:
 - `ErrorState` — user-facing error block with `role="alert"`.
 - `DisclaimerBox` — reusable legal/compliance caution box.
 - `DisclaimerStrip` — sitewide short/full disclaimer strip.
+- `LegalDraftNotice` — M24 owner/legal-review draft warning for legal and compliance pages.
+- `OfficialSourceList` — official source cards with use, coverage, caution, and verified date.
+- `MethodologyContent` — reusable source/methodology layout for LCA, PERM, wage, Visa Bulletin, and employer signal pages.
+- `CorrectionRequestForm` — no-secret local correction stub form that posts to `/corrections/request`.
 
 ## Accessibility Basics
 
@@ -73,5 +77,7 @@ M12 wires representative components into:
 - `/guides/[slug]` M22 shared content pages
 - `/visa-bulletin/[year]/[month]`
 - M23 not-found and error experiences
+- M24 legal pages: `/disclaimer`, `/privacy`, `/terms`, `/corrections`
+- M24 source/methodology pages: `/sources`, `/methodology/lca`, `/methodology/perm`, `/methodology/wage`, `/methodology/visa-bulletin`, `/methodology/employer-signal`
 
 Later milestones will reuse the same components in search, company pages, tools, and guide templates.

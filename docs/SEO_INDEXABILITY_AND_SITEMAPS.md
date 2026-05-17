@@ -1,6 +1,6 @@
-# SEO Indexability and Sitemaps — M15-M23
+# SEO Indexability and Sitemaps — M15-M24
 
-Milestones: M15 — Company page quality scoring, noindex, and sitemap logic; M16 — Generate first 500 high-quality company pages; M17 — Expand toward 2,000 company pages and performance hardening; M18 — H-1B wage-level checker tool; M19 — EB priority date calculator; M20 — Company immigration public-data signal; M21 — H-1B transfer and PERM restart tools; M22 — 50 guide/tool content pages; M23 — Technical SEO hardening
+Milestones: M15 — Company page quality scoring, noindex, and sitemap logic; M16 — Generate first 500 high-quality company pages; M17 — Expand toward 2,000 company pages and performance hardening; M18 — H-1B wage-level checker tool; M19 — EB priority date calculator; M20 — Company immigration public-data signal; M21 — H-1B transfer and PERM restart tools; M22 — 50 guide/tool content pages; M23 — Technical SEO hardening; M24 — Legal/compliance pages and correction workflow
 
 ## Purpose
 
@@ -98,6 +98,21 @@ M23 adds `app/robots.ts`, which allows crawling public pages and advertises the 
 
 M23 also adds `lib/seo/internal-link-graph.ts` to verify registered related links, sitemap URLs, and noindex exclusions.
 
+M24 keeps the legal, source, and methodology pages in `/sitemaps/core.xml` through the existing `compliance` sitemap group:
+
+- `/disclaimer`
+- `/privacy`
+- `/terms`
+- `/corrections`
+- `/sources`
+- `/methodology/lca`
+- `/methodology/perm`
+- `/methodology/wage`
+- `/methodology/visa-bulletin`
+- `/methodology/employer-signal`
+
+The correction confirmation route `/corrections/received` is intentionally not registered as a public route and uses `noindex, follow` metadata. It can receive local stub IDs in query strings, but those URLs never enter XML sitemaps.
+
 ## Validation Coverage
 
 `tests/seo.test.ts` covers:
@@ -116,6 +131,8 @@ M23 also adds `lib/seo/internal-link-graph.ts` to verify registered related link
 `tests/content-pages.test.tsx` covers M22-specific content quality checks: exact 50-page coverage, priority 1 coverage, source-backed non-thin content fields, forbidden-language guards, rendered source links, disclaimers, review dates, and representative dynamic route rendering.
 
 `tests/technical-seo.test.tsx` covers M23 shared metadata, query-result noindex, visible JSON-LD, internal link graph integrity, robots config, and 404/500 rendering.
+
+`tests/compliance-pages.test.tsx` covers M24 draft legal language, official source registry domains, methodology page rendering, the no-secret correction form, and correction stub redirect behavior.
 
 `vitest.config.ts` now includes both `.test.ts` and `.test.tsx` files so component and content rendering tests are part of the default `pnpm test` run.
 

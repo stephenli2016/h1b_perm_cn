@@ -146,7 +146,21 @@ describe("M15 SEO indexability and sitemaps", () => {
     expect(coreUrls).toContain("http://localhost:3000/");
     expect(coreUrls).toContain("http://localhost:3000/disclaimer");
     expect(coreUrls).toContain("http://localhost:3000/privacy");
+    expect(coreUrls).toContain("http://localhost:3000/terms");
     expect(coreUrls).toContain("http://localhost:3000/corrections");
+    expect(coreUrls).toContain("http://localhost:3000/sources");
+    expect(coreUrls).toContain("http://localhost:3000/methodology/lca");
+    expect(coreUrls).toContain("http://localhost:3000/methodology/perm");
+    expect(coreUrls).toContain("http://localhost:3000/methodology/wage");
+    expect(coreUrls).toContain(
+      "http://localhost:3000/methodology/visa-bulletin",
+    );
+    expect(coreUrls).toContain(
+      "http://localhost:3000/methodology/employer-signal",
+    );
+    expect(coreUrls).not.toContain(
+      "http://localhost:3000/corrections/received",
+    );
   });
 
   it("renders valid sitemap XML shells without noindex URLs", () => {

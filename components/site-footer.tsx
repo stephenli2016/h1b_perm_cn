@@ -5,7 +5,7 @@ import { footerNavGroups, siteConfig } from "@/lib/site";
 export function SiteFooter() {
   return (
     <footer className="border-t border-[var(--line)] bg-white">
-      <div className="mx-auto grid max-w-6xl gap-8 px-5 py-8 sm:px-8 md:grid-cols-[1.2fr_1fr_1fr_1fr] lg:px-10">
+      <div className="mx-auto grid max-w-6xl gap-8 px-5 py-8 sm:px-8 md:grid-cols-2 lg:grid-cols-[1.2fr_1fr_1fr_1fr_1fr] lg:px-10">
         <div>
           <p className="text-base font-semibold">{siteConfig.chineseName}</p>
           <p className="mt-2 text-sm uppercase text-[var(--muted)]">
@@ -36,7 +36,7 @@ export function SiteFooter() {
       </div>
       <div className="border-t border-[var(--line)] px-5 py-4 text-center text-xs text-[var(--muted)]">
         © {new Date().getFullYear()} {siteConfig.name}.
-        本站不提供法律或移民建议。
+        本站内容仅供信息参考，不构成法律、移民、税务或职业建议。
       </div>
     </footer>
   );

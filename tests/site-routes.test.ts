@@ -27,6 +27,15 @@ const requiredM21Routes = [
   "/tools/h1b-transfer-risk-checklist",
   "/tools/perm-restart-timeline-estimator",
 ] as const;
+const requiredM24Routes = [
+  "/terms",
+  "/sources",
+  "/methodology/lca",
+  "/methodology/perm",
+  "/methodology/wage",
+  "/methodology/visa-bulletin",
+  "/methodology/employer-signal",
+] as const;
 
 describe("public route map", () => {
   it("contains every M02 route", () => {
@@ -100,6 +109,19 @@ describe("public route map", () => {
         indexing: "indexable",
         nav: false,
         sitemapGroup: "tools",
+      });
+    }
+  });
+
+  it("adds the M24 legal, source, and methodology routes", () => {
+    const routePaths = publicRoutes.map((route) => route.path);
+
+    expect(routePaths).toEqual(expect.arrayContaining([...requiredM24Routes]));
+    for (const path of requiredM24Routes) {
+      expect(publicRoutes.find((route) => route.path === path)).toMatchObject({
+        indexing: "indexable",
+        nav: false,
+        sitemapGroup: "compliance",
       });
     }
   });

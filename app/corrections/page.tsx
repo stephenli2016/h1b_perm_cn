@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 
+import { CorrectionRequestForm } from "@/components/compliance/correction-request-form";
+import { LegalDraftNotice } from "@/components/compliance/legal-draft-notice";
 import { PageShell } from "@/components/page-shell";
 import { buildWebPageJsonLd } from "@/lib/seo/json-ld";
 import { buildRouteSeoMetadata } from "@/lib/seo/metadata";
@@ -21,23 +23,52 @@ export default function CorrectionsPage() {
       })}
       title="数据纠错与移除请求"
     >
-      <section className="rounded-lg border border-[var(--line)] bg-white p-6 shadow-sm">
-        <h2 className="text-lg font-semibold">提交时建议包含</h2>
-        <ul className="mt-4 grid gap-3 text-sm leading-6 text-[var(--muted)]">
-          <li>问题页面 URL 或公司名称。</li>
-          <li>你认为需要修改的字段或解释。</li>
-          <li>可以核验的官方来源或简短原因。</li>
-          <li>
-            如涉及隐私，请只描述问题，不要发送敏感身份证件或完整个人材料。
-          </li>
-        </ul>
-        <a
-          className="mt-5 inline-flex rounded-md bg-[var(--accent)] px-5 py-3 text-sm font-semibold text-white hover:bg-[var(--accent-strong)] hover:text-white"
-          href={`mailto:${siteConfig.contactEmail}?subject=VisaRadar%20CN%20correction%20request`}
-        >
-          发送纠错邮件
-        </a>
-      </section>
+      <div className="space-y-6">
+        <LegalDraftNotice />
+
+        <section className="grid gap-4 md:grid-cols-2">
+          <article className="rounded-lg border border-[var(--line)] bg-white p-5 shadow-sm">
+            <h2 className="text-lg font-semibold">提交时建议包含</h2>
+            <ul className="mt-4 grid gap-3 text-sm leading-6 text-[var(--muted)]">
+              <li>问题页面 URL 或公司名称。</li>
+              <li>你认为需要修改的字段、归并问题或解释问题。</li>
+              <li>可以核验的官方来源 URL 或简短原因。</li>
+              <li>
+                如涉及隐私，请只描述问题，不要发送敏感身份证件或完整个人材料。
+              </li>
+            </ul>
+          </article>
+          <article className="rounded-lg border border-[var(--line)] bg-white p-5 shadow-sm">
+            <h2 className="text-lg font-semibold">处理原则</h2>
+            <ul className="mt-4 grid gap-3 text-sm leading-6 text-[var(--muted)]">
+              <li>优先复核官方来源、字段映射和雇主名称归并规则。</li>
+              <li>隐私或低样本风险优先处理，可聚合、隐藏或补充说明。</li>
+              <li>不会通过纠错表单提供个人移民法律判断。</li>
+              <li>
+                生产接入前，后台处理流程和保留期限需要 owner/legal review。
+              </li>
+            </ul>
+          </article>
+        </section>
+
+        <CorrectionRequestForm />
+
+        <section className="rounded-lg border border-[var(--line)] bg-white p-5 shadow-sm">
+          <h2 className="text-lg font-semibold">邮件备用路径</h2>
+          <p className="mt-3 text-sm leading-7 text-[var(--muted)]">
+            本地 stub 不能持久保存请求。上线前或需要人工跟进时，可发送邮件至{" "}
+            {siteConfig.contactEmail}，并保留同样的最小化信息原则。
+          </p>
+          <a
+            className="mt-5 inline-flex rounded-md border border-[var(--line)] px-5 py-3 text-sm font-semibold text-[var(--accent-strong)] hover:bg-slate-50 hover:text-[var(--accent-strong)]"
+            href={`mailto:${siteConfig.contactEmail}?subject=VisaRadar%20CN%20correction%20request`}
+          >
+            发送纠错邮件
+          </a>
+        </section>
+
+        <p className="text-xs text-[var(--muted)]">Last reviewed: 2026-05-17</p>
+      </div>
     </PageShell>
   );
 }
