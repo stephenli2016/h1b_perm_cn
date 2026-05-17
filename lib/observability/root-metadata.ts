@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 
 import type { PublicObservabilityConfig } from "@/lib/observability/config";
 import { getPublicObservabilityConfig } from "@/lib/observability/config";
+import { rootRobotsMetadata } from "@/lib/seo/prelaunch";
 import { siteConfig } from "@/lib/site";
 
 export function buildRootMetadata(
@@ -15,6 +16,7 @@ export function buildRootMetadata(
     },
     description: siteConfig.description,
     applicationName: siteConfig.name,
+    robots: rootRobotsMetadata(),
     verification: {
       google: config.webmaster.googleSiteVerification,
       other: config.webmaster.bingSiteVerification

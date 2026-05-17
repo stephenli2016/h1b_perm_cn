@@ -29,3 +29,10 @@ This folder contains project instructions for building a Chinese H-1B/PERM/green
 - Stripe/payment keys only if paid reports are enabled.
 
 Codex should not ask you for minor decisions during milestones.
+
+## Vercel preview note
+
+M27 adds Vercel preparation only. Preview or private production tests should keep
+`PRELAUNCH_NOINDEX=true`. Public production deployment, custom domain
+connection, DNS changes, and switching `PRELAUNCH_NOINDEX=false` require owner
+approval in the launch gate.

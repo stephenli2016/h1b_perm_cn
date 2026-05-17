@@ -10,6 +10,7 @@
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
+    "deploy:validate": "node --no-warnings --experimental-strip-types scripts/validate-vercel-prep.ts",
     "db:validate": "vitest run tests/schema.test.ts tests/local-repository.test.ts",
     "db:production:validate": "node --no-warnings --experimental-strip-types scripts/validate-production-db.ts",
     "etl:validate": "python3 -m etl.cli validate-manifest --manifest data/source_manifest.json",

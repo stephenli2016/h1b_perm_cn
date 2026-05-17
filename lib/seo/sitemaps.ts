@@ -6,6 +6,7 @@ import {
   EXPANDED_COMPANY_PAGE_TARGET,
   selectCompanyPageRoutes,
 } from "@/lib/seo/company-page-selection";
+import { isPrelaunchNoindexEnabled } from "@/lib/seo/prelaunch";
 import { getCanonicalUrl, publicRoutes } from "@/lib/site";
 
 export type SitemapKind =
@@ -60,6 +61,10 @@ export function listSitemapEntries(
   data: FixtureData = localFixtureData,
   options: SitemapListOptions = {},
 ): SitemapEntry[] {
+  if (isPrelaunchNoindexEnabled()) {
+    return [];
+  }
+
   switch (kind) {
     case "core":
       return listStaticRouteEntries(["core", "compliance"]);
@@ -108,6 +113,10 @@ function listContentRouteEntries(
 export function listSitemapIndexEntries(
   data: FixtureData = localFixtureData,
 ): SitemapIndexEntry[] {
+  if (isPrelaunchNoindexEnabled()) {
+    return [];
+  }
+
   return splitSitemapDefinitions.flatMap((definition) => {
     if (definition.kind !== "company-pages") {
       return [

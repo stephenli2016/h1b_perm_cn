@@ -6,6 +6,7 @@ import {
   siteConfig,
   type PublicRoute,
 } from "@/lib/site";
+import { robotsForIndexing } from "@/lib/seo/prelaunch";
 
 export type SeoPageType =
   | "website"
@@ -52,10 +53,10 @@ export function buildSeoMetadata({
     alternates: {
       canonical: canonicalPath,
     },
-    robots: {
+    robots: robotsForIndexing({
       index,
       follow,
-    },
+    }),
     openGraph: {
       title,
       description,
