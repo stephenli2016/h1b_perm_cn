@@ -1,6 +1,6 @@
-# SEO Indexability and Sitemaps — M15-M24
+# SEO Indexability and Sitemaps — M15-M25
 
-Milestones: M15 — Company page quality scoring, noindex, and sitemap logic; M16 — Generate first 500 high-quality company pages; M17 — Expand toward 2,000 company pages and performance hardening; M18 — H-1B wage-level checker tool; M19 — EB priority date calculator; M20 — Company immigration public-data signal; M21 — H-1B transfer and PERM restart tools; M22 — 50 guide/tool content pages; M23 — Technical SEO hardening; M24 — Legal/compliance pages and correction workflow
+Milestones: M15 — Company page quality scoring, noindex, and sitemap logic; M16 — Generate first 500 high-quality company pages; M17 — Expand toward 2,000 company pages and performance hardening; M18 — H-1B wage-level checker tool; M19 — EB priority date calculator; M20 — Company immigration public-data signal; M21 — H-1B transfer and PERM restart tools; M22 — 50 guide/tool content pages; M23 — Technical SEO hardening; M24 — Legal/compliance pages and correction workflow; M25 — Analytics, monitoring, and webmaster setup
 
 ## Purpose
 
@@ -133,6 +133,8 @@ The correction confirmation route `/corrections/received` is intentionally not r
 `tests/technical-seo.test.tsx` covers M23 shared metadata, query-result noindex, visible JSON-LD, internal link graph integrity, robots config, and 404/500 rendering.
 
 `tests/compliance-pages.test.tsx` covers M24 draft legal language, official source registry domains, methodology page rendering, the no-secret correction form, and correction stub redirect behavior.
+
+M25 adds `pnpm seo:audit`, which runs the SEO-facing route, sitemap, internal link, structured data, and compliance tests as a focused audit command before production or content pushes.
 
 `vitest.config.ts` now includes both `.test.ts` and `.test.tsx` files so component and content rendering tests are part of the default `pnpm test` run.
 

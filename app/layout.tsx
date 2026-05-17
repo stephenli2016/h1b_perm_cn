@@ -3,32 +3,16 @@ import type { ReactNode } from "react";
 
 import "./globals.css";
 import { DisclaimerStrip } from "@/components/disclaimer-strip";
+import { ErrorMonitoringListener } from "@/components/observability/error-monitoring-listener";
+import { ObservabilityScripts } from "@/components/observability/observability-scripts";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
-import { siteConfig } from "@/lib/site";
+import { getPublicObservabilityConfig } from "@/lib/observability/config";
+import { buildRootMetadata } from "@/lib/observability/root-metadata";
 
-export const metadata: Metadata = {
-  metadataBase: new URL(siteConfig.url),
-  title: {
-    default: `${siteConfig.chineseName} | ${siteConfig.name}`,
-    template: `%s | ${siteConfig.name}`,
-  },
-  description: siteConfig.description,
-  applicationName: siteConfig.name,
-  openGraph: {
-    title: siteConfig.chineseName,
-    description: siteConfig.description,
-    url: siteConfig.url,
-    siteName: `${siteConfig.chineseName} | ${siteConfig.name}`,
-    locale: "zh_CN",
-    type: "website",
-  },
-  twitter: {
-    card: "summary",
-    title: siteConfig.chineseName,
-    description: siteConfig.description,
-  },
-};
+const observabilityConfig = getPublicObservabilityConfig();
+
+export const metadata: Metadata = buildRootMetadata(observabilityConfig);
 
 export default function RootLayout({
   children,
@@ -38,6 +22,8 @@ export default function RootLayout({
   return (
     <html lang="zh-CN">
       <body>
+        <ObservabilityScripts config={observabilityConfig} />
+        <ErrorMonitoringListener config={observabilityConfig.monitoring} />
         <div className="flex min-h-screen flex-col">
           <SiteHeader />
           <DisclaimerStrip />

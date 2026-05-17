@@ -75,3 +75,22 @@ M08 adds `parse-uscis-h1b` and `parse-uscis-h1b-manifest` for USCIS H-1B Employe
 M09 adds `parse-visa-bulletin`, `parse-visa-bulletin-manifest`, `parse-uscis-filing-chart`, and `parse-uscis-filing-chart-manifest` for Department of State Visa Bulletin pages and USCIS adjustment-of-status filing chart selections. Fixture commands write normalized JSONL to `data/normalized/visa_bulletin_dates.jsonl` and `data/normalized/uscis_filing_charts.jsonl`, both ignored as generated local output.
 
 M10 adds `build-company-candidates` for deterministic employer canonicalization, auditable alias output, company quality scoring, and initial noindex/indexable data-readiness decisions. The fixture command writes `data/normalized/employers.jsonl`, `data/normalized/employer_aliases.jsonl`, and `data/normalized/company_page_candidates.jsonl`, all ignored as generated local output. Methodology lives in `docs/EMPLOYER_CANONICALIZATION.md`.
+
+## M25 Data Freshness CLI
+
+Run:
+
+```bash
+pnpm data:freshness
+```
+
+The command reads `data/source_manifest.json` and reports local official-source inventory health:
+
+- manifest update date and age
+- total and required source count
+- required fixture coverage
+- latest fiscal year represented in the manifest
+- latest Visa Bulletin fixture month
+- missing required fixture files
+
+Local fixture mode does not require downloaded production files to exist. Missing downloaded files are reported as warnings, not failures, so development remains unblocked without network or production storage.
