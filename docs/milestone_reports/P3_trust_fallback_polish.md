@@ -22,6 +22,7 @@ Completed, committed, pushed, and production-deployed.
 - Added tests for footer quick actions, source trust sections, disclaimer checklist, and 404 recovery links.
 - After production smoke testing, removed stale dynamic company sample links from public navigation and changed the company-signal example CTA back to the company directory.
 - Made the company-pages sitemap return no company URLs in production database mode until the production import contains indexable company rows, avoiding fixture-only URLs.
+- Kept the company-signal methodology example on local fixture data so the public method page does not wait on production database availability.
 
 ## Files changed
 
