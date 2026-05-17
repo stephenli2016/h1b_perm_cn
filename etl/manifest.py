@@ -8,7 +8,7 @@ from typing import Any
 from urllib.parse import urlparse
 
 
-ALLOWED_FILE_TYPES = {"csv", "html", "json", "pdf", "xlsx", "zip"}
+ALLOWED_FILE_TYPES = {"csv", "html", "json", "pdf", "txt", "xlsx", "zip"}
 REQUIRED_SOURCE_FIELDS = {
     "id",
     "source_name",

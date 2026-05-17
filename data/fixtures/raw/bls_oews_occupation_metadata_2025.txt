@@ -1,0 +1,3 @@
+occupation_code	occupation_text	display_level	selectable	sort_sequence
+15-1252	Software Developers	6	T	151252
+15-2051	Data Scientists	6	T	152051

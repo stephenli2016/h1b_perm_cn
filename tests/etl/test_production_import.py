@@ -27,8 +27,13 @@ class ProductionImportPackageTests(unittest.TestCase):
             self.assertTrue((output_dir / "production_import_report.md").exists())
             self.assertGreater(package.table_counts["employers"], 0)
             self.assertGreater(package.table_counts["h1b_lca_records"], 0)
+            self.assertGreater(package.table_counts["h1b_lca_worksite_records"], 0)
+            self.assertGreater(package.table_counts["h1b_lca_appendix_a_records"], 0)
             self.assertGreater(package.table_counts["perm_records"], 0)
+            self.assertGreater(package.table_counts["pwd_case_records"], 0)
             self.assertGreater(package.table_counts["visa_bulletin_months"], 0)
+            self.assertGreater(package.table_counts["bls_oews_occupations"], 0)
+            self.assertGreater(package.table_counts["bls_oews_areas"], 0)
 
             with (output_dir / "csv" / "h1b_lca_records.csv").open(
                 "r",
@@ -43,6 +48,8 @@ class ProductionImportPackageTests(unittest.TestCase):
 
             load_sql = (output_dir / "load_order.sql").read_text(encoding="utf-8")
             self.assertIn("\\copy public.locations", load_sql)
+            self.assertIn("\\copy public.pwd_case_records", load_sql)
+            self.assertIn("\\copy public.bls_oews_areas", load_sql)
             self.assertIn("\\copy public.company_page_metrics", load_sql)
 
 
@@ -126,6 +133,43 @@ def _write_minimal_normalized_inputs(normalized_dir: Path) -> None:
         ],
     )
     _write_jsonl(
+        normalized_dir / "h1b_lca_worksite_records.jsonl.gz",
+        [
+            {
+                "source_file_id": "oflc_lca_worksites_fy2026_q2",
+                "source_record_id": "I-200-26001-000001:1",
+                "source_record_fingerprint": "lca-worksite-fingerprint",
+                "case_number": "I-200-26001-000001",
+                "fiscal_year": 2026,
+                "worksite_sequence": 1,
+                "workers": 1,
+                "secondary_entity": False,
+                "secondary_entity_name": None,
+                "worksite_city": "Seattle",
+                "worksite_county": "King",
+                "worksite_state": "WA",
+                "worksite_postal_code": "98101",
+                "raw_record_json": {"WORKSITE_CITY": "Seattle"},
+            }
+        ],
+    )
+    _write_jsonl(
+        normalized_dir / "h1b_lca_appendix_a_records.jsonl.gz",
+        [
+            {
+                "source_file_id": "oflc_lca_appendix_a_fy2026_q2",
+                "source_record_id": "I-200-26001-000001:a",
+                "source_record_fingerprint": "lca-appendix-fingerprint",
+                "case_number": "I-200-26001-000001",
+                "fiscal_year": 2026,
+                "exempt_worker_count": 0,
+                "h1b_dependent": False,
+                "willful_violator": False,
+                "raw_record_json": {"H1B_DEPENDENT": "N"},
+            }
+        ],
+    )
+    _write_jsonl(
         normalized_dir / "perm_records.jsonl.gz",
         [
             {
@@ -172,6 +216,42 @@ def _write_minimal_normalized_inputs(normalized_dir: Path) -> None:
                 "wage_level_4": 150000,
                 "wage_unit": "Year",
                 "raw_record_json": {"AREA_NAME": "Seattle-Tacoma-Bellevue WA"},
+            }
+        ],
+    )
+    _write_jsonl(
+        normalized_dir / "pwd_case_records.jsonl.gz",
+        [
+            {
+                "source_file_id": "oflc_pwd_fy2026_q2",
+                "source_record_id": "P-100-26001-000001",
+                "source_record_fingerprint": "pwd-case-fingerprint",
+                "case_number": "P-100-26001-000001",
+                "case_status": "Determination Issued",
+                "visa_class": "PERM",
+                "raw_employer_name": "ACME ANALYTICS LLC",
+                "normalized_employer_name": "acme analytics",
+                "fiscal_year": 2026,
+                "naics_code": "541511",
+                "job_title": "Software Engineer",
+                "soc_code": "15-1252",
+                "soc_title": "Software Developers",
+                "worksite_city": "Seattle",
+                "worksite_county": "King",
+                "worksite_state": "WA",
+                "worksite_postal_code": "98101",
+                "pwd_wage_rate": 100000,
+                "pwd_unit": "Year",
+                "annualized_pwd_wage": 100000,
+                "pwd_wage_level": "II",
+                "pwd_wage_source": "OES",
+                "bls_area": "Seattle-Tacoma-Bellevue WA",
+                "required_education_level": "Bachelor's",
+                "required_experience_months": 24,
+                "received_date": "2026-01-01",
+                "determination_date": "2026-01-05",
+                "expiration_date": "2026-06-30",
+                "raw_record_json": {"WORKSITE_CITY": "Seattle"},
             }
         ],
     )
@@ -230,6 +310,41 @@ def _write_minimal_normalized_inputs(normalized_dir: Path) -> None:
                 "month_key": "2026-06",
                 "employment_based_chart": "final_action",
                 "raw_text": "For employment-based filings use Final Action Dates.",
+            }
+        ],
+    )
+    _write_jsonl(
+        normalized_dir / "bls_oews_occupations.jsonl.gz",
+        [
+            {
+                "source_file_id": "bls_oews_occupation_metadata_2025",
+                "source_record_id": "15-1252",
+                "source_record_fingerprint": "bls-occ-fingerprint",
+                "release_year": 2025,
+                "occupation_code": "15-1252",
+                "occupation_name": "Software Developers",
+                "display_level": 1,
+                "selectable": True,
+                "sort_sequence": 1,
+                "raw_record_json": {"OCCUPATION_CODE": "15-1252"},
+            }
+        ],
+    )
+    _write_jsonl(
+        normalized_dir / "bls_oews_areas.jsonl.gz",
+        [
+            {
+                "source_file_id": "bls_oews_area_metadata_2025",
+                "source_record_id": "42660",
+                "source_record_fingerprint": "bls-area-fingerprint",
+                "release_year": 2025,
+                "area_code": "42660",
+                "area_name": "Seattle-Tacoma-Bellevue WA",
+                "area_type_code": "M",
+                "display_level": 1,
+                "selectable": True,
+                "sort_sequence": 1,
+                "raw_record_json": {"AREA_CODE": "42660"},
             }
         ],
     )

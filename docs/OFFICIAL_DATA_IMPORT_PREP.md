@@ -33,9 +33,19 @@ does not currently have a free Supabase project slot for a dedicated production
 database. Until that changes, prepare data locally and keep Vercel in
 `LOCAL_DATA_MODE=fixture` with `PRELAUNCH_NOINDEX=true`.
 
-As of the latest local run, all 42 manifest sources have been downloaded from
-official `.gov` URLs into `data/raw/`. These raw files are intentionally
-gitignored.
+As of the latest local run, all 106 manifest sources have been downloaded from
+official URLs into `data/raw/`. These raw files are intentionally gitignored.
+The manifest now covers the seven highest-priority enrichment gaps requested
+before Supabase import:
+
+- USCIS H-1B Employer Data Hub official CSVs available from FY2020-FY2023, with
+  FY2024/FY2025 documented as not yet available from the official archive.
+- DOL PWD case disclosure files in a separate `pwd_case_records` table.
+- DOL LCA Worksites and Appendix A supplemental files.
+- Deeper PERM/PWD requirement fields from newer and older ETA-9089 layouts.
+- Department of State Visa Bulletin history from 2024-07 through 2026-06.
+- USCIS adjustment-of-status filing chart history from 2024-07 through 2026-06.
+- BLS OEWS occupation and area metadata for official SOC/area labels.
 
 ## Local Preparation Commands
 
@@ -69,8 +79,12 @@ For production data, use the compressed production parse scripts:
 
 ```bash
 pnpm production:data:parse:lca
+pnpm production:data:parse:lca-worksites
+pnpm production:data:parse:lca-appendix-a
 pnpm production:data:parse:perm
 pnpm production:data:parse:pwd
+pnpm production:data:parse:pwd-cases
+pnpm production:data:parse:bls-oews
 pnpm production:data:parse:uscis
 python3 -m etl.cli parse-visa-bulletin-manifest --manifest data/source_manifest.json --output data/normalized/visa_bulletin_dates.jsonl
 python3 -m etl.cli parse-uscis-filing-chart-manifest --manifest data/source_manifest.json --output data/normalized/uscis_filing_charts.jsonl
@@ -110,37 +124,47 @@ The generated CSV package covers:
 - `employers`
 - `employer_aliases`
 - `h1b_lca_records`
+- `h1b_lca_worksite_records`
+- `h1b_lca_appendix_a_records`
 - `perm_records`
 - `pwd_records`
+- `pwd_case_records`
 - `uscis_h1b_employer_records`
 - `visa_bulletin_months`
 - `visa_bulletin_dates`
+- `bls_oews_occupations`
+- `bls_oews_areas`
 - `company_page_metrics`
 
 Latest generated row counts:
 
 | Table                        |      Rows |
 | ---------------------------- | --------: |
-| `locations`                  |    65,644 |
-| `source_files`               |        42 |
+| `locations`                  |   143,022 |
+| `source_files`               |       106 |
 | `employers`                  |   236,666 |
 | `employer_aliases`           |   415,179 |
 | `h1b_lca_records`            | 3,464,585 |
+| `h1b_lca_worksite_records`   | 4,428,017 |
+| `h1b_lca_appendix_a_records` |     2,824 |
 | `perm_records`               |   650,761 |
 | `pwd_records`                |   770,620 |
+| `pwd_case_records`           | 1,187,535 |
 | `uscis_h1b_employer_records` |   205,053 |
-| `visa_bulletin_months`       |         3 |
-| `visa_bulletin_dates`        |        18 |
+| `visa_bulletin_months`       |        24 |
+| `visa_bulletin_dates`        |       144 |
+| `bls_oews_occupations`       |     1,104 |
+| `bls_oews_areas`             |       583 |
 | `company_page_metrics`       |     2,000 |
 
 The package intentionally does not auto-run against production. Review the
 report, then run `load_order.sql` only after a dedicated Supabase/Postgres
 project exists and the schema migration has been applied.
 
-`pwd_records` currently contains FLAG wage lookup rows from the official
-2025-2026 wage ZIP. The DOL PWD case disclosure Excel is downloaded and
-fingerprinted as an official source file, but it is not loaded into
-`pwd_records` because that table is a wage lookup table, not a PWD case table.
+`pwd_records` contains FLAG wage lookup rows from the official 2025-2026 wage
+ZIP. DOL PWD case disclosure files are loaded separately into
+`pwd_case_records` because wage lookup rows and PWD case determinations answer
+different product questions.
 
 ## Data Quality Gates Before Public Launch
 
@@ -160,11 +184,12 @@ fingerprinted as an official source file, but it is not loaded into
 
 No manual export is required for the current local package. The manifest uses
 official USCIS H-1B Employer Data Hub CSV URLs for FY2020-FY2023. The official
-USCIS archive page available on 2026-05-17 lists CSV files through FY2023; FY2024
-and FY2025 direct CSV URLs returned 404 during verification. When USCIS publishes
-new official annual CSV files, add them to `data/source_manifest.json`, download
-them into `data/raw/`, fingerprint them through the ETL log, and rerun the
-production parse/import flow.
+USCIS archive page reviewed on 2026-05-17 lists downloadable Employer Data Hub
+CSV files through FY2023; FY2024/FY2025 are not added because no official annual
+CSV file was available from that archive. When USCIS publishes new official
+annual CSV files, add them to `data/source_manifest.json`, download them into
+`data/raw/`, fingerprint them through the ETL log, and rerun the production
+parse/import flow.
 
 ## Remaining Launch Blocker
 

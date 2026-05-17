@@ -3,9 +3,10 @@ from __future__ import annotations
 import argparse
 import gzip
 import json
+import re
 from dataclasses import asdict
 from pathlib import Path
-from typing import Sequence
+from typing import Iterable, Sequence
 
 from etl.downloader import download_manifest
 from etl.employer_canonicalization import (
@@ -16,8 +17,17 @@ from etl.employer_canonicalization import (
 )
 from etl.fingerprint import fingerprint_file
 from etl.manifest import ManifestError, SourceEntry, load_manifest
+from etl.parsers.bls_oews import (
+    iter_bls_oews_area_records,
+    iter_bls_oews_occupation_records,
+)
 from etl.parsers.oflc_lca import parse_lca_file, write_lca_jsonl
+from etl.parsers.oflc_lca_supplemental import (
+    iter_lca_appendix_a_records,
+    iter_lca_worksite_records,
+)
 from etl.parsers.oflc_perm import parse_perm_file, write_perm_jsonl
+from etl.parsers.oflc_pwd_case import iter_pwd_case_records
 from etl.parsers.oflc_pwd import parse_pwd_file, write_pwd_jsonl
 from etl.parsers.uscis_h1b_employer import (
     parse_uscis_h1b_employer_file,
@@ -63,6 +73,30 @@ def main(argv: Sequence[str] | None = None) -> int:
     parse_lca_manifest_parser.add_argument("--fixtures-only", action="store_true")
     parse_lca_manifest_parser.add_argument("--omit-raw-record-json", action="store_true")
 
+    parse_lca_worksites_manifest_parser = subparsers.add_parser(
+        "parse-lca-worksites-manifest"
+    )
+    parse_lca_worksites_manifest_parser.add_argument("--manifest", required=True)
+    parse_lca_worksites_manifest_parser.add_argument("--repo-root", default=".")
+    parse_lca_worksites_manifest_parser.add_argument("--output", required=True)
+    parse_lca_worksites_manifest_parser.add_argument("--fixtures-only", action="store_true")
+    parse_lca_worksites_manifest_parser.add_argument(
+        "--omit-raw-record-json",
+        action="store_true",
+    )
+
+    parse_lca_appendix_manifest_parser = subparsers.add_parser(
+        "parse-lca-appendix-a-manifest"
+    )
+    parse_lca_appendix_manifest_parser.add_argument("--manifest", required=True)
+    parse_lca_appendix_manifest_parser.add_argument("--repo-root", default=".")
+    parse_lca_appendix_manifest_parser.add_argument("--output", required=True)
+    parse_lca_appendix_manifest_parser.add_argument("--fixtures-only", action="store_true")
+    parse_lca_appendix_manifest_parser.add_argument(
+        "--omit-raw-record-json",
+        action="store_true",
+    )
+
     parse_perm_parser = subparsers.add_parser("parse-perm")
     parse_perm_parser.add_argument("--input", required=True)
     parse_perm_parser.add_argument("--source-id", required=True)
@@ -89,6 +123,43 @@ def main(argv: Sequence[str] | None = None) -> int:
     parse_pwd_manifest_parser.add_argument("--output", required=True)
     parse_pwd_manifest_parser.add_argument("--fixtures-only", action="store_true")
     parse_pwd_manifest_parser.add_argument("--omit-raw-record-json", action="store_true")
+
+    parse_pwd_case_manifest_parser = subparsers.add_parser("parse-pwd-case-manifest")
+    parse_pwd_case_manifest_parser.add_argument("--manifest", required=True)
+    parse_pwd_case_manifest_parser.add_argument("--repo-root", default=".")
+    parse_pwd_case_manifest_parser.add_argument("--output", required=True)
+    parse_pwd_case_manifest_parser.add_argument("--fixtures-only", action="store_true")
+    parse_pwd_case_manifest_parser.add_argument("--omit-raw-record-json", action="store_true")
+
+    parse_bls_oews_occupations_manifest_parser = subparsers.add_parser(
+        "parse-bls-oews-occupations-manifest"
+    )
+    parse_bls_oews_occupations_manifest_parser.add_argument("--manifest", required=True)
+    parse_bls_oews_occupations_manifest_parser.add_argument("--repo-root", default=".")
+    parse_bls_oews_occupations_manifest_parser.add_argument("--output", required=True)
+    parse_bls_oews_occupations_manifest_parser.add_argument(
+        "--fixtures-only",
+        action="store_true",
+    )
+    parse_bls_oews_occupations_manifest_parser.add_argument(
+        "--omit-raw-record-json",
+        action="store_true",
+    )
+
+    parse_bls_oews_areas_manifest_parser = subparsers.add_parser(
+        "parse-bls-oews-areas-manifest"
+    )
+    parse_bls_oews_areas_manifest_parser.add_argument("--manifest", required=True)
+    parse_bls_oews_areas_manifest_parser.add_argument("--repo-root", default=".")
+    parse_bls_oews_areas_manifest_parser.add_argument("--output", required=True)
+    parse_bls_oews_areas_manifest_parser.add_argument(
+        "--fixtures-only",
+        action="store_true",
+    )
+    parse_bls_oews_areas_manifest_parser.add_argument(
+        "--omit-raw-record-json",
+        action="store_true",
+    )
 
     parse_uscis_h1b_parser = subparsers.add_parser("parse-uscis-h1b")
     parse_uscis_h1b_parser.add_argument("--input", required=True)
@@ -306,6 +377,114 @@ def main(argv: Sequence[str] | None = None) -> int:
             )
             return 0
 
+        if args.command == "parse-lca-worksites-manifest":
+            manifest = load_manifest(args.manifest)
+            repo_root = Path(args.repo_root)
+            sources = [
+                source
+                for source in manifest.sources
+                if source.parser_name == "oflc_lca_worksites"
+            ]
+            output_path = Path(args.output)
+            _reset_jsonl_output(output_path)
+            source_summaries = []
+            total_seen = 0
+            total_written = 0
+            total_duplicates = 0
+            for source in sources:
+                input_path = _source_input_path(source, repo_root, args.fixtures_only)
+                summary = _append_unique_dataclass_jsonl(
+                    output_path,
+                    iter_lca_worksite_records(
+                        input_path,
+                        source_file_id=source.id,
+                        fiscal_year=source.fiscal_year or 0,
+                    ),
+                    omit_raw_record_json=args.omit_raw_record_json,
+                )
+                summary.update(
+                    {
+                        "source_file_id": source.id,
+                        "input_path": str(input_path),
+                    }
+                )
+                source_summaries.append(summary)
+                total_seen += int(summary["records_seen"])
+                total_written += int(summary["records_written"])
+                total_duplicates += int(summary["duplicate_records"])
+
+            print(
+                json.dumps(
+                    {
+                        "parser_name": "oflc_lca_worksites",
+                        "source_count": len(sources),
+                        "output": args.output,
+                        "records_seen": total_seen,
+                        "records_inserted": total_written,
+                        "duplicate_records": total_duplicates,
+                        "records_written": total_written,
+                        "sources": source_summaries,
+                    },
+                    ensure_ascii=False,
+                    indent=2,
+                )
+            )
+            return 0
+
+        if args.command == "parse-lca-appendix-a-manifest":
+            manifest = load_manifest(args.manifest)
+            repo_root = Path(args.repo_root)
+            sources = [
+                source
+                for source in manifest.sources
+                if source.parser_name == "oflc_lca_appendix_a"
+            ]
+            output_path = Path(args.output)
+            _reset_jsonl_output(output_path)
+            source_summaries = []
+            total_seen = 0
+            total_written = 0
+            total_duplicates = 0
+            for source in sources:
+                input_path = _source_input_path(source, repo_root, args.fixtures_only)
+                summary = _append_unique_dataclass_jsonl(
+                    output_path,
+                    iter_lca_appendix_a_records(
+                        input_path,
+                        source_file_id=source.id,
+                        fiscal_year=source.fiscal_year or 0,
+                    ),
+                    omit_raw_record_json=args.omit_raw_record_json,
+                )
+                summary.update(
+                    {
+                        "source_file_id": source.id,
+                        "input_path": str(input_path),
+                    }
+                )
+                source_summaries.append(summary)
+                total_seen += int(summary["records_seen"])
+                total_written += int(summary["records_written"])
+                total_duplicates += int(summary["duplicate_records"])
+
+            print(
+                json.dumps(
+                    {
+                        "parser_name": "oflc_lca_appendix_a",
+                        "source_count": len(sources),
+                        "output": args.output,
+                        "records_seen": total_seen,
+                        "records_inserted": total_written,
+                        "duplicate_records": total_duplicates,
+                        "records_written": total_written,
+                        "sources": source_summaries,
+                    },
+                    ensure_ascii=False,
+                    indent=2,
+                )
+            )
+            return 0
+
         if args.command == "parse-perm":
             result = parse_perm_file(
                 args.input,
@@ -470,6 +649,158 @@ def main(argv: Sequence[str] | None = None) -> int:
             )
             return 0
 
+        if args.command == "parse-pwd-case-manifest":
+            manifest = load_manifest(args.manifest)
+            repo_root = Path(args.repo_root)
+            sources = [
+                source
+                for source in manifest.sources
+                if source.parser_name == "oflc_pwd_case_disclosure"
+            ]
+            output_path = Path(args.output)
+            _reset_jsonl_output(output_path)
+            source_summaries = []
+            total_seen = 0
+            total_written = 0
+            total_duplicates = 0
+            for source in sources:
+                input_path = _source_input_path(source, repo_root, args.fixtures_only)
+                summary = _append_unique_dataclass_jsonl(
+                    output_path,
+                    iter_pwd_case_records(
+                        input_path,
+                        source_file_id=source.id,
+                        fiscal_year=source.fiscal_year,
+                    ),
+                    omit_raw_record_json=args.omit_raw_record_json,
+                )
+                summary.update(
+                    {
+                        "source_file_id": source.id,
+                        "input_path": str(input_path),
+                    }
+                )
+                source_summaries.append(summary)
+                total_seen += int(summary["records_seen"])
+                total_written += int(summary["records_written"])
+                total_duplicates += int(summary["duplicate_records"])
+
+            print(
+                json.dumps(
+                    {
+                        "parser_name": "oflc_pwd_case_disclosure",
+                        "source_count": len(sources),
+                        "output": args.output,
+                        "records_seen": total_seen,
+                        "records_inserted": total_written,
+                        "duplicate_records": total_duplicates,
+                        "records_written": total_written,
+                        "sources": source_summaries,
+                    },
+                    ensure_ascii=False,
+                    indent=2,
+                )
+            )
+            return 0
+
+        if args.command == "parse-bls-oews-occupations-manifest":
+            manifest = load_manifest(args.manifest)
+            repo_root = Path(args.repo_root)
+            sources = [
+                source
+                for source in manifest.sources
+                if source.parser_name == "bls_oews_occupation_metadata"
+            ]
+            output_path = Path(args.output)
+            _reset_jsonl_output(output_path)
+            source_summaries = []
+            total_seen = 0
+            total_written = 0
+            total_duplicates = 0
+            for source in sources:
+                input_path = _source_input_path(source, repo_root, args.fixtures_only)
+                summary = _append_unique_dataclass_jsonl(
+                    output_path,
+                    iter_bls_oews_occupation_records(
+                        input_path,
+                        source_file_id=source.id,
+                        release_year=source.fiscal_year or 0,
+                    ),
+                    omit_raw_record_json=args.omit_raw_record_json,
+                )
+                summary.update({"source_file_id": source.id, "input_path": str(input_path)})
+                source_summaries.append(summary)
+                total_seen += int(summary["records_seen"])
+                total_written += int(summary["records_written"])
+                total_duplicates += int(summary["duplicate_records"])
+
+            print(
+                json.dumps(
+                    {
+                        "parser_name": "bls_oews_occupation_metadata",
+                        "source_count": len(sources),
+                        "output": args.output,
+                        "records_seen": total_seen,
+                        "records_inserted": total_written,
+                        "duplicate_records": total_duplicates,
+                        "records_written": total_written,
+                        "sources": source_summaries,
+                    },
+                    ensure_ascii=False,
+                    indent=2,
+                )
+            )
+            return 0
+
+        if args.command == "parse-bls-oews-areas-manifest":
+            manifest = load_manifest(args.manifest)
+            repo_root = Path(args.repo_root)
+            sources = [
+                source
+                for source in manifest.sources
+                if source.parser_name == "bls_oews_area_metadata"
+            ]
+            output_path = Path(args.output)
+            _reset_jsonl_output(output_path)
+            source_summaries = []
+            total_seen = 0
+            total_written = 0
+            total_duplicates = 0
+            for source in sources:
+                input_path = _source_input_path(source, repo_root, args.fixtures_only)
+                summary = _append_unique_dataclass_jsonl(
+                    output_path,
+                    iter_bls_oews_area_records(
+                        input_path,
+                        source_file_id=source.id,
+                        release_year=source.fiscal_year or 0,
+                    ),
+                    omit_raw_record_json=args.omit_raw_record_json,
+                )
+                summary.update({"source_file_id": source.id, "input_path": str(input_path)})
+                source_summaries.append(summary)
+                total_seen += int(summary["records_seen"])
+                total_written += int(summary["records_written"])
+                total_duplicates += int(summary["duplicate_records"])
+
+            print(
+                json.dumps(
+                    {
+                        "parser_name": "bls_oews_area_metadata",
+                        "source_count": len(sources),
+                        "output": args.output,
+                        "records_seen": total_seen,
+                        "records_inserted": total_written,
+                        "duplicate_records": total_duplicates,
+                        "records_written": total_written,
+                        "sources": source_summaries,
+                    },
+                    ensure_ascii=False,
+                    indent=2,
+                )
+            )
+            return 0
+
         if args.command == "parse-uscis-h1b":
             result = parse_uscis_h1b_employer_file(
                 args.input,
@@ -596,6 +927,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                     input_path,
                     source_file_id=source.id,
                     source_url=source.official_url,
+                    month_key=_month_key_from_source_id(source.id),
                 )
                 parse_results.append(result)
 
@@ -668,6 +1000,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                 result = parse_uscis_filing_chart_file(
                     input_path,
                     source_file_id=source.id,
+                    month_key=_month_key_from_source_id(source.id),
                 )
                 parse_results.append(result)
 
@@ -798,6 +1131,13 @@ def _source_input_path(source: SourceEntry, repo_root: Path, fixtures_only: bool
     return downloaded_path
 
 
+def _month_key_from_source_id(source_id: str) -> str | None:
+    match = re.search(r"_(\d{4})_(\d{2})$", source_id)
+    if not match:
+        return None
+    return f"{match.group(1)}-{match.group(2)}"
+
+
 def _reset_jsonl_output(path: Path) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     with _open_jsonl_text(path, "wt"):
@@ -822,6 +1162,42 @@ def _append_dataclass_jsonl(
             count += 1
 
     return count
+
+
+def _append_unique_dataclass_jsonl(
+    path: Path,
+    records: Iterable[object],
+    *,
+    omit_raw_record_json: bool = False,
+) -> dict[str, int]:
+    seen_fingerprints: set[str] = set()
+    records_seen = 0
+    duplicate_records = 0
+    records_written = 0
+
+    with _open_jsonl_text(path, "at") as handle:
+        for record in records:
+            records_seen += 1
+            fingerprint = getattr(record, "source_record_fingerprint", None)
+            if fingerprint:
+                if fingerprint in seen_fingerprints:
+                    duplicate_records += 1
+                    continue
+                seen_fingerprints.add(fingerprint)
+
+            payload = asdict(record)
+            if omit_raw_record_json and "raw_record_json" in payload:
+                payload["raw_record_json"] = None
+            handle.write(json.dumps(payload, ensure_ascii=False, sort_keys=True))
+            handle.write("\n")
+            records_written += 1
+
+    return {
+        "records_seen": records_seen,
+        "records_inserted": records_written,
+        "duplicate_records": duplicate_records,
+        "records_written": records_written,
+    }
 
 
 def _open_jsonl_text(path: Path, mode: str):

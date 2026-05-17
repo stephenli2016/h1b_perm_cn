@@ -188,6 +188,56 @@ Interpretation boundary:
 
 LCA records are labor condition application records. They are signals, not H-1B petition approvals, hiring proof, or future sponsorship promises.
 
+### `h1b_lca_worksite_records`
+
+Supplemental DOL LCA worksite rows from the Worksites disclosure files.
+
+Important columns:
+
+- `source_file_id`
+- `location_id`
+- `source_record_id`
+- `source_record_fingerprint`
+- `case_number`
+- `fiscal_year`
+- `worksite_sequence`
+- `workers`
+- `secondary_entity`
+- `secondary_entity_name`
+- `worksite_city`
+- `worksite_county`
+- `worksite_state`
+- `worksite_postal_code`
+- `raw_record_json`
+
+Indexes:
+
+- `idx_h1b_lca_worksite_case_number`
+- `idx_h1b_lca_worksite_year`
+- `idx_h1b_lca_worksite_city_state`
+
+### `h1b_lca_appendix_a_records`
+
+Supplemental DOL LCA Appendix A rows for H-1B dependent/willful violator and
+exempt-worker context.
+
+Important columns:
+
+- `source_file_id`
+- `source_record_id`
+- `source_record_fingerprint`
+- `case_number`
+- `fiscal_year`
+- `exempt_worker_count`
+- `h1b_dependent`
+- `willful_violator`
+- `raw_record_json`
+
+Indexes:
+
+- `idx_h1b_lca_appendix_case_number`
+- `idx_h1b_lca_appendix_year`
+
 ### `perm_records`
 
 Normalized DOL OFLC PERM disclosure records.
@@ -214,6 +264,20 @@ Important columns:
 - `priority_date`
 - `received_date`
 - `decision_date`
+- `pwd_case_number`
+- `pwd_soc_code`
+- `pwd_soc_title`
+- `pwd_wage`
+- `pwd_unit`
+- `annualized_pwd_wage`
+- `pwd_wage_level`
+- `minimum_education`
+- `major_field_of_study`
+- `training_months`
+- `experience_months`
+- `alternate_education`
+- `alternate_experience_months`
+- `foreign_language_required`
 - `raw_record_json`
 
 Indexes:
@@ -261,6 +325,66 @@ Indexes:
 - `idx_pwd_soc_location_year`
 - `idx_pwd_effective_year`
 - `idx_pwd_city_state`
+
+### `pwd_case_records`
+
+Official DOL PWD case disclosure records. This is separate from
+`pwd_records`, which is the reusable FLAG wage lookup table.
+
+Important columns:
+
+- `source_file_id`
+- `employer_id`
+- `location_id`
+- `source_record_id`
+- `source_record_fingerprint`
+- `case_number`
+- `case_status`
+- `visa_class`
+- `raw_employer_name`
+- `fiscal_year`
+- `naics_code`
+- `job_title`
+- `soc_code`
+- `soc_title`
+- `worksite_city`
+- `worksite_county`
+- `worksite_state`
+- `worksite_postal_code`
+- `other_worksite_location`
+- `wage_source_requested`
+- `pwd_wage_rate`
+- `pwd_unit`
+- `annualized_pwd_wage`
+- `pwd_wage_level`
+- `pwd_wage_source`
+- `bls_area`
+- `o_net_code`
+- `o_net_title`
+- `required_education_level`
+- `required_education_major`
+- `required_training_months`
+- `required_experience_months`
+- `required_occupation`
+- `alternative_requirements`
+- `alt_education_level`
+- `alt_experience_months`
+- `special_skills`
+- `foreign_language_required`
+- `travel_required`
+- `received_date`
+- `determination_date`
+- `expiration_date`
+- `raw_record_json`
+
+Indexes:
+
+- `idx_pwd_case_source_record_id`
+- `idx_pwd_case_employer_year`
+- `idx_pwd_case_fiscal_year`
+- `idx_pwd_case_soc_code`
+- `idx_pwd_case_city_state`
+- `idx_pwd_case_status`
 
 ### `uscis_h1b_employer_records`
 
@@ -330,6 +454,51 @@ Important columns:
 Index:
 
 - `idx_visa_bulletin_dates_lookup`
+
+### `bls_oews_occupations`
+
+Official BLS OEWS occupation metadata used to label and validate SOC/OEWS
+occupation codes.
+
+Important columns:
+
+- `source_file_id`
+- `source_record_id`
+- `source_record_fingerprint`
+- `release_year`
+- `occupation_code`
+- `occupation_name`
+- `display_level`
+- `selectable`
+- `sort_sequence`
+- `raw_record_json`
+
+Index:
+
+- `idx_bls_oews_occupation_code`
+
+### `bls_oews_areas`
+
+Official BLS OEWS area metadata used to label and validate wage areas.
+
+Important columns:
+
+- `source_file_id`
+- `source_record_id`
+- `source_record_fingerprint`
+- `release_year`
+- `area_code`
+- `area_name`
+- `area_type_code`
+- `display_level`
+- `selectable`
+- `sort_sequence`
+- `raw_record_json`
+
+Indexes:
+
+- `idx_bls_oews_area_code`
+- `idx_bls_oews_area_name`
 
 ### `company_page_metrics`
 

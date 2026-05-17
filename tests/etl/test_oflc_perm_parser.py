@@ -112,6 +112,15 @@ class OflcPermParserTests(unittest.TestCase):
                 "JOB_TITLE": "Operations Supervisor",
                 "PRIMARY_WORKSITE_CITY": "Gainesville",
                 "PRIMARY_WORKSITE_STATE": "GA",
+                "JOB_OPP_PWD_NUMBER": "P-100-24330-000001",
+                "PWD_WAGE_RATE": "53123",
+                "PWD_UNIT_OF_PAY": "Year",
+                "PWD_OES_WAGE_LEVEL": "Level II",
+                "REQUIRED_EDUCATION_LEVEL": "Bachelor's",
+                "REQUIRED_EXPERIENCE_MONTHS": "24",
+                "ALT_EDUCATION_LEVEL": "Master's",
+                "ALT_EXPERIENCE_MONTHS": "12",
+                "OTHER_REQ_JOB_FOREIGN_LANGUAGE": "N",
                 "JOB_OPP_WAGE_FROM": "72578",
                 "JOB_OPP_WAGE_TO": "90954",
                 "JOB_OPP_WAGE_PER": "Year",
@@ -130,6 +139,14 @@ class OflcPermParserTests(unittest.TestCase):
         self.assertEqual(record.worksite_state, "GA")
         self.assertEqual(record.wage_offer_from, 72578)
         self.assertEqual(record.annualized_wage_offer_to, 90954)
+        self.assertEqual(record.pwd_case_number, "P-100-24330-000001")
+        self.assertEqual(record.pwd_wage, 53123)
+        self.assertEqual(record.annualized_pwd_wage, 53123)
+        self.assertEqual(record.pwd_wage_level, "Level II")
+        self.assertEqual(record.minimum_education, "Bachelor's")
+        self.assertEqual(record.experience_months, 24)
+        self.assertEqual(record.alternate_experience_months, 12)
+        self.assertFalse(record.foreign_language_required)
 
     def test_deduplicates_by_source_record_fingerprint(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:

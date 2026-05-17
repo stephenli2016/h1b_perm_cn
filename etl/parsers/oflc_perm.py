@@ -14,6 +14,7 @@ from etl.parsers.oflc_lca import (
     normalize_employer_name,
     normalize_state,
     normalize_wage_unit,
+    parse_bool,
     parse_date,
     parse_number,
     read_tabular_rows,
@@ -131,6 +132,68 @@ FIELD_ALIASES = {
         "FOREIGN_WORKER_INFO_BIRTH_COUNTRY",
         "BENEFICIARY_BIRTH_COUNTRY",
     ],
+    "pwd_case_number": [
+        "JOB_OPP_PWD_NUMBER",
+        "JOB OPP PWD NUMBER",
+        "PWD_CASE_NUMBER",
+        "PWD CASE NUMBER",
+    ],
+    "pwd_soc_code": ["PWD_SOC_CODE", "PWD SOC CODE"],
+    "pwd_soc_title": ["PWD_SOC_TITLE", "PWD SOC TITLE"],
+    "pwd_wage": [
+        "PWD_WAGE_RATE",
+        "PWD WAGE RATE",
+        "PREVAILING_WAGE",
+        "PREVAILING WAGE",
+    ],
+    "pwd_unit": ["PWD_UNIT_OF_PAY", "PWD UNIT OF PAY", "PW_UNIT_OF_PAY"],
+    "pwd_wage_level": [
+        "PWD_OES_WAGE_LEVEL",
+        "PWD OES WAGE LEVEL",
+        "PW_WAGE_LEVEL",
+        "WAGE_LEVEL",
+    ],
+    "minimum_education": [
+        "REQUIRED_EDUCATION_LEVEL",
+        "REQUIRED EDUCATION LEVEL",
+        "MINIMUM_EDUCATION",
+        "MINIMUM EDUCATION",
+    ],
+    "major_field_of_study": [
+        "REQUIRED_EDUCATION_MAJOR",
+        "REQUIRED EDUCATION MAJOR",
+        "MAJOR_FIELD_OF_STUDY",
+        "MAJOR FIELD OF STUDY",
+    ],
+    "training_months": [
+        "REQUIRED_TRAINING_MONTHS",
+        "REQUIRED TRAINING MONTHS",
+        "TRAINING_MONTHS",
+        "TRAINING MONTHS",
+    ],
+    "experience_months": [
+        "REQUIRED_EXPERIENCE_MONTHS",
+        "REQUIRED EXPERIENCE MONTHS",
+        "EXPERIENCE_MONTHS",
+        "EXPERIENCE MONTHS",
+    ],
+    "alternate_education": [
+        "ALT_EDUCATION_LEVEL",
+        "ALT EDUCATION LEVEL",
+        "ALTERNATE_EDUCATION",
+        "ALTERNATE EDUCATION",
+    ],
+    "alternate_experience_months": [
+        "ALT_EXPERIENCE_MONTHS",
+        "ALT EXPERIENCE MONTHS",
+        "ALTERNATE_EXPERIENCE_MONTHS",
+    ],
+    "foreign_language_required": [
+        "OTHER_REQ_JOB_FOREIGN_LANGUAGE",
+        "OTHER REQ JOB FOREIGN LANGUAGE",
+        "SPEC_REQ_FOREIGN_LANG",
+        "SPEC REQ FOREIGN LANG",
+    ],
 }
 
 
@@ -159,6 +222,20 @@ class NormalizedPermRecord:
     decision_date: str | None
     country_of_citizenship: str | None
     country_of_birth: str | None
+    pwd_case_number: str | None
+    pwd_soc_code: str | None
+    pwd_soc_title: str | None
+    pwd_wage: float | None
+    pwd_unit: str | None
+    annualized_pwd_wage: float | None
+    pwd_wage_level: str | None
+    minimum_education: str | None
+    major_field_of_study: str | None
+    training_months: int | None
+    experience_months: int | None
+    alternate_education: str | None
+    alternate_experience_months: int | None
+    foreign_language_required: bool | None
     raw_record_json: dict[str, str | None]
 
 
@@ -236,6 +313,8 @@ def normalize_perm_row(
     wage_from = parse_number(_get(cleaned_row, FIELD_ALIASES["wage_offer_from"]))
     wage_to = parse_number(_get(cleaned_row, FIELD_ALIASES["wage_offer_to"]))
     wage_unit = normalize_wage_unit(_get(cleaned_row, FIELD_ALIASES["wage_unit"]))
+    pwd_wage = parse_number(_get(cleaned_row, FIELD_ALIASES["pwd_wage"]))
+    pwd_unit = normalize_wage_unit(_get(cleaned_row, FIELD_ALIASES["pwd_unit"]))
     priority_date = parse_date(_get(cleaned_row, FIELD_ALIASES["priority_date"]))
     received_date = parse_date(_get(cleaned_row, FIELD_ALIASES["received_date"]))
     decision_date = parse_date(_get(cleaned_row, FIELD_ALIASES["decision_date"]))
@@ -270,6 +349,24 @@ def normalize_perm_row(
             _get(cleaned_row, FIELD_ALIASES["country_of_citizenship"])
         ),
         country_of_birth=normalize_country(_get(cleaned_row, FIELD_ALIASES["country_of_birth"])),
+        pwd_case_number=_get(cleaned_row, FIELD_ALIASES["pwd_case_number"]),
+        pwd_soc_code=_get(cleaned_row, FIELD_ALIASES["pwd_soc_code"]),
+        pwd_soc_title=_get(cleaned_row, FIELD_ALIASES["pwd_soc_title"]),
+        pwd_wage=pwd_wage,
+        pwd_unit=pwd_unit,
+        annualized_pwd_wage=annualize_wage(pwd_wage, pwd_unit),
+        pwd_wage_level=_get(cleaned_row, FIELD_ALIASES["pwd_wage_level"]),
+        minimum_education=_get(cleaned_row, FIELD_ALIASES["minimum_education"]),
+        major_field_of_study=_get(cleaned_row, FIELD_ALIASES["major_field_of_study"]),
+        training_months=parse_int(_get(cleaned_row, FIELD_ALIASES["training_months"])),
+        experience_months=parse_int(_get(cleaned_row, FIELD_ALIASES["experience_months"])),
+        alternate_education=_get(cleaned_row, FIELD_ALIASES["alternate_education"]),
+        alternate_experience_months=parse_int(
+            _get(cleaned_row, FIELD_ALIASES["alternate_experience_months"])
+        ),
+        foreign_language_required=parse_bool(
+            _get(cleaned_row, FIELD_ALIASES["foreign_language_required"])
+        ),
         raw_record_json=sanitized_raw,
     )
 
@@ -332,6 +429,13 @@ def normalize_country(value: object) -> str | None:
         "U.S.A.": "United States",
     }
     return special_names.get(upper, text.title())
+
+
+def parse_int(value: object) -> int | None:
+    parsed = parse_number(value)
+    if parsed is None:
+        return None
+    return int(parsed)
 
 
 def _get(row: dict[str, str | None], candidates: list[str]) -> str | None:

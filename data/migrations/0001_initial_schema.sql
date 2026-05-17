@@ -94,6 +94,40 @@ CREATE TABLE IF NOT EXISTS h1b_lca_records (
   created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE IF NOT EXISTS h1b_lca_worksite_records (
+  id TEXT PRIMARY KEY,
+  source_file_id TEXT NOT NULL REFERENCES source_files(id),
+  location_id TEXT REFERENCES locations(id),
+  source_record_id TEXT NOT NULL,
+  source_record_fingerprint TEXT NOT NULL UNIQUE,
+  case_number TEXT,
+  fiscal_year INTEGER NOT NULL,
+  worksite_sequence INTEGER,
+  workers INTEGER,
+  secondary_entity INTEGER,
+  secondary_entity_name TEXT,
+  worksite_city TEXT,
+  worksite_county TEXT,
+  worksite_state TEXT,
+  worksite_postal_code TEXT,
+  raw_record_json TEXT,
+  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS h1b_lca_appendix_a_records (
+  id TEXT PRIMARY KEY,
+  source_file_id TEXT NOT NULL REFERENCES source_files(id),
+  source_record_id TEXT NOT NULL,
+  source_record_fingerprint TEXT NOT NULL UNIQUE,
+  case_number TEXT,
+  fiscal_year INTEGER NOT NULL,
+  exempt_worker_count INTEGER,
+  h1b_dependent INTEGER,
+  willful_violator INTEGER,
+  raw_record_json TEXT,
+  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
 CREATE TABLE IF NOT EXISTS perm_records (
   id TEXT PRIMARY KEY,
   source_file_id TEXT NOT NULL REFERENCES source_files(id),
@@ -116,6 +150,20 @@ CREATE TABLE IF NOT EXISTS perm_records (
   priority_date TEXT,
   received_date TEXT,
   decision_date TEXT,
+  pwd_case_number TEXT,
+  pwd_soc_code TEXT,
+  pwd_soc_title TEXT,
+  pwd_wage REAL,
+  pwd_unit TEXT,
+  annualized_pwd_wage REAL,
+  pwd_wage_level TEXT,
+  minimum_education TEXT,
+  major_field_of_study TEXT,
+  training_months INTEGER,
+  experience_months INTEGER,
+  alternate_education TEXT,
+  alternate_experience_months INTEGER,
+  foreign_language_required INTEGER,
   raw_record_json TEXT,
   created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
@@ -138,6 +186,54 @@ CREATE TABLE IF NOT EXISTS pwd_records (
   wage_level_3 REAL,
   wage_level_4 REAL,
   wage_unit TEXT NOT NULL,
+  raw_record_json TEXT,
+  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS pwd_case_records (
+  id TEXT PRIMARY KEY,
+  source_file_id TEXT NOT NULL REFERENCES source_files(id),
+  employer_id TEXT REFERENCES employers(id),
+  location_id TEXT REFERENCES locations(id),
+  source_record_id TEXT NOT NULL,
+  source_record_fingerprint TEXT NOT NULL UNIQUE,
+  case_number TEXT,
+  case_status TEXT,
+  visa_class TEXT,
+  raw_employer_name TEXT,
+  fiscal_year INTEGER NOT NULL,
+  naics_code TEXT,
+  job_title TEXT,
+  soc_code TEXT,
+  soc_title TEXT,
+  worksite_city TEXT,
+  worksite_county TEXT,
+  worksite_state TEXT,
+  worksite_postal_code TEXT,
+  other_worksite_location INTEGER,
+  wage_source_requested TEXT,
+  pwd_wage_rate REAL,
+  pwd_unit TEXT,
+  annualized_pwd_wage REAL,
+  pwd_wage_level TEXT,
+  pwd_wage_source TEXT,
+  bls_area TEXT,
+  o_net_code TEXT,
+  o_net_title TEXT,
+  required_education_level TEXT,
+  required_education_major TEXT,
+  required_training_months INTEGER,
+  required_experience_months INTEGER,
+  required_occupation TEXT,
+  alternative_requirements INTEGER,
+  alt_education_level TEXT,
+  alt_experience_months INTEGER,
+  special_skills INTEGER,
+  foreign_language_required INTEGER,
+  travel_required INTEGER,
+  received_date TEXT,
+  determination_date TEXT,
+  expiration_date TEXT,
   raw_record_json TEXT,
   created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
@@ -182,6 +278,37 @@ CREATE TABLE IF NOT EXISTS visa_bulletin_dates (
   cutoff_date TEXT,
   cutoff_status TEXT NOT NULL,
   raw_value TEXT NOT NULL,
+  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS bls_oews_occupations (
+  id TEXT PRIMARY KEY,
+  source_file_id TEXT NOT NULL REFERENCES source_files(id),
+  source_record_id TEXT NOT NULL,
+  source_record_fingerprint TEXT NOT NULL UNIQUE,
+  release_year INTEGER NOT NULL,
+  occupation_code TEXT NOT NULL,
+  occupation_name TEXT NOT NULL,
+  display_level INTEGER,
+  selectable INTEGER,
+  sort_sequence INTEGER,
+  raw_record_json TEXT,
+  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS bls_oews_areas (
+  id TEXT PRIMARY KEY,
+  source_file_id TEXT NOT NULL REFERENCES source_files(id),
+  source_record_id TEXT NOT NULL,
+  source_record_fingerprint TEXT NOT NULL UNIQUE,
+  release_year INTEGER NOT NULL,
+  area_code TEXT NOT NULL,
+  area_name TEXT NOT NULL,
+  area_type_code TEXT,
+  display_level INTEGER,
+  selectable INTEGER,
+  sort_sequence INTEGER,
+  raw_record_json TEXT,
   created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -247,6 +374,12 @@ CREATE INDEX IF NOT EXISTS idx_h1b_lca_city_state ON h1b_lca_records(worksite_ci
 CREATE INDEX IF NOT EXISTS idx_h1b_lca_job_title ON h1b_lca_records(job_title);
 CREATE INDEX IF NOT EXISTS idx_h1b_lca_case_status ON h1b_lca_records(case_status);
 
+CREATE INDEX IF NOT EXISTS idx_h1b_lca_worksite_case_number ON h1b_lca_worksite_records(case_number);
+CREATE INDEX IF NOT EXISTS idx_h1b_lca_worksite_year ON h1b_lca_worksite_records(fiscal_year);
+CREATE INDEX IF NOT EXISTS idx_h1b_lca_worksite_city_state ON h1b_lca_worksite_records(worksite_city, worksite_state);
+CREATE INDEX IF NOT EXISTS idx_h1b_lca_appendix_case_number ON h1b_lca_appendix_a_records(case_number);
+CREATE INDEX IF NOT EXISTS idx_h1b_lca_appendix_year ON h1b_lca_appendix_a_records(fiscal_year);
+
 CREATE INDEX IF NOT EXISTS idx_perm_source_record_id ON perm_records(source_record_id);
 CREATE INDEX IF NOT EXISTS idx_perm_raw_employer_name ON perm_records(raw_employer_name);
 CREATE INDEX IF NOT EXISTS idx_perm_employer_year ON perm_records(employer_id, fiscal_year);
@@ -261,6 +394,13 @@ CREATE INDEX IF NOT EXISTS idx_pwd_soc_location_year ON pwd_records(soc_code, st
 CREATE INDEX IF NOT EXISTS idx_pwd_effective_year ON pwd_records(effective_year);
 CREATE INDEX IF NOT EXISTS idx_pwd_city_state ON pwd_records(city, state);
 
+CREATE INDEX IF NOT EXISTS idx_pwd_case_source_record_id ON pwd_case_records(source_record_id);
+CREATE INDEX IF NOT EXISTS idx_pwd_case_employer_year ON pwd_case_records(employer_id, fiscal_year);
+CREATE INDEX IF NOT EXISTS idx_pwd_case_fiscal_year ON pwd_case_records(fiscal_year);
+CREATE INDEX IF NOT EXISTS idx_pwd_case_soc_code ON pwd_case_records(soc_code);
+CREATE INDEX IF NOT EXISTS idx_pwd_case_city_state ON pwd_case_records(worksite_city, worksite_state);
+CREATE INDEX IF NOT EXISTS idx_pwd_case_status ON pwd_case_records(case_status);
+
 CREATE INDEX IF NOT EXISTS idx_uscis_h1b_source_record_id ON uscis_h1b_employer_records(source_record_id);
 CREATE INDEX IF NOT EXISTS idx_uscis_h1b_raw_employer_name ON uscis_h1b_employer_records(raw_employer_name);
 CREATE INDEX IF NOT EXISTS idx_uscis_h1b_employer_year ON uscis_h1b_employer_records(employer_id, fiscal_year);
@@ -274,6 +414,10 @@ CREATE INDEX IF NOT EXISTS idx_visa_bulletin_dates_lookup ON visa_bulletin_dates
   chargeability_area,
   chart_type
 );
+
+CREATE INDEX IF NOT EXISTS idx_bls_oews_occupation_code ON bls_oews_occupations(occupation_code);
+CREATE INDEX IF NOT EXISTS idx_bls_oews_area_code ON bls_oews_areas(area_code);
+CREATE INDEX IF NOT EXISTS idx_bls_oews_area_name ON bls_oews_areas(area_name);
 
 CREATE INDEX IF NOT EXISTS idx_company_page_metrics_indexable ON company_page_metrics(indexable, quality_score);
 CREATE INDEX IF NOT EXISTS idx_company_page_metrics_latest_year ON company_page_metrics(latest_fiscal_year);

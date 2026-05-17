@@ -89,6 +89,7 @@ const safeNegationMarkers = [
 ];
 
 const allowedOfficialHosts = new Set([
+  "download.bls.gov",
   "www.dol.gov",
   "flag.dol.gov",
   "www.uscis.gov",

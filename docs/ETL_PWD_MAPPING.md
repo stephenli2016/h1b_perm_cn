@@ -20,10 +20,11 @@ The M07 parser supports:
   `Geography.csv`, `oes_soc_occs.csv`, `ALC_Export.csv`, and `EDC_Export.csv`.
 - Local fixture fallback through `data/source_manifest.json` when network access is unavailable.
 
-For production import, `pwd_records` is treated as a wage lookup table. The DOL
-PWD case disclosure Excel remains in the source manifest and is downloaded for
-audit coverage, but the production `pwd_records` CSV is generated from the FLAG
-wage ZIP.
+For production import, `pwd_records` is treated as a wage lookup table. DOL PWD
+case disclosure files are parsed into `pwd_case_records`, a separate
+determination table with employer, job, worksite, PWD wage, O\*NET/BLS area, and
+education/experience requirement fields. Keeping the two tables separate avoids
+mixing reusable wage levels with case-specific PWD determinations.
 
 Commands:
 
@@ -32,9 +33,10 @@ pnpm etl:pwd:fixture
 pnpm etl:pwd:fixtures
 python3 -m etl.cli parse-pwd --input <file> --source-id <id> --effective-year <year> --output data/normalized/pwd_records.jsonl
 python3 -m etl.cli parse-pwd-manifest --manifest data/source_manifest.json --output data/normalized/pwd_records.jsonl --fixtures-only
+python3 -m etl.cli parse-pwd-case-manifest --manifest data/source_manifest.json --output data/normalized/pwd_case_records.jsonl
 ```
 
-## Normalized Fields
+## Normalized Wage Lookup Fields
 
 | Normalized field                      | Example source headers                               | Notes                                                                              |
 | ------------------------------------- | ---------------------------------------------------- | ---------------------------------------------------------------------------------- |
@@ -50,6 +52,22 @@ python3 -m etl.cli parse-pwd-manifest --manifest data/source_manifest.json --out
 | `state`                               | `STATE`, `STATE_ABBREVIATION`, `AREA_STATE`          | Normalized to uppercase.                                                           |
 | `wage_level_1` through `wage_level_4` | `WAGE_LEVEL_1`, `LEVEL_1_WAGE`, `LEVEL1`, etc.       | Numeric values with currency formatting removed.                                   |
 | `wage_unit`                           | `WAGE_UNIT`, `RATE_TYPE`                             | Normalized to `Year` or `Hour` when possible.                                      |
+
+## Normalized PWD Case Fields
+
+`pwd_case_records` uses the official DOL PWD case disclosure files and stores:
+
+- case number, status, visa class, fiscal year, employer, NAICS, job title, SOC
+  code/title, worksite city/state/postal code.
+- PWD wage rate, unit, annualized wage, wage level, wage source requested, final
+  wage source, BLS area, O\*NET code/title.
+- required education, major, training months, experience months, required
+  occupation, alternate requirements, special skills, foreign language, travel,
+  received/determination/expiration dates.
+
+Street-address-like fields are removed from `raw_record_json` before
+fingerprinting/output so the public product does not carry unnecessary address
+detail.
 
 ## Lookup Rules
 

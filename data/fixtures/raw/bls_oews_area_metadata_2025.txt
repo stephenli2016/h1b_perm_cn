@@ -1,0 +1,3 @@
+area_code	area_text	area_type_code	display_level	selectable	sort_sequence
+42660	Seattle-Tacoma-Bellevue, WA	4	4	T	42660
+47900	Washington-Arlington-Alexandria, DC-VA-MD-WV	4	4	T	47900

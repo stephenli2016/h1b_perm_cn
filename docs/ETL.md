@@ -75,11 +75,13 @@ M05 adds `parse-lca` and `parse-lca-manifest` for OFLC LCA/H-1B disclosure files
 
 M06 adds `parse-perm` and `parse-perm-manifest` for OFLC PERM disclosure files. The fixture command writes normalized JSONL to `data/normalized/perm_records.jsonl`, which is ignored as generated local output.
 
-M07 adds `parse-pwd` and `parse-pwd-manifest` for OFLC Prevailing Wage fixtures and FLAG OFLC wage downloads. Production `pwd_records` are wage lookup rows from the FLAG wage ZIP; DOL PWD case disclosure files remain source-file audit inputs until a separate case-disclosure table is added. The fixture command writes normalized JSONL to `data/normalized/pwd_records.jsonl`, which is ignored as generated local output.
+M07 adds `parse-pwd` and `parse-pwd-manifest` for OFLC Prevailing Wage fixtures and FLAG OFLC wage downloads. Production `pwd_records` are wage lookup rows from the FLAG wage ZIP, while DOL PWD case disclosure files are parsed by `parse-pwd-case-manifest` into `pwd_case_records`. Generated normalized JSONL stays under `data/normalized/`, which is ignored as local output.
 
 M08 adds `parse-uscis-h1b` and `parse-uscis-h1b-manifest` for USCIS H-1B Employer Data Hub CSV files and local HTML table fixtures. The fixture command writes normalized JSONL to `data/normalized/uscis_h1b_employer_records.jsonl`, which is ignored as generated local output.
 
-M09 adds `parse-visa-bulletin`, `parse-visa-bulletin-manifest`, `parse-uscis-filing-chart`, and `parse-uscis-filing-chart-manifest` for Department of State Visa Bulletin pages and USCIS adjustment-of-status filing chart selections. Fixture commands write normalized JSONL to `data/normalized/visa_bulletin_dates.jsonl` and `data/normalized/uscis_filing_charts.jsonl`, both ignored as generated local output.
+M09 adds `parse-visa-bulletin`, `parse-visa-bulletin-manifest`, `parse-uscis-filing-chart`, and `parse-uscis-filing-chart-manifest` for Department of State Visa Bulletin pages and USCIS adjustment-of-status filing chart selections. Production coverage currently spans 2024-07 through 2026-06. Fixture commands write normalized JSONL to `data/normalized/visa_bulletin_dates.jsonl` and `data/normalized/uscis_filing_charts.jsonl`, both ignored as generated local output.
+
+Post-M29 production enrichment adds `parse-lca-worksites-manifest`, `parse-lca-appendix-a-manifest`, `parse-pwd-case-manifest`, `parse-bls-oews-occupations-manifest`, and `parse-bls-oews-areas-manifest` for supplemental LCA worksites/Appendix A, PWD case disclosure, and official BLS OEWS metadata.
 
 M10 adds `build-company-candidates` for deterministic employer canonicalization, auditable alias output, company quality scoring, and initial noindex/indexable data-readiness decisions. The fixture command writes `data/normalized/employers.jsonl`, `data/normalized/employer_aliases.jsonl`, and `data/normalized/company_page_candidates.jsonl`, all ignored as generated local output. Methodology lives in `docs/EMPLOYER_CANONICALIZATION.md`.
 

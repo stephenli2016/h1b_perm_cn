@@ -19,11 +19,16 @@ POSTGRES_IMPORT_TABLES = (
     "employers",
     "employer_aliases",
     "h1b_lca_records",
+    "h1b_lca_worksite_records",
+    "h1b_lca_appendix_a_records",
     "perm_records",
     "pwd_records",
+    "pwd_case_records",
     "uscis_h1b_employer_records",
     "visa_bulletin_months",
     "visa_bulletin_dates",
+    "bls_oews_occupations",
+    "bls_oews_areas",
     "company_page_metrics",
 )
 
@@ -51,11 +56,31 @@ def prepare_postgres_import_package(
     csv_dir.mkdir(parents=True, exist_ok=True)
 
     lca_path = _normalized_input_path(normalized_path, "h1b_lca_records.jsonl")
+    lca_worksite_path = _optional_normalized_input_path(
+        normalized_path,
+        "h1b_lca_worksite_records.jsonl",
+    )
+    lca_appendix_a_path = _optional_normalized_input_path(
+        normalized_path,
+        "h1b_lca_appendix_a_records.jsonl",
+    )
     perm_path = _normalized_input_path(normalized_path, "perm_records.jsonl")
     pwd_path = _normalized_input_path(normalized_path, "pwd_records.jsonl")
+    pwd_case_path = _optional_normalized_input_path(
+        normalized_path,
+        "pwd_case_records.jsonl",
+    )
     uscis_path = _normalized_input_path(
         normalized_path,
         "uscis_h1b_employer_records.jsonl",
+    )
+    bls_oews_occupations_path = _optional_normalized_input_path(
+        normalized_path,
+        "bls_oews_occupations.jsonl",
+    )
+    bls_oews_areas_path = _optional_normalized_input_path(
+        normalized_path,
+        "bls_oews_areas.jsonl",
     )
     employers = _read_jsonl(normalized_path / "employers.jsonl")
     aliases = _read_jsonl(normalized_path / "employer_aliases.jsonl")
@@ -64,7 +89,14 @@ def prepare_postgres_import_package(
     filing_chart_records = _read_jsonl(normalized_path / "uscis_filing_charts.jsonl")
 
     employer_id_by_normalized_name = _employer_id_by_normalized_name(employers, aliases)
-    locations = _build_locations_from_paths(lca_path, perm_path, pwd_path, uscis_path)
+    locations = _build_locations_from_paths(
+        lca_path,
+        perm_path,
+        pwd_path,
+        uscis_path,
+        lca_worksite_path=lca_worksite_path,
+        pwd_case_path=pwd_case_path,
+    )
     location_id_lookup = {
         _location_lookup_key(row["city"], row["state"], row.get("postal_code")): row["id"]
         for row in locations
@@ -147,6 +179,20 @@ def prepare_postgres_import_package(
             yield row
 
     table_counts["h1b_lca_records"] = _write_csv(csv_dir / "h1b_lca_records.csv", h1b_rows())
+    table_counts["h1b_lca_worksite_records"] = _write_csv(
+        csv_dir / "h1b_lca_worksite_records.csv",
+        (
+            _build_lca_worksite_row(record, location_id_lookup)
+            for record in _iter_optional_jsonl(lca_worksite_path)
+        ),
+    )
+    table_counts["h1b_lca_appendix_a_records"] = _write_csv(
+        csv_dir / "h1b_lca_appendix_a_records.csv",
+        (
+            _build_lca_appendix_a_row(record)
+            for record in _iter_optional_jsonl(lca_appendix_a_path)
+        ),
+    )
 
     unmatched_perm = 0
 
@@ -167,6 +213,17 @@ def prepare_postgres_import_package(
     table_counts["pwd_records"] = _write_csv(
         csv_dir / "pwd_records.csv",
         (_build_pwd_row(record, location_id_lookup) for record in _iter_jsonl(pwd_path)),
+    )
+    table_counts["pwd_case_records"] = _write_csv(
+        csv_dir / "pwd_case_records.csv",
+        (
+            _build_pwd_case_row(
+                record,
+                employer_id_by_normalized_name,
+                location_id_lookup,
+            )
+            for record in _iter_optional_jsonl(pwd_case_path)
+        ),
     )
 
     unmatched_uscis = 0
@@ -191,6 +248,14 @@ def prepare_postgres_import_package(
     table_counts["visa_bulletin_dates"] = _write_csv(
         csv_dir / "visa_bulletin_dates.csv",
         visa_dates,
+    )
+    table_counts["bls_oews_occupations"] = _write_csv(
+        csv_dir / "bls_oews_occupations.csv",
+        (_build_bls_oews_occupation_row(record) for record in _iter_optional_jsonl(bls_oews_occupations_path)),
+    )
+    table_counts["bls_oews_areas"] = _write_csv(
+        csv_dir / "bls_oews_areas.csv",
+        (_build_bls_oews_area_row(record) for record in _iter_optional_jsonl(bls_oews_areas_path)),
     )
     table_counts["company_page_metrics"] = _write_csv(
         csv_dir / "company_page_metrics.csv",
@@ -236,6 +301,16 @@ def _normalized_input_path(normalized_path: Path, file_name: str) -> Path:
     return normalized_path / file_name
 
 
+def _optional_normalized_input_path(normalized_path: Path, file_name: str) -> Path | None:
+    compressed_path = normalized_path / f"{file_name}.gz"
+    if compressed_path.exists():
+        return compressed_path
+    uncompressed_path = normalized_path / file_name
+    if uncompressed_path.exists():
+        return uncompressed_path
+    return None
+
+
 def _read_jsonl(path: Path) -> list[dict[str, object]]:
     if not path.exists():
         raise FileNotFoundError(f"missing normalized JSONL input: {path}")
@@ -251,6 +326,12 @@ def _iter_jsonl(path: Path) -> Iterable[dict[str, object]]:
         for line in handle:
             if line.strip():
                 yield json.loads(line)
+
+
+def _iter_optional_jsonl(path: Path | None) -> Iterable[dict[str, object]]:
+    if path is None:
+        return
+    yield from _iter_jsonl(path)
 
 
 def _iter_records_from_paths(*paths: Path) -> Iterable[dict[str, object]]:
@@ -325,6 +406,9 @@ def _build_locations_from_paths(
     perm_path: Path,
     pwd_path: Path,
     uscis_path: Path,
+    *,
+    lca_worksite_path: Path | None = None,
+    pwd_case_path: Path | None = None,
 ) -> list[dict[str, object | None]]:
     rows_by_id: dict[str, dict[str, object | None]] = {}
 
@@ -337,12 +421,28 @@ def _build_locations_from_paths(
                 postal_code=_as_str(record.get("worksite_postal_code")),
             )
 
+    for record in _iter_optional_jsonl(lca_worksite_path):
+        _add_location(
+            rows_by_id,
+            city=_as_str(record.get("worksite_city")),
+            state=_as_str(record.get("worksite_state")),
+            postal_code=_as_str(record.get("worksite_postal_code")),
+        )
+
     for record in _iter_jsonl(pwd_path):
         _add_location(
             rows_by_id,
             city=_as_str(record.get("city")),
             state=_as_str(record.get("state")),
             postal_code=None,
+        )
+
+    for record in _iter_optional_jsonl(pwd_case_path):
+        _add_location(
+            rows_by_id,
+            city=_as_str(record.get("worksite_city")),
+            state=_as_str(record.get("worksite_state")),
+            postal_code=_as_str(record.get("worksite_postal_code")),
         )
 
     for record in _iter_jsonl(uscis_path):
@@ -487,6 +587,63 @@ def _build_h1b_row(
     }
 
 
+def _build_lca_worksite_row(
+    record: dict[str, object],
+    location_id_lookup: dict[str, str],
+) -> dict[str, object | None]:
+    source_record_id = _as_str(record.get("source_record_id")) or _as_str(
+        record.get("source_record_fingerprint")
+    )
+    source_scoped_id = ":".join(
+        [
+            _as_str(record.get("source_file_id")) or "",
+            source_record_id or "",
+        ]
+    )
+    return {
+        "id": f"lca-worksite-{_stable_id(source_scoped_id)}",
+        "source_file_id": record.get("source_file_id"),
+        "location_id": _location_id_for_record(record, location_id_lookup),
+        "source_record_id": source_record_id,
+        "source_record_fingerprint": record.get("source_record_fingerprint"),
+        "case_number": record.get("case_number"),
+        "fiscal_year": record.get("fiscal_year"),
+        "worksite_sequence": record.get("worksite_sequence"),
+        "workers": record.get("workers"),
+        "secondary_entity": record.get("secondary_entity"),
+        "secondary_entity_name": record.get("secondary_entity_name"),
+        "worksite_city": record.get("worksite_city"),
+        "worksite_county": record.get("worksite_county"),
+        "worksite_state": record.get("worksite_state"),
+        "worksite_postal_code": record.get("worksite_postal_code"),
+        "raw_record_json": _json_cell(record.get("raw_record_json")),
+    }
+
+
+def _build_lca_appendix_a_row(record: dict[str, object]) -> dict[str, object | None]:
+    source_record_id = _as_str(record.get("source_record_id")) or _as_str(
+        record.get("source_record_fingerprint")
+    )
+    source_scoped_id = ":".join(
+        [
+            _as_str(record.get("source_file_id")) or "",
+            source_record_id or "",
+        ]
+    )
+    return {
+        "id": f"lca-appendix-a-{_stable_id(source_scoped_id)}",
+        "source_file_id": record.get("source_file_id"),
+        "source_record_id": source_record_id,
+        "source_record_fingerprint": record.get("source_record_fingerprint"),
+        "case_number": record.get("case_number"),
+        "fiscal_year": record.get("fiscal_year"),
+        "exempt_worker_count": record.get("exempt_worker_count"),
+        "h1b_dependent": record.get("h1b_dependent"),
+        "willful_violator": record.get("willful_violator"),
+        "raw_record_json": _json_cell(record.get("raw_record_json")),
+    }
+
+
 def _build_perm_rows(
     records: Sequence[dict[str, object]],
     employer_id_by_normalized_name: dict[str, str],
@@ -549,6 +706,20 @@ def _build_perm_row(
         "priority_date": record.get("priority_date"),
         "received_date": record.get("received_date"),
         "decision_date": record.get("decision_date"),
+        "pwd_case_number": record.get("pwd_case_number"),
+        "pwd_soc_code": record.get("pwd_soc_code"),
+        "pwd_soc_title": record.get("pwd_soc_title"),
+        "pwd_wage": record.get("pwd_wage"),
+        "pwd_unit": record.get("pwd_unit"),
+        "annualized_pwd_wage": record.get("annualized_pwd_wage"),
+        "pwd_wage_level": record.get("pwd_wage_level"),
+        "minimum_education": record.get("minimum_education"),
+        "major_field_of_study": record.get("major_field_of_study"),
+        "training_months": record.get("training_months"),
+        "experience_months": record.get("experience_months"),
+        "alternate_education": record.get("alternate_education"),
+        "alternate_experience_months": record.get("alternate_experience_months"),
+        "foreign_language_required": record.get("foreign_language_required"),
         "raw_record_json": _json_cell(record.get("raw_record_json")),
     }
 
@@ -583,6 +754,117 @@ def _build_pwd_row(
         "wage_level_3": record.get("wage_level_3"),
         "wage_level_4": record.get("wage_level_4"),
         "wage_unit": record.get("wage_unit"),
+        "raw_record_json": _json_cell(record.get("raw_record_json")),
+    }
+
+
+def _build_pwd_case_row(
+    record: dict[str, object],
+    employer_id_by_normalized_name: dict[str, str],
+    location_id_lookup: dict[str, str],
+) -> dict[str, object | None]:
+    source_record_id = _as_str(record.get("source_record_id")) or _as_str(
+        record.get("source_record_fingerprint")
+    )
+    source_scoped_id = ":".join(
+        [
+            _as_str(record.get("source_file_id")) or "",
+            source_record_id or "",
+        ]
+    )
+    return {
+        "id": f"pwd-case-{_stable_id(source_scoped_id)}",
+        "source_file_id": record.get("source_file_id"),
+        "employer_id": _employer_id_for_record(record, employer_id_by_normalized_name),
+        "location_id": _location_id_for_record(record, location_id_lookup),
+        "source_record_id": source_record_id,
+        "source_record_fingerprint": record.get("source_record_fingerprint"),
+        "case_number": record.get("case_number"),
+        "case_status": record.get("case_status"),
+        "visa_class": record.get("visa_class"),
+        "raw_employer_name": record.get("raw_employer_name"),
+        "fiscal_year": record.get("fiscal_year"),
+        "naics_code": record.get("naics_code"),
+        "job_title": record.get("job_title"),
+        "soc_code": record.get("soc_code"),
+        "soc_title": record.get("soc_title"),
+        "worksite_city": record.get("worksite_city"),
+        "worksite_county": record.get("worksite_county"),
+        "worksite_state": record.get("worksite_state"),
+        "worksite_postal_code": record.get("worksite_postal_code"),
+        "other_worksite_location": record.get("other_worksite_location"),
+        "wage_source_requested": record.get("wage_source_requested"),
+        "pwd_wage_rate": record.get("pwd_wage_rate"),
+        "pwd_unit": record.get("pwd_unit"),
+        "annualized_pwd_wage": record.get("annualized_pwd_wage"),
+        "pwd_wage_level": record.get("pwd_wage_level"),
+        "pwd_wage_source": record.get("pwd_wage_source"),
+        "bls_area": record.get("bls_area"),
+        "o_net_code": record.get("o_net_code"),
+        "o_net_title": record.get("o_net_title"),
+        "required_education_level": record.get("required_education_level"),
+        "required_education_major": record.get("required_education_major"),
+        "required_training_months": record.get("required_training_months"),
+        "required_experience_months": record.get("required_experience_months"),
+        "required_occupation": record.get("required_occupation"),
+        "alternative_requirements": record.get("alternative_requirements"),
+        "alt_education_level": record.get("alt_education_level"),
+        "alt_experience_months": record.get("alt_experience_months"),
+        "special_skills": record.get("special_skills"),
+        "foreign_language_required": record.get("foreign_language_required"),
+        "travel_required": record.get("travel_required"),
+        "received_date": record.get("received_date"),
+        "determination_date": record.get("determination_date"),
+        "expiration_date": record.get("expiration_date"),
+        "raw_record_json": _json_cell(record.get("raw_record_json")),
+    }
+
+
+def _build_bls_oews_occupation_row(record: dict[str, object]) -> dict[str, object | None]:
+    source_record_id = _as_str(record.get("source_record_id")) or _as_str(
+        record.get("occupation_code")
+    )
+    source_scoped_id = ":".join(
+        [
+            _as_str(record.get("source_file_id")) or "",
+            source_record_id or "",
+        ]
+    )
+    return {
+        "id": f"bls-oews-occ-{_stable_id(source_scoped_id)}",
+        "source_file_id": record.get("source_file_id"),
+        "source_record_id": source_record_id,
+        "source_record_fingerprint": record.get("source_record_fingerprint"),
+        "release_year": record.get("release_year"),
+        "occupation_code": record.get("occupation_code"),
+        "occupation_name": record.get("occupation_name"),
+        "display_level": record.get("display_level"),
+        "selectable": record.get("selectable"),
+        "sort_sequence": record.get("sort_sequence"),
+        "raw_record_json": _json_cell(record.get("raw_record_json")),
+    }
+
+
+def _build_bls_oews_area_row(record: dict[str, object]) -> dict[str, object | None]:
+    source_record_id = _as_str(record.get("source_record_id")) or _as_str(record.get("area_code"))
+    source_scoped_id = ":".join(
+        [
+            _as_str(record.get("source_file_id")) or "",
+            source_record_id or "",
+        ]
+    )
+    return {
+        "id": f"bls-oews-area-{_stable_id(source_scoped_id)}",
+        "source_file_id": record.get("source_file_id"),
+        "source_record_id": source_record_id,
+        "source_record_fingerprint": record.get("source_record_fingerprint"),
+        "release_year": record.get("release_year"),
+        "area_code": record.get("area_code"),
+        "area_name": record.get("area_name"),
+        "area_type_code": record.get("area_type_code"),
+        "display_level": record.get("display_level"),
+        "selectable": record.get("selectable"),
+        "sort_sequence": record.get("sort_sequence"),
         "raw_record_json": _json_cell(record.get("raw_record_json")),
     }
 
@@ -894,6 +1176,9 @@ def _latest_data_date(source: SourceEntry) -> str | None:
         if match:
             return f"{match.group(1)}-{match.group(2)}-01"
 
+    if source.parser_name.startswith("bls_oews_") and source.fiscal_year:
+        return f"{source.fiscal_year}-05-01"
+
     if source.fiscal_year and source.quarter:
         quarter_end_month_day = {
             "Q1": (12, 31),
@@ -987,6 +1272,36 @@ POSTGRES_COLUMNS: dict[str, list[str]] = {
         "decision_date",
         "raw_record_json",
     ],
+    "h1b_lca_worksite_records": [
+        "id",
+        "source_file_id",
+        "location_id",
+        "source_record_id",
+        "source_record_fingerprint",
+        "case_number",
+        "fiscal_year",
+        "worksite_sequence",
+        "workers",
+        "secondary_entity",
+        "secondary_entity_name",
+        "worksite_city",
+        "worksite_county",
+        "worksite_state",
+        "worksite_postal_code",
+        "raw_record_json",
+    ],
+    "h1b_lca_appendix_a_records": [
+        "id",
+        "source_file_id",
+        "source_record_id",
+        "source_record_fingerprint",
+        "case_number",
+        "fiscal_year",
+        "exempt_worker_count",
+        "h1b_dependent",
+        "willful_violator",
+        "raw_record_json",
+    ],
     "perm_records": [
         "id",
         "source_file_id",
@@ -1009,6 +1324,20 @@ POSTGRES_COLUMNS: dict[str, list[str]] = {
         "priority_date",
         "received_date",
         "decision_date",
+        "pwd_case_number",
+        "pwd_soc_code",
+        "pwd_soc_title",
+        "pwd_wage",
+        "pwd_unit",
+        "annualized_pwd_wage",
+        "pwd_wage_level",
+        "minimum_education",
+        "major_field_of_study",
+        "training_months",
+        "experience_months",
+        "alternate_education",
+        "alternate_experience_months",
+        "foreign_language_required",
         "raw_record_json",
     ],
     "pwd_records": [
@@ -1029,6 +1358,52 @@ POSTGRES_COLUMNS: dict[str, list[str]] = {
         "wage_level_3",
         "wage_level_4",
         "wage_unit",
+        "raw_record_json",
+    ],
+    "pwd_case_records": [
+        "id",
+        "source_file_id",
+        "employer_id",
+        "location_id",
+        "source_record_id",
+        "source_record_fingerprint",
+        "case_number",
+        "case_status",
+        "visa_class",
+        "raw_employer_name",
+        "fiscal_year",
+        "naics_code",
+        "job_title",
+        "soc_code",
+        "soc_title",
+        "worksite_city",
+        "worksite_county",
+        "worksite_state",
+        "worksite_postal_code",
+        "other_worksite_location",
+        "wage_source_requested",
+        "pwd_wage_rate",
+        "pwd_unit",
+        "annualized_pwd_wage",
+        "pwd_wage_level",
+        "pwd_wage_source",
+        "bls_area",
+        "o_net_code",
+        "o_net_title",
+        "required_education_level",
+        "required_education_major",
+        "required_training_months",
+        "required_experience_months",
+        "required_occupation",
+        "alternative_requirements",
+        "alt_education_level",
+        "alt_experience_months",
+        "special_skills",
+        "foreign_language_required",
+        "travel_required",
+        "received_date",
+        "determination_date",
+        "expiration_date",
         "raw_record_json",
     ],
     "uscis_h1b_employer_records": [
@@ -1067,6 +1442,33 @@ POSTGRES_COLUMNS: dict[str, list[str]] = {
         "cutoff_date",
         "cutoff_status",
         "raw_value",
+    ],
+    "bls_oews_occupations": [
+        "id",
+        "source_file_id",
+        "source_record_id",
+        "source_record_fingerprint",
+        "release_year",
+        "occupation_code",
+        "occupation_name",
+        "display_level",
+        "selectable",
+        "sort_sequence",
+        "raw_record_json",
+    ],
+    "bls_oews_areas": [
+        "id",
+        "source_file_id",
+        "source_record_id",
+        "source_record_fingerprint",
+        "release_year",
+        "area_code",
+        "area_name",
+        "area_type_code",
+        "display_level",
+        "selectable",
+        "sort_sequence",
+        "raw_record_json",
     ],
     "company_page_metrics": [
         "id",

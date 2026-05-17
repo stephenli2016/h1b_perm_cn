@@ -8,9 +8,15 @@ Milestone: M09 — Visa Bulletin and USCIS filing chart parser
 - Department of State June 2026 Visa Bulletin: `https://travel.state.gov/content/travel/en/legal/visa-law0/visa-bulletin/2026/visa-bulletin-for-june-2026.html`
 - USCIS Adjustment of Status Filing Charts from the Visa Bulletin: `https://www.uscis.gov/green-card/green-card-processes-and-procedures/visa-availability-priority-dates/adjustment-of-status-filing-charts-from-the-visa-bulletin`
 
-The Department of State index confirmed on May 16, 2026 that the current bulletin is May 2026 and the upcoming bulletin is June 2026. The index also states that Final Action Dates and Dates for Filing are listed in DAY-MONTH-YEAR format.
+The Department of State index confirmed on May 16, 2026 that the current
+bulletin is May 2026 and the upcoming bulletin is June 2026. The index also
+states that Final Action Dates and Dates for Filing are listed in
+DAY-MONTH-YEAR format.
 
-Direct access to the current USCIS chart page was unreliable from the local environment during M09, but USCIS source text indexed by search confirms the rule: USCIS designates each month whether adjustment-of-status applicants use Final Action Dates or Dates for Filing. The parser supports both direct USCIS page text and manual monthly fixture fallback.
+The production manifest now backfills 24 official months from 2024-07 through
+2026-06 for both Department of State Visa Bulletin pages and USCIS monthly
+adjustment-of-status filing chart pages. The parser supports direct USCIS page
+text and manual monthly fixture fallback for local development.
 
 ## Parser Inputs
 
@@ -18,6 +24,7 @@ The M09 parser supports:
 
 - Department of State Visa Bulletin HTML pages with employment-based final action and dates-for-filing tables.
 - Local HTML fixtures for April, May, and June 2026.
+- Production raw HTML downloads for 2024-07 through 2026-06.
 - USCIS filing-chart HTML text, plus a manual fallback chart value when a page is unavailable.
 
 Commands:
@@ -27,6 +34,8 @@ pnpm etl:visa:bulletin:fixtures
 pnpm etl:uscis:filing-chart:fixtures
 python3 -m etl.cli parse-visa-bulletin --input <file> --source-id <id> --source-url <url> --output data/normalized/visa_bulletin_dates.jsonl
 python3 -m etl.cli parse-uscis-filing-chart --input <file> --source-id <id> --output data/normalized/uscis_filing_charts.jsonl
+python3 -m etl.cli parse-visa-bulletin-manifest --manifest data/source_manifest.json --output data/normalized/visa_bulletin_dates.jsonl
+python3 -m etl.cli parse-uscis-filing-chart-manifest --manifest data/source_manifest.json --output data/normalized/uscis_filing_charts.jsonl
 ```
 
 ## Normalized Visa Bulletin Fields
@@ -65,7 +74,11 @@ USCIS selection output stores:
 - `employment_based_chart`: `final_action` or `dates_for_filing`
 - source text for audit/debugging
 
-The local fixture data currently marks April, May, and June 2026 employment-based filing as `final_action`, consistent with the conservative default unless USCIS explicitly allows Dates for Filing.
+The latest production parse produced 24 monthly USCIS chart rows. The
+employment-based chart selection varies by month; for example, 2024-10 through
+2025-01 use `dates_for_filing`, 2025-02 through 2025-09 use `final_action`,
+2025-10 through 2026-04 use `dates_for_filing`, and 2026-05 through 2026-06 use
+`final_action`.
 
 ## Public Product Limitations
 
