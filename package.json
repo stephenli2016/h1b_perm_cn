@@ -12,6 +12,7 @@
     "test": "vitest run",
     "launch:readiness": "node --no-warnings --experimental-strip-types scripts/launch-readiness.ts",
     "deploy:validate": "node --no-warnings --experimental-strip-types scripts/validate-vercel-prep.ts",
+    "deploy:preview:validate": "node --no-warnings --experimental-strip-types scripts/validate-vercel-preview.ts",
     "db:validate": "vitest run tests/schema.test.ts tests/local-repository.test.ts",
     "db:production:validate": "node --no-warnings --experimental-strip-types scripts/validate-production-db.ts",
     "db:runtime:smoke": "node --no-warnings --experimental-strip-types scripts/db-runtime-smoke.ts",

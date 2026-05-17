@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { CompanyProfile } from "@/components/company/company-profile";
 import { PageShell } from "@/components/page-shell";
 import { getRuntimePublicQueryRepository } from "@/lib/db/runtime-public-query-repository";
+import { shouldGenerateCompanyStaticParams } from "@/lib/seo/company-static-generation";
 import { getCompanyPageSeo } from "@/lib/seo/company-quality";
 import { buildWebPageJsonLd } from "@/lib/seo/json-ld";
 import { buildNoIndexSeoMetadata, buildSeoMetadata } from "@/lib/seo/metadata";
@@ -17,6 +18,10 @@ type CompanyPageProps = {
 export const dynamicParams = true;
 
 export async function generateStaticParams() {
+  if (!shouldGenerateCompanyStaticParams()) {
+    return [];
+  }
+
   const repo = await getRuntimePublicQueryRepository();
 
   return repo.listCompanyStaticSlugs("h1b").map((slug) => ({ slug }));
