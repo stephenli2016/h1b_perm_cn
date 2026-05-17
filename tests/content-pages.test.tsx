@@ -2,7 +2,9 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 
 import GuideContentPage from "@/app/guides/[slug]/page";
+import GuidesPage from "@/app/guides/page";
 import ToolContentPage from "@/app/tools/[slug]/page";
+import ToolsPage from "@/app/tools/page";
 import { ContentArticle } from "@/components/content/content-article";
 import {
   contentPages,
@@ -154,10 +156,29 @@ describe("M22 content pages", () => {
     expect(html).toContain("常见误区");
     expect(html).toContain("相关工具 / 指南 / 数据入口");
     expect(html).toContain("本站基于公开数据整理");
+    expect(html).toContain("核心必读");
+    expect(html).not.toContain("Priority 1");
+    expect(html).not.toContain("内容优先级");
     expect(html).toContain("Last reviewed: 2026-05-16");
     expect(html).toContain(
       "https://www.dol.gov/agencies/eta/foreign-labor/performance",
     );
+  });
+
+  it("renders tool and guide directories as task-oriented entry points", () => {
+    const toolsHtml = renderToStaticMarkup(<ToolsPage />);
+    const guidesHtml = renderToStaticMarkup(<GuidesPage />);
+
+    expect(toolsHtml).toContain("按任务开始");
+    expect(toolsHtml).toContain("投递前查公司");
+    expect(toolsHtml).toContain("从 OPT 走到 H-1B");
+    expect(toolsHtml).toContain("全部工具");
+    expect(toolsHtml).not.toContain("P1 ·");
+    expect(guidesHtml).toContain("先按问题选择");
+    expect(guidesHtml).toContain("第一次读 H-1B 数据");
+    expect(guidesHtml).toContain("建议先读");
+    expect(guidesHtml).toContain('aria-label="指南分类"');
+    expect(guidesHtml).not.toContain("P1 ·");
   });
 
   it("renders dynamic guide and missing-tool routes", async () => {

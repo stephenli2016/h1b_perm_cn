@@ -51,11 +51,9 @@ export function ContentArticle({ page }: ContentArticleProps) {
                 ? "优先补齐、优先维护的核心页面。"
                 : "用于补充公司页、工具页和求职场景的解释页面。"
             }
-            label="内容优先级"
-            trend={
-              page.priority === 1 ? "Priority 1" : `Priority ${page.priority}`
-            }
-            value={`P${page.priority}`}
+            label="阅读定位"
+            trend={page.priority === 1 ? "先读" : "补充"}
+            value={priorityLabel(page.priority)}
           />
           <MetricCard
             description="每个页面至少连接一个官方来源；多数页面连接多个来源。"
@@ -185,7 +183,7 @@ export function ContentDirectoryCard({ page }: { page: ContentPage }) {
       href={page.path}
     >
       <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--accent)]">
-        P{page.priority} · {page.category}
+        {priorityLabel(page.priority)} · {page.category}
       </p>
       <h2 className="mt-2 text-lg font-semibold">{page.title}</h2>
       <p className="mt-3 text-sm leading-6 text-[var(--muted)]">
@@ -193,4 +191,15 @@ export function ContentDirectoryCard({ page }: { page: ContentPage }) {
       </p>
     </Link>
   );
+}
+
+function priorityLabel(priority: ContentPage["priority"]) {
+  if (priority === 1) {
+    return "核心必读";
+  }
+  if (priority === 2) {
+    return "进阶补充";
+  }
+
+  return "场景延伸";
 }
