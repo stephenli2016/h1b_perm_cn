@@ -8,6 +8,7 @@ import { CompanyProfile } from "@/components/company/company-profile";
 import { PageShell } from "@/components/page-shell";
 import { DirectoryFilterForm } from "@/components/search/directory-filter-form";
 import { Pagination } from "@/components/search/pagination";
+import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { Breadcrumbs } from "@/components/ui/breadcrumbs";
 import { DataTable, type DataTableColumn } from "@/components/ui/data-table";
@@ -45,6 +46,17 @@ describe("M12 UI components", () => {
     expect(html).toContain('aria-label="移动端主导航"');
     expect(html).toContain("<summary");
     expect(html).toContain("菜单");
+  });
+
+  it("renders footer quick actions and compliance navigation", () => {
+    const html = renderToStaticMarkup(<SiteFooter />);
+
+    expect(html).toContain('aria-label="常用动作"');
+    expect(html).toContain("查公司");
+    expect(html).toContain("查工资");
+    expect(html).toContain("查排期");
+    expect(html).toContain("提交纠错");
+    expect(html).toContain("不提供法律、移民、税务、职业或财务建议");
   });
 
   it("renders page shell with breadcrumbs", () => {

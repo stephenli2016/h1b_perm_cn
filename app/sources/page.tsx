@@ -63,6 +63,30 @@ export default function SourcesPage() {
           </div>
         </section>
 
+        <section className="grid gap-4 md:grid-cols-2">
+          <article className="rounded-lg border border-[var(--line)] bg-white p-5 shadow-sm">
+            <h2 className="text-lg font-semibold">如何核验一页数据</h2>
+            <ol className="mt-4 list-decimal space-y-3 pl-5 text-sm leading-6 text-[var(--muted)]">
+              <li>先看页面底部的数据来源名称和最新数据日期。</li>
+              <li>
+                再确认记录属于 LCA、PERM、PWD、USCIS Employer Hub 还是 Visa
+                Bulletin。
+              </li>
+              <li>
+                最后回到对应方法页，看字段口径、低样本限制和不能推断的结论。
+              </li>
+            </ol>
+          </article>
+          <article className="rounded-lg border border-[var(--line)] bg-white p-5 shadow-sm">
+            <h2 className="text-lg font-semibold">不会作为数据输入的来源</h2>
+            <ul className="mt-4 space-y-3 text-sm leading-6 text-[var(--muted)]">
+              <li>竞争网站、论坛、社媒、群聊截图或付费数据库。</li>
+              <li>无法核验来源日期和字段口径的二手整理表。</li>
+              <li>包含不必要个人识别信息且无法安全聚合的材料。</li>
+            </ul>
+          </article>
+        </section>
+
         <OfficialSourceList sources={officialSources} />
 
         <DisclaimerBox>

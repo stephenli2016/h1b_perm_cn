@@ -187,6 +187,9 @@ describe("M23 technical SEO hardening", () => {
       follow: true,
     });
     expect(notFoundHtml).toContain("页面未找到");
+    expect(notFoundHtml).toContain("可能发生了什么");
+    expect(notFoundHtml).toContain("回到公司目录");
+    expect(notFoundHtml).toContain("提交纠错");
     expect(errorHtml).toContain("页面暂时无法加载");
     expect(errorHtml).toContain("重试");
   });

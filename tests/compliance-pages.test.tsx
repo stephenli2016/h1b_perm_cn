@@ -24,6 +24,7 @@ describe("M24 legal, source, and correction workflow pages", () => {
 
     expect(html).toContain("重要提示");
     expect(html).toContain("不替代专业判断");
+    expect(html).toContain("做决定前请另外确认");
     expect(html).toContain("不构成法律、移民、税务、职业或财务建议");
     expect(html).toContain("不是律师事务所");
   });
@@ -38,6 +39,8 @@ describe("M24 legal, source, and correction workflow pages", () => {
 
     expect(methodologyPages).toHaveLength(5);
     expect(sourceHtml).toContain("不使用竞争网站、论坛或付费数据库作为数据源");
+    expect(sourceHtml).toContain("如何核验一页数据");
+    expect(sourceHtml).toContain("不会作为数据输入的来源");
     expect(methodologyHtml).toContain("LCA 是劳动条件申请");
     expect(methodologyHtml).toContain("信号不是 sponsor 成功率");
     expect(methodologyHtml).toContain("USCIS 当月 Adjustment of Status");

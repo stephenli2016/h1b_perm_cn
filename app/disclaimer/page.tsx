@@ -68,6 +68,16 @@ export default function DisclaimerPage() {
           </p>
         </section>
 
+        <section className="rounded-lg border border-[var(--line)] bg-white p-6 shadow-sm">
+          <h2 className="text-lg font-semibold">做决定前请另外确认</h2>
+          <ul className="mt-4 grid gap-3 text-sm leading-6 text-[var(--muted)] md:grid-cols-2">
+            <li>雇主当前政策、具体岗位实体、worksite 和内部审批流程。</li>
+            <li>个人身份、priority date、类别、chargeability 和案件节点。</li>
+            <li>律师对岗位职责、工资、材料窗口和风险的具体判断。</li>
+            <li>官方来源是否已有更新，或页面是否需要通过纠错流程复核。</li>
+          </ul>
+        </section>
+
         <p className="text-xs text-[var(--muted)]">Last reviewed: 2026-05-17</p>
       </div>
     </PageShell>
