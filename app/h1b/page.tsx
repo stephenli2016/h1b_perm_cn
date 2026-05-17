@@ -10,6 +10,8 @@ import { DataTable, type DataTableColumn } from "@/components/ui/data-table";
 import { DisclaimerBox } from "@/components/ui/disclaimer-box";
 import { ErrorState } from "@/components/ui/feedback-state";
 import { MetricCard } from "@/components/ui/metric-card";
+import { getRuntimeDataMode } from "@/lib/db/postgres-fixture-data";
+import { searchPostgresH1BRecords } from "@/lib/db/postgres-directory-queries";
 import type { PublicDisclosureRecordRow } from "@/lib/db/public-query-repository";
 import { waitForRuntimeDataRequestBoundary } from "@/lib/db/runtime-rendering";
 import { getRuntimePublicQueryRepository } from "@/lib/db/runtime-public-query-repository";
@@ -38,7 +40,7 @@ export async function generateMetadata({
   return buildSeoMetadata({
     title: filterCount > 0 ? "H-1B 公司搜索结果" : "H-1B 公司数据库",
     description:
-      "按雇主、年份、州/城市、职位/SOC 和 case status 查询本地 H-1B LCA fixture 记录。",
+      "按雇主、年份、州/城市、职位/SOC 和 case status 查询官方 H-1B LCA 公开记录样本。",
     path: "/h1b",
     index: false,
     pageType: "data",
@@ -106,21 +108,22 @@ const h1bColumns: DataTableColumn<PublicDisclosureRecordRow>[] = [
 export default async function H1BPage({ searchParams }: H1BPageProps) {
   await waitForRuntimeDataRequestBoundary();
 
-  const repo = await getRuntimePublicQueryRepository();
   const parsed = parseDirectorySearchParams(await searchParams);
-  const result = repo.searchH1BRecords(parsed.input);
-  const filterOptions = repo.searchH1BRecords({
-    pageSize: 1,
-  });
-  const availableFilters = filterOptions.ok
-    ? filterOptions.data.availableFilters
+  const result =
+    getRuntimeDataMode() === "postgres"
+      ? await searchPostgresH1BRecords(parsed.input)
+      : (await getRuntimePublicQueryRepository()).searchH1BRecords(
+          parsed.input,
+        );
+  const availableFilters = result.ok
+    ? result.data.availableFilters
     : { caseStatuses: [], fiscalYears: [], states: [] };
 
   return (
     <PageShell
       breadcrumbs={[{ href: "/", label: "首页" }, { label: "H-1B" }]}
       canonicalPath="/h1b"
-      description="按雇主、年份、地区、职位/SOC 和 case status 查看本地 H-1B LCA fixture 记录。生产数据接入前，本目录和筛选 URL 均保持 noindex。"
+      description="按雇主、年份、地区、职位/SOC 和 case status 查看官方 H-1B LCA 公开记录样本。本目录和筛选 URL 在公开上线前保持 noindex。"
       eyebrow={siteConfig.tagline}
       structuredData={buildWebPageJsonLd({
         title: "H-1B 公司数据库",
@@ -155,7 +158,7 @@ export default async function H1BPage({ searchParams }: H1BPageProps) {
                 value="noindex"
               />
               <MetricCard
-                description="来自本地 fixture；后续会显示真实官方数据覆盖日期。"
+                description="来自官方公开数据导入；展示当前数据库覆盖的最新日期。"
                 label="最新数据日期"
                 value={result.data.latestDataDate ?? "待接入"}
               />
@@ -164,7 +167,7 @@ export default async function H1BPage({ searchParams }: H1BPageProps) {
             <DataTable
               caption="H-1B LCA 搜索结果"
               columns={h1bColumns}
-              emptyDescription="当前筛选条件没有匹配的 H-1B LCA fixture 记录。可以减少筛选条件或回到全部记录。"
+              emptyDescription="当前筛选条件没有匹配的 H-1B LCA 公开记录样本。可以减少筛选条件或回到全部记录。"
               emptyTitle="没有找到 H-1B 记录"
               getRowKey={(row) => row.id}
               rows={result.data.records}
@@ -194,9 +197,9 @@ export default async function H1BPage({ searchParams }: H1BPageProps) {
         )}
 
         <SourceNote
-          latestDataLabel={
+              latestDataLabel={
             result.ok
-              ? `当前本地数据最新日期：${result.data.latestDataDate ?? "待接入真实数据"}。筛选 URL 默认 noindex。`
+              ? `当前官方公开数据最新日期：${result.data.latestDataDate ?? "待接入真实数据"}。筛选 URL 默认 noindex。`
               : undefined
           }
           names={[

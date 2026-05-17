@@ -10,6 +10,8 @@ import { DataTable, type DataTableColumn } from "@/components/ui/data-table";
 import { DisclaimerBox } from "@/components/ui/disclaimer-box";
 import { ErrorState } from "@/components/ui/feedback-state";
 import { MetricCard } from "@/components/ui/metric-card";
+import { getRuntimeDataMode } from "@/lib/db/postgres-fixture-data";
+import { searchPostgresCompanyDirectory } from "@/lib/db/postgres-directory-queries";
 import type { PublicCompanyDirectoryResult } from "@/lib/db/public-query-repository";
 import { waitForRuntimeDataRequestBoundary } from "@/lib/db/runtime-rendering";
 import { getRuntimePublicQueryRepository } from "@/lib/db/runtime-public-query-repository";
@@ -35,7 +37,7 @@ export async function generateMetadata({
 
   return buildSeoMetadata({
     title: filterCount > 0 ? "公司目录搜索结果" : "公司目录",
-    description: "合并查看本地 H-1B LCA 与 PERM fixture 中的公司公开数据信号。",
+    description: "合并查看官方 H-1B LCA 与 PERM 公开数据中的公司移民信号。",
     path: "/companies",
     index: false,
     pageType: "data",
@@ -114,21 +116,22 @@ export default async function CompaniesPage({
 }: CompaniesPageProps) {
   await waitForRuntimeDataRequestBoundary();
 
-  const repo = await getRuntimePublicQueryRepository();
   const parsed = parseDirectorySearchParams(await searchParams);
-  const result = repo.searchCompanyDirectory(parsed.input);
-  const filterOptions = repo.searchCompanyDirectory({
-    pageSize: 1,
-  });
-  const availableFilters = filterOptions.ok
-    ? filterOptions.data.availableFilters
+  const result =
+    getRuntimeDataMode() === "postgres"
+      ? await searchPostgresCompanyDirectory(parsed.input)
+      : (await getRuntimePublicQueryRepository()).searchCompanyDirectory(
+          parsed.input,
+        );
+  const availableFilters = result.ok
+    ? result.data.availableFilters
     : { caseStatuses: [], fiscalYears: [], states: [] };
 
   return (
     <PageShell
       breadcrumbs={[{ href: "/", label: "首页" }, { label: "公司目录" }]}
       canonicalPath="/companies"
-      description="把 H-1B LCA 与 PERM fixture 中的雇主记录合并成公司目录，方便从一个入口查看公开数据活动信号。筛选 URL 默认 noindex。"
+      description="把 H-1B LCA 与 PERM 官方公开数据中的雇主记录合并成公司目录，方便从一个入口查看公开数据活动信号。筛选 URL 默认 noindex。"
       eyebrow={siteConfig.tagline}
       structuredData={buildWebPageJsonLd({
         title: "公司目录",
@@ -164,7 +167,7 @@ export default async function CompaniesPage({
                 value="noindex"
               />
               <MetricCard
-                description="来自本地 fixture；后续会显示真实官方数据覆盖日期。"
+                description="来自官方公开数据导入；展示当前数据库覆盖的最新日期。"
                 label="最新数据日期"
                 value={result.data.latestDataDate ?? "待接入"}
               />
@@ -202,9 +205,9 @@ export default async function CompaniesPage({
         )}
 
         <SourceNote
-          latestDataLabel={
+              latestDataLabel={
             result.ok
-              ? `当前本地数据最新日期：${result.data.latestDataDate ?? "待接入真实数据"}。筛选 URL 默认 noindex。`
+              ? `当前官方公开数据最新日期：${result.data.latestDataDate ?? "待接入真实数据"}。筛选 URL 默认 noindex。`
               : undefined
           }
           names={[

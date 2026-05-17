@@ -21,3 +21,4 @@ data/etl_runs/*.jsonl
 !data/etl_runs/.gitkeep
 data/normalized/*
 !data/normalized/.gitkeep
+.vercel

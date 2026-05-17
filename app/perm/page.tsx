@@ -10,6 +10,8 @@ import { DataTable, type DataTableColumn } from "@/components/ui/data-table";
 import { DisclaimerBox } from "@/components/ui/disclaimer-box";
 import { ErrorState } from "@/components/ui/feedback-state";
 import { MetricCard } from "@/components/ui/metric-card";
+import { getRuntimeDataMode } from "@/lib/db/postgres-fixture-data";
+import { searchPostgresPermRecords } from "@/lib/db/postgres-directory-queries";
 import type { PublicDisclosureRecordRow } from "@/lib/db/public-query-repository";
 import { waitForRuntimeDataRequestBoundary } from "@/lib/db/runtime-rendering";
 import { getRuntimePublicQueryRepository } from "@/lib/db/runtime-public-query-repository";
@@ -39,7 +41,7 @@ export async function generateMetadata({
     title:
       filterCount > 0 ? "PERM / 绿卡公司搜索结果" : "PERM / 绿卡公司数据库",
     description:
-      "按雇主、年份、州/城市、职位/SOC 和 case status 查询本地 PERM fixture 记录。",
+      "按雇主、年份、州/城市、职位/SOC 和 case status 查询官方 PERM 公开记录样本。",
     path: "/perm",
     index: false,
     pageType: "data",
@@ -107,21 +109,22 @@ const permColumns: DataTableColumn<PublicDisclosureRecordRow>[] = [
 export default async function PermPage({ searchParams }: PermPageProps) {
   await waitForRuntimeDataRequestBoundary();
 
-  const repo = await getRuntimePublicQueryRepository();
   const parsed = parseDirectorySearchParams(await searchParams);
-  const result = repo.searchPermRecords(parsed.input);
-  const filterOptions = repo.searchPermRecords({
-    pageSize: 1,
-  });
-  const availableFilters = filterOptions.ok
-    ? filterOptions.data.availableFilters
+  const result =
+    getRuntimeDataMode() === "postgres"
+      ? await searchPostgresPermRecords(parsed.input)
+      : (await getRuntimePublicQueryRepository()).searchPermRecords(
+          parsed.input,
+        );
+  const availableFilters = result.ok
+    ? result.data.availableFilters
     : { caseStatuses: [], fiscalYears: [], states: [] };
 
   return (
     <PageShell
       breadcrumbs={[{ href: "/", label: "首页" }, { label: "PERM" }]}
       canonicalPath="/perm"
-      description="按雇主、年份、地区、职位/SOC 和 case status 查看本地 PERM fixture 记录。PERM 公开记录是职业移民信号，不等于 I-140、I-485 或绿卡结果。"
+      description="按雇主、年份、地区、职位/SOC 和 case status 查看官方 PERM 公开记录样本。PERM 公开记录是职业移民信号，不等于 I-140、I-485 或绿卡结果。"
       eyebrow={siteConfig.tagline}
       structuredData={buildWebPageJsonLd({
         title: "PERM / 绿卡公司数据库",
@@ -156,7 +159,7 @@ export default async function PermPage({ searchParams }: PermPageProps) {
                 value="noindex"
               />
               <MetricCard
-                description="来自本地 fixture；后续会显示真实官方数据覆盖日期。"
+                description="来自官方公开数据导入；展示当前数据库覆盖的最新日期。"
                 label="最新数据日期"
                 value={result.data.latestDataDate ?? "待接入"}
               />
@@ -165,7 +168,7 @@ export default async function PermPage({ searchParams }: PermPageProps) {
             <DataTable
               caption="PERM 搜索结果"
               columns={permColumns}
-              emptyDescription="当前筛选条件没有匹配的 PERM fixture 记录。可以减少筛选条件或回到全部记录。"
+              emptyDescription="当前筛选条件没有匹配的 PERM 公开记录样本。可以减少筛选条件或回到全部记录。"
               emptyTitle="没有找到 PERM 记录"
               getRowKey={(row) => row.id}
               rows={result.data.records}
@@ -193,9 +196,9 @@ export default async function PermPage({ searchParams }: PermPageProps) {
         )}
 
         <SourceNote
-          latestDataLabel={
+              latestDataLabel={
             result.ok
-              ? `当前本地数据最新日期：${result.data.latestDataDate ?? "待接入真实数据"}。筛选 URL 默认 noindex。`
+              ? `当前官方公开数据最新日期：${result.data.latestDataDate ?? "待接入真实数据"}。筛选 URL 默认 noindex。`
               : undefined
           }
           names={["DOL OFLC PERM disclosure data"]}

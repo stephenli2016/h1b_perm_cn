@@ -223,12 +223,22 @@ async function loadFreshPostgresFixtureData(): Promise<FixtureData> {
   };
 }
 
+export async function queryPostgresRows<T extends QueryResultRow>(
+  query: string,
+  values?: readonly unknown[],
+): Promise<T[]> {
+  const result = await getPool().query<T>(
+    query,
+    values ? [...values] : undefined,
+  );
+
+  return result.rows;
+}
+
 async function queryRows<T extends QueryResultRow>(
   query: string,
 ): Promise<T[]> {
-  const result = await getPool().query<T>(query);
-
-  return result.rows;
+  return queryPostgresRows<T>(query);
 }
 
 function getPool() {
