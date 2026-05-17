@@ -9,6 +9,7 @@ import { ErrorState } from "@/components/ui/feedback-state";
 import { MetricCard } from "@/components/ui/metric-card";
 import { RelatedLinks } from "@/components/ui/related-links";
 import type { PublicVisaBulletinPriorityDatePayload } from "@/lib/db/public-query-repository";
+import { waitForRuntimeDataRequestBoundary } from "@/lib/db/runtime-rendering";
 import { getRuntimePublicQueryRepository } from "@/lib/db/runtime-public-query-repository";
 import type { RawSearchParams } from "@/lib/directory-search";
 import {
@@ -71,6 +72,8 @@ const bulletinColumns: DataTableColumn<VisaBulletinRow>[] = [
 export default async function PriorityDateCalculatorPage({
   searchParams,
 }: PriorityDateCalculatorPageProps) {
+  await waitForRuntimeDataRequestBoundary();
+
   const repo = await getRuntimePublicQueryRepository();
   const months = repo.listVisaBulletinMonths();
   const latestMonthKey = months[0]?.monthKey;

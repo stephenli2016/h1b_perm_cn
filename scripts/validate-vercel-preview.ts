@@ -27,6 +27,10 @@ export function buildVercelPreviewValidationReport({
     join(cwd, "lib/security/preview-protection.ts"),
     "utf8",
   );
+  const runtimeRendering = readFileSync(
+    join(cwd, "lib/db/runtime-rendering.ts"),
+    "utf8",
+  );
 
   const checks: ValidationCheck[] = [
     {
@@ -53,7 +57,15 @@ export function buildVercelPreviewValidationReport({
         envExample.includes("LOCAL_DATA_MODE=fixture") &&
         envExample.includes("DATABASE_URL=") &&
         envExample.includes("DATABASE_POOL_MAX=1") &&
-        envExample.includes("PRERENDER_COMPANY_PAGES=false"),
+        envExample.includes("PRERENDER_COMPANY_PAGES=false") &&
+        envExample.includes("PRERENDER_RUNTIME_DATA_PAGES=false"),
+    },
+    {
+      name: "database-mode data pages defer rendering until request time",
+      passed:
+        runtimeRendering.includes("connection") &&
+        runtimeRendering.includes("getRuntimeDataMode") &&
+        runtimeRendering.includes('"postgres"'),
     },
     {
       name: "Vercel config still does not commit env values",
@@ -68,6 +80,7 @@ export function buildVercelPreviewValidationReport({
         m32Doc.includes("LOCAL_DATA_MODE=postgres") &&
         m32Doc.includes("PRELAUNCH_NOINDEX=true") &&
         m32Doc.includes("PRERENDER_COMPANY_PAGES=false") &&
+        m32Doc.includes("PRERENDER_RUNTIME_DATA_PAGES=false") &&
         m32Doc.includes("DATABASE_URL"),
     },
     {

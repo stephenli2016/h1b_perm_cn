@@ -11,6 +11,7 @@ import { DisclaimerBox } from "@/components/ui/disclaimer-box";
 import { ErrorState } from "@/components/ui/feedback-state";
 import { MetricCard } from "@/components/ui/metric-card";
 import type { PublicDisclosureRecordRow } from "@/lib/db/public-query-repository";
+import { waitForRuntimeDataRequestBoundary } from "@/lib/db/runtime-rendering";
 import { getRuntimePublicQueryRepository } from "@/lib/db/runtime-public-query-repository";
 import {
   activeFilterCount,
@@ -104,6 +105,8 @@ const permColumns: DataTableColumn<PublicDisclosureRecordRow>[] = [
 ];
 
 export default async function PermPage({ searchParams }: PermPageProps) {
+  await waitForRuntimeDataRequestBoundary();
+
   const repo = await getRuntimePublicQueryRepository();
   const parsed = parseDirectorySearchParams(await searchParams);
   const result = repo.searchPermRecords(parsed.input);

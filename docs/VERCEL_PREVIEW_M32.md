@@ -23,6 +23,11 @@ Error: DATABASE_URL is required when LOCAL_DATA_MODE uses the production databas
 This is a configuration problem, not a local build problem. Local validation
 passes with the Supabase Session Pooler URL.
 
+M32 also hardens the build path so database-backed data pages render at request
+time in `LOCAL_DATA_MODE=postgres`. A branch Preview can now complete its build
+without a build-time database connection, but runtime data pages still require
+`DATABASE_URL` before the Preview can be treated as Supabase-backed.
+
 ## Required Preview Environment Variables
 
 Set these in Vercel Project Settings for Preview before deploying the private
@@ -37,6 +42,7 @@ PREVIEW_PROTECTION_ENABLED=true
 PREVIEW_PROTECTION_USERNAME=preview
 PREVIEW_PROTECTION_PASSWORD=<strong random password>
 PRERENDER_COMPANY_PAGES=false
+PRERENDER_RUNTIME_DATA_PAGES=false
 NEXT_PUBLIC_SITE_URL=<preview deployment URL after deploy>
 NEXT_PUBLIC_CONTACT_EMAIL=<owner contact email>
 ```
@@ -110,6 +116,12 @@ Expected private-preview behavior:
 Company pages should stay dynamically rendered in Supabase-backed Vercel builds.
 Keep `PRERENDER_COMPANY_PAGES=false`; otherwise the build tries to pre-render
 thousands of company routes and can time out.
+
+Database-backed directory, tool, and Visa Bulletin pages also defer their data
+load to request time in `LOCAL_DATA_MODE=postgres`, so Vercel builds are not
+blocked by build-time database connectivity. Keep
+`PRERENDER_RUNTIME_DATA_PAGES=false` for Preview and Production unless a later
+milestone deliberately adds build-time database access.
 
 ## Current Blocker
 

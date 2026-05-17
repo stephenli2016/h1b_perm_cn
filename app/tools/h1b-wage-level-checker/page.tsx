@@ -12,6 +12,7 @@ import type {
   PublicH1BWageLevelCheckPayload,
   PublicWageLevelRow,
 } from "@/lib/db/public-query-repository";
+import { waitForRuntimeDataRequestBoundary } from "@/lib/db/runtime-rendering";
 import { getRuntimePublicQueryRepository } from "@/lib/db/runtime-public-query-repository";
 import type { RawSearchParams } from "@/lib/directory-search";
 import {
@@ -94,6 +95,8 @@ const relatedCompanyColumns: DataTableColumn<RelatedCompanyRow>[] = [
 export default async function H1BWageLevelCheckerPage({
   searchParams,
 }: H1BWageLevelCheckerPageProps) {
+  await waitForRuntimeDataRequestBoundary();
+
   const repo = await getRuntimePublicQueryRepository();
   const parsed = parseWageLevelSearchParams(await searchParams);
   const formValues = wageLevelValuesWithDefaults(parsed.values);

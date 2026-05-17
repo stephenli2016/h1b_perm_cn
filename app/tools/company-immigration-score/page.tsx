@@ -11,6 +11,7 @@ import {
   COMPANY_IMMIGRATION_SIGNAL_DIMENSIONS,
   type CompanyImmigrationSignalDimension,
 } from "@/lib/company-immigration-signals";
+import { waitForRuntimeDataRequestBoundary } from "@/lib/db/runtime-rendering";
 import { getRuntimePublicQueryRepository } from "@/lib/db/runtime-public-query-repository";
 import { buildWebApplicationJsonLd } from "@/lib/seo/json-ld";
 import { buildSeoMetadata } from "@/lib/seo/metadata";
@@ -70,6 +71,8 @@ export const metadata: Metadata = buildSeoMetadata({
 });
 
 export default async function CompanyImmigrationScorePage() {
+  await waitForRuntimeDataRequestBoundary();
+
   const repo = await getRuntimePublicQueryRepository();
   const example = repo.getCompanyProfileBySlug({
     slug: "brightline-health",

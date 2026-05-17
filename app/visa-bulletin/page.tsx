@@ -8,6 +8,7 @@ import { DisclaimerBox } from "@/components/ui/disclaimer-box";
 import { EmptyState } from "@/components/ui/empty-state";
 import { MetricCard } from "@/components/ui/metric-card";
 import type { PublicVisaBulletinDatesPayload } from "@/lib/db/public-query-repository";
+import { waitForRuntimeDataRequestBoundary } from "@/lib/db/runtime-rendering";
 import { getRuntimePublicQueryRepository } from "@/lib/db/runtime-public-query-repository";
 import { buildDatasetJsonLd } from "@/lib/seo/json-ld";
 import { buildRouteSeoMetadata } from "@/lib/seo/metadata";
@@ -17,6 +18,8 @@ export const metadata: Metadata = buildRouteSeoMetadata("/visa-bulletin");
 type VisaBulletinRow = PublicVisaBulletinDatesPayload["rows"][number];
 
 export default async function VisaBulletinPage() {
+  await waitForRuntimeDataRequestBoundary();
+
   const repo = await getRuntimePublicQueryRepository();
   const latestMonth = repo.listVisaBulletinMonths()[0];
   const result = latestMonth

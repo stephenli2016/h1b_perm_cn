@@ -12,6 +12,7 @@ import { getRuntimePublicQueryRepository } from "@/lib/db/runtime-public-query-r
 import { chartTypeLabelZh, formatVisaCutoff } from "@/lib/priority-date-tool";
 import { buildDatasetJsonLd } from "@/lib/seo/json-ld";
 import { buildNoIndexSeoMetadata, buildSeoMetadata } from "@/lib/seo/metadata";
+import { shouldGenerateRuntimeStaticParams } from "@/lib/seo/company-static-generation";
 
 type VisaBulletinMonthPageProps = {
   params: Promise<{
@@ -25,6 +26,10 @@ type VisaBulletinMonthRow = PublicVisaBulletinDatesPayload["rows"][number];
 export const dynamicParams = true;
 
 export async function generateStaticParams() {
+  if (!shouldGenerateRuntimeStaticParams()) {
+    return [];
+  }
+
   const repo = await getRuntimePublicQueryRepository();
 
   return repo.listVisaBulletinMonths().map((month) => ({

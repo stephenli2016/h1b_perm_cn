@@ -3,11 +3,15 @@ import { join } from "node:path";
 
 import { describe, expect, it } from "vitest";
 
+import { waitForRuntimeDataRequestBoundary } from "@/lib/db/runtime-rendering";
 import {
   getPreviewProtectionConfig,
   isPreviewProtectionAuthorized,
 } from "@/lib/security/preview-protection";
-import { shouldGenerateCompanyStaticParams } from "@/lib/seo/company-static-generation";
+import {
+  shouldGenerateCompanyStaticParams,
+  shouldGenerateRuntimeStaticParams,
+} from "@/lib/seo/company-static-generation";
 import { buildVercelPreviewValidationReport } from "@/scripts/validate-vercel-preview";
 
 describe("M32 Vercel Supabase preview", () => {
@@ -26,6 +30,7 @@ describe("M32 Vercel Supabase preview", () => {
     expect(doc).toContain("LOCAL_DATA_MODE=postgres");
     expect(doc).toContain("PRELAUNCH_NOINDEX=true");
     expect(doc).toContain("PRERENDER_COMPANY_PAGES=false");
+    expect(doc).toContain("PRERENDER_RUNTIME_DATA_PAGES=false");
     expect(doc).toContain("Do not promote");
   });
 
@@ -92,7 +97,66 @@ describe("M32 Vercel Supabase preview", () => {
         LOCAL_DATA_MODE: "postgres",
         PRERENDER_COMPANY_PAGES: "true",
       }),
+    ).toBe(false);
+    expect(
+      shouldGenerateCompanyStaticParams({
+        DATABASE_URL: "postgresql://example.test/db",
+        LOCAL_DATA_MODE: "postgres",
+        PRERENDER_COMPANY_PAGES: "true",
+      }),
     ).toBe(true);
+  });
+
+  it("skips runtime-backed static params when database mode is unconfigured", () => {
+    expect(
+      shouldGenerateRuntimeStaticParams({
+        LOCAL_DATA_MODE: "postgres",
+      }),
+    ).toBe(false);
+    expect(
+      shouldGenerateRuntimeStaticParams({
+        DATABASE_URL: "postgresql://example.test/db",
+        LOCAL_DATA_MODE: "postgres",
+      }),
+    ).toBe(false);
+    expect(
+      shouldGenerateRuntimeStaticParams({
+        DATABASE_URL: "postgresql://example.test/db",
+        LOCAL_DATA_MODE: "postgres",
+        PRERENDER_RUNTIME_DATA_PAGES: "true",
+      }),
+    ).toBe(true);
+    expect(
+      shouldGenerateRuntimeStaticParams({
+        LOCAL_DATA_MODE: "fixture",
+      }),
+    ).toBe(true);
+  });
+
+  it("defers runtime data pages to request time in database mode", async () => {
+    let connectionCalls = 0;
+
+    await waitForRuntimeDataRequestBoundary({
+      env: {
+        LOCAL_DATA_MODE: "postgres",
+      },
+      waitForConnection: async () => {
+        connectionCalls += 1;
+      },
+    });
+
+    expect(connectionCalls).toBe(1);
+
+    await waitForRuntimeDataRequestBoundary({
+      env: {
+        LOCAL_DATA_MODE: "fixture",
+      },
+      waitForConnection: async () => {
+        connectionCalls += 1;
+      },
+    });
+
+    expect(connectionCalls).toBe(1);
   });
 
   it("passes the M32 preview validator", () => {

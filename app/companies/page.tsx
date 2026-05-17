@@ -11,6 +11,7 @@ import { DisclaimerBox } from "@/components/ui/disclaimer-box";
 import { ErrorState } from "@/components/ui/feedback-state";
 import { MetricCard } from "@/components/ui/metric-card";
 import type { PublicCompanyDirectoryResult } from "@/lib/db/public-query-repository";
+import { waitForRuntimeDataRequestBoundary } from "@/lib/db/runtime-rendering";
 import { getRuntimePublicQueryRepository } from "@/lib/db/runtime-public-query-repository";
 import {
   activeFilterCount,
@@ -111,6 +112,8 @@ const companyColumns: DataTableColumn<PublicCompanyDirectoryResult>[] = [
 export default async function CompaniesPage({
   searchParams,
 }: CompaniesPageProps) {
+  await waitForRuntimeDataRequestBoundary();
+
   const repo = await getRuntimePublicQueryRepository();
   const parsed = parseDirectorySearchParams(await searchParams);
   const result = repo.searchCompanyDirectory(parsed.input);
