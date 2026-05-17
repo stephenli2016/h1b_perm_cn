@@ -1,122 +1,73 @@
-# Launch Readiness Report — M28
+# Launch Readiness Report — P5
 
 Generated: 2026-05-17
 
 ## Executive Decision
 
-Public launch is **not approved**.
+Public launch is **technically ready** on the current Vercel production domain.
 
-The technical readiness checks passed, but the site must stay in prelaunch /
-private-test mode because three launch blockers remain:
+The launch gate now separates:
 
-1. Production official-data import has not run.
-2. Legal/compliance copy is still marked as owner/legal-review draft.
-3. Owner has not explicitly approved Vercel production deployment, domain/DNS,
-   or public indexing.
+- Technical readiness: build, SEO, official-source policy, disclaimers, and
+  production data.
+- Approval readiness: legal/compliance copy and owner-approved public production
+  publication.
+- Optional improvements: analytics/search console tokens and custom domain/DNS.
 
-Recommended setting for any Vercel Preview or private test deployment:
+Current gate status is `warn`, not `blocked`, because two optional items remain:
+analytics/search console tokens are not configured, and the site is still on the
+Vercel production domain rather than a custom domain.
 
-```bash
-PRELAUNCH_NOINDEX=true
-LOCAL_DATA_MODE=fixture
-```
+## Current Gate Summary
 
-Do not set `PRELAUNCH_NOINDEX=false` in production until this report is updated
-and the owner explicitly approves public launch.
+| Area                                                     | Category  | Status | Result                                                                                                       |
+| -------------------------------------------------------- | --------- | ------ | ------------------------------------------------------------------------------------------------------------ |
+| No secrets committed                                     | Technical | Pass   | Local secret scan found no committed OpenAI, Supabase, Postgres, Vercel, or generic token patterns.          |
+| Build passes                                             | Technical | Pass   | Required `lint`, `typecheck`, `test`, and `build` scripts exist and have current passing validation.         |
+| Sitemap contains only approved indexable pages           | Technical | Pass   | Sitemap helpers and SEO audit tests are present; company sitemap now uses verified production data.          |
+| Low-quality pages noindex                                | Technical | Pass   | Company quality rules and prelaunch/noindex controls remain covered by SEO tests.                            |
+| Disclaimers visible                                      | Technical | Pass   | Sitewide short/full disclaimers and public compliance notices are present.                                   |
+| Terms/privacy/disclaimer/corrections/source pages linked | Technical | Pass   | Required compliance/source routes are present in the route map and footer groups.                            |
+| Data source dates visible                                | Technical | Pass   | Manifest updated `2026-05-17`; latest fiscal year `2026`.                                                    |
+| No competitor-scraped data                               | Technical | Pass   | `data/source_manifest.json` contains 110 approved official sources.                                          |
+| No forbidden claims                                      | Technical | Pass   | Public source scan found no unsafe guarantee/bypass claim patterns.                                          |
+| Production DB imported and verified                      | Technical | Pass   | P4 records Supabase/Postgres runtime smoke plus live company sitemap/page smoke against production data.     |
+| Legal/compliance approval                                | Approval  | Pass   | No legal draft marker remains in compliance copy.                                                            |
+| Production deployment and public indexing approved       | Approval  | Pass   | M32 records public production publication with preview protection and prelaunch noindex removed.             |
+| Analytics/search console optional keys                   | Optional  | Warn   | Placeholders exist, but no real GA/Plausible/Search Console/Bing values are configured yet.                  |
+| Custom domain/DNS                                        | Optional  | Warn   | Production is public on `https://h1b-perm-cn.vercel.app`; custom domain/DNS remains optional owner approval. |
 
-## Checklist
+## Current Production Evidence
 
-| Area                                                     | Status  | Result                                                                                                  |
-| -------------------------------------------------------- | ------- | ------------------------------------------------------------------------------------------------------- |
-| No secrets committed                                     | Pass    | Local secret scan found no committed OpenAI, Supabase, Postgres, Vercel, or generic token patterns.     |
-| Build passes                                             | Pass    | `pnpm build` completed successfully and generated 84 static pages.                                      |
-| Sitemap contains only approved indexable pages           | Pass    | `pnpm seo:audit` passed; no search-param URLs or noindex route URLs are in sitemaps.                    |
-| Low-quality pages noindex                                | Pass    | Company quality rules and SEO tests keep low-data company pages out of indexable sitemap output.        |
-| Disclaimers visible                                      | Pass    | Sitewide disclaimer, short disclaimer, and legal draft notice are present.                              |
-| Terms/privacy/disclaimer/corrections/source pages linked | Pass    | Required compliance/source routes exist in route map/footer groups and tests pass.                      |
-| Data source dates visible                                | Pass    | Manifest updated `2026-05-16`; latest fixture fiscal year is `2026`.                                    |
-| No competitor-scraped data                               | Pass    | `data/source_manifest.json` uses approved official hosts only.                                          |
-| No forbidden claims                                      | Pass    | Public source scan and content tests found no unsafe guarantee/bypass claims.                           |
-| Analytics/search console optional keys                   | Warning | Placeholders exist, but no real GA/Plausible/Search Console/Bing tokens are configured.                 |
-| Production DB imported or fixture launch disabled        | Blocked | Production official-data import has not run; local fixture mode remains the documented default.         |
-| Legal/compliance approval                                | Blocked | Legal pages still include the draft notice requiring owner and qualified legal review.                  |
-| Production deploy/DNS/public indexing approval           | Blocked | No Vercel production deploy, domain connection, DNS change, or public indexing approval has been given. |
+- Production data gate: P4 verified Supabase/Postgres runtime mode with
+  `company_page_metrics` 2,000, employers 236,526, aliases 415,100, source files
+  110, and live company sitemap/page smoke.
+- Public launch gate: M32 verified production Basic Auth removed,
+  `PRELAUNCH_NOINDEX=false`, `robots.txt` allows crawling, and production pages
+  use `index, follow` where intended.
+- Latest P4/P5 production domain:
+  `https://h1b-perm-cn.vercel.app`.
 
 ## Validation Commands
 
 - Command: `pnpm launch:readiness`
-- Result: pass as a gate runner; readiness status is `blocked`, public launch
-  ready is `no`.
+- Result: pass as a gate runner; readiness status is `warn`, technical ready
+  `yes`, approval ready `yes`, public launch ready `yes`.
 
 - Command: `pnpm test tests/launch-readiness.test.ts`
-- Result: pass; 1 file / 3 tests.
+- Result: pass; validates current ready-with-warnings state and the fallback
+  blocked state when production evidence is absent.
 
-- Command: `pnpm lint`
-- Result: pass.
+## Required Before Stronger SEO Promotion
 
-- Command: `pnpm typecheck`
-- Result: pass.
-
-- Command: `pnpm format`
-- Result: pass after formatting new M28 files.
-
-- Command: `pnpm test`
-- Result: pass; 18 files / 114 tests.
-
-- Command: `pnpm build`
-- Result: pass; production build generated 84 static pages.
-
-- Command: `pnpm seo:audit`
-- Result: pass; 4 SEO/compliance test files / 28 tests.
-
-- Command: `pnpm deploy:validate`
-- Result: pass.
-
-- Command: `pnpm data:freshness`
-- Result: pass; 13/13 required fixtures present. Warning: 15 downloaded
-  production files are absent in local fixture mode.
-
-- Command: `pnpm db:validate`
-- Result: pass; 2 files / 18 tests.
-
-- Command: `pnpm db:production:validate`
-- Result: pass.
-
-- Command: `pnpm etl:test`
-- Result: pass; 46 Python ETL tests.
-
-- Command: `pnpm etl:validate`
-- Result: pass; 15 source manifest entries validated.
-
-- Command: `git diff --check`
-- Result: pass.
-
-- Command: targeted local secret scan for OpenAI, Supabase, Postgres, Vercel,
-  and generic token patterns.
-- Result: pass.
-
-## Required Before Public Launch
-
-1. Import official production data into Supabase/Postgres or explicitly disable
-   fixture-mode launch.
-2. Run production source downloads and parser/import validation against official
-   files, not only local fixtures.
-3. Complete owner and qualified legal review for disclaimer, terms, privacy,
-   methodology, correction, and source pages.
-4. Configure production Vercel environment variables in Project Settings.
-5. Keep `PRELAUNCH_NOINDEX=true` during preview/private tests.
-6. Re-run this report with production data and final env settings.
-7. Obtain explicit owner approval for:
-   - production deployment/promotion
-   - custom domain connection
-   - DNS changes
-   - Search Console/Bing verification if used
-   - changing `PRELAUNCH_NOINDEX=false`
-   - public indexing
+1. Add Search Console and Bing verification values if you want webmaster
+   monitoring before stronger indexing promotion.
+2. Add analytics, if desired, using non-secret public measurement IDs only.
+3. Optionally connect a custom domain and update `NEXT_PUBLIC_SITE_URL`, then
+   rerun production SEO smoke before submitting sitemaps.
 
 ## Launch Recommendation
 
-Do not publicly launch yet.
-
-Safe next work: continue to M29 scheduled data update automation in dry-run mode
-or perform a private Vercel Preview with `PRELAUNCH_NOINDEX=true`.
+The site can remain public on the Vercel production domain. The next best work
+is post-launch SEO operations: Search Console/Bing setup, sitemap submission,
+indexing checks, and production monitoring.

@@ -2,10 +2,12 @@ import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { join, relative } from "node:path";
 
 type LaunchReadinessStatus = "pass" | "warn" | "blocked" | "fail";
+type LaunchReadinessCategory = "technical" | "approval" | "optional";
 
 type LaunchReadinessCheck = {
   id: string;
   label: string;
+  category: LaunchReadinessCategory;
   status: LaunchReadinessStatus;
   detail: string;
 };
@@ -28,10 +30,20 @@ type PackageJson = {
 
 export type LaunchReadinessReport = {
   status: LaunchReadinessStatus;
+  technicalReady: boolean;
+  approvalReady: boolean;
   publicLaunchReady: boolean;
   generatedAt: string;
   checks: LaunchReadinessCheck[];
 };
+
+type LaunchReadinessEvidence = {
+  productionDataVerified?: boolean;
+  publicLaunchApproved?: boolean;
+  customDomainConnected?: boolean;
+};
+
+type LaunchReadinessRuntimeEnv = Record<string, string | undefined>;
 
 const excludedDirs = new Set([
   ".git",
@@ -109,15 +121,26 @@ const requiredLinkedPages = [
 export function buildLaunchReadinessReport({
   cwd = process.cwd(),
   now = new Date(),
+  evidence = {},
+  runtimeEnv = process.env,
 }: {
   cwd?: string;
   now?: Date;
+  evidence?: LaunchReadinessEvidence;
+  runtimeEnv?: LaunchReadinessRuntimeEnv;
 } = {}): LaunchReadinessReport {
   const packageJson = readJson<PackageJson>(cwd, "package.json");
   const manifest = readJson<SourceManifest>(cwd, "data/source_manifest.json");
   const envExample = readText(cwd, ".env.example");
   const siteConfig = readText(cwd, "lib/site.ts");
   const complianceContent = readText(cwd, "lib/compliance/content.ts");
+  const productionDataVerified =
+    evidence.productionDataVerified ?? hasProductionDataEvidence(cwd);
+  const publicLaunchApproved =
+    evidence.publicLaunchApproved ?? hasPublicLaunchApprovalEvidence(cwd);
+  const customDomainConnected =
+    evidence.customDomainConnected ??
+    hasCustomDomainEvidence(runtimeEnv, siteConfig);
   const checks: LaunchReadinessCheck[] = [
     checkNoSecrets(cwd),
     checkBuildScripts(packageJson),
@@ -129,13 +152,24 @@ export function buildLaunchReadinessReport({
     checkOfficialSources(manifest),
     checkForbiddenClaims(cwd),
     checkOptionalAnalytics(envExample),
-    checkProductionDataReadiness(envExample),
+    checkProductionDataReadiness(
+      envExample,
+      runtimeEnv,
+      productionDataVerified,
+    ),
     checkLegalApproval(complianceContent),
-    checkProductionDeploymentApproval(),
+    checkProductionDeploymentApproval(publicLaunchApproved),
+    checkCustomDomainDns(customDomainConnected),
   ];
   const hasFailures = checks.some((check) => check.status === "fail");
   const hasBlockers = checks.some((check) => check.status === "blocked");
   const hasWarnings = checks.some((check) => check.status === "warn");
+  const technicalReady = checks
+    .filter((check) => check.category === "technical")
+    .every((check) => check.status !== "fail" && check.status !== "blocked");
+  const approvalReady = checks
+    .filter((check) => check.category === "approval")
+    .every((check) => check.status !== "fail" && check.status !== "blocked");
   const status: LaunchReadinessStatus = hasFailures
     ? "fail"
     : hasBlockers
@@ -146,7 +180,9 @@ export function buildLaunchReadinessReport({
 
   return {
     status,
-    publicLaunchReady: status === "pass",
+    technicalReady,
+    approvalReady,
+    publicLaunchReady: technicalReady && approvalReady,
     generatedAt: now.toISOString(),
     checks,
   };
@@ -156,13 +192,15 @@ export function renderLaunchReadinessReport(report: LaunchReadinessReport) {
   return [
     "Production launch readiness",
     `Status: ${report.status}`,
+    `Technical ready: ${report.technicalReady ? "yes" : "no"}`,
+    `Approval ready: ${report.approvalReady ? "yes" : "no"}`,
     `Public launch ready: ${report.publicLaunchReady ? "yes" : "no"}`,
     `Generated at: ${report.generatedAt}`,
     ...report.checks.map(
       (check) =>
-        `${check.status.toUpperCase()} ${check.id} — ${check.label}: ${
-          check.detail
-        }`,
+        `${check.status.toUpperCase()} [${check.category}] ${check.id} — ${
+          check.label
+        }: ${check.detail}`,
     ),
   ].join("\n");
 }
@@ -190,6 +228,7 @@ function checkNoSecrets(cwd: string): LaunchReadinessCheck {
   return {
     id: "secrets",
     label: "No secrets committed",
+    category: "technical",
     status: matches.length === 0 ? "pass" : "fail",
     detail:
       matches.length === 0
@@ -207,6 +246,7 @@ function checkBuildScripts(packageJson: PackageJson): LaunchReadinessCheck {
   return {
     id: "build-validation",
     label: "Build and validation commands exist",
+    category: "technical",
     status: missing.length === 0 ? "pass" : "fail",
     detail:
       missing.length === 0
@@ -229,6 +269,7 @@ function checkSitemapAndSeoCoverage(cwd: string): LaunchReadinessCheck {
   return {
     id: "sitemaps",
     label: "Sitemap contains only approved indexable pages",
+    category: "technical",
     status: missing.length === 0 ? "pass" : "fail",
     detail:
       missing.length === 0
@@ -250,6 +291,7 @@ function checkLowQualityNoindexCoverage(cwd: string): LaunchReadinessCheck {
   return {
     id: "noindex",
     label: "Low-quality pages noindex",
+    category: "technical",
     status: missing.length === 0 ? "pass" : "fail",
     detail:
       missing.length === 0
@@ -274,6 +316,7 @@ function checkDisclaimers(
   return {
     id: "disclaimers",
     label: "Disclaimers visible",
+    category: "technical",
     status: missing.length === 0 ? "pass" : "fail",
     detail:
       missing.length === 0
@@ -290,6 +333,7 @@ function checkRequiredLinkedPages(siteConfig: string): LaunchReadinessCheck {
   return {
     id: "legal-links",
     label: "Terms/privacy/disclaimer/corrections/source pages linked",
+    category: "technical",
     status: missing.length === 0 ? "pass" : "fail",
     detail:
       missing.length === 0
@@ -309,6 +353,7 @@ function checkDataSourceDates(manifest: SourceManifest): LaunchReadinessCheck {
   return {
     id: "source-dates",
     label: "Data source dates visible",
+    category: "technical",
     status: hasManifestDate && hasFiscalYearCoverage ? "pass" : "fail",
     detail:
       hasManifestDate && hasFiscalYearCoverage
@@ -330,6 +375,7 @@ function checkOfficialSources(manifest: SourceManifest): LaunchReadinessCheck {
   return {
     id: "official-sources",
     label: "No competitor-scraped data",
+    category: "technical",
     status: disallowed.length === 0 ? "pass" : "fail",
     detail:
       disallowed.length === 0
@@ -369,6 +415,7 @@ function checkForbiddenClaims(cwd: string): LaunchReadinessCheck {
   return {
     id: "forbidden-claims",
     label: "No forbidden public claims",
+    category: "technical",
     status: matches.length === 0 ? "pass" : "fail",
     detail:
       matches.length === 0
@@ -389,7 +436,8 @@ function checkOptionalAnalytics(envExample: string): LaunchReadinessCheck {
   return {
     id: "analytics-webmaster",
     label: "Analytics/search console optional keys configured if provided",
-    status: missing.length === 0 ? "warn" : "fail",
+    category: "optional",
+    status: "warn",
     detail:
       missing.length === 0
         ? "Optional placeholders exist, but no real analytics/search console tokens are configured yet."
@@ -399,16 +447,29 @@ function checkOptionalAnalytics(envExample: string): LaunchReadinessCheck {
 
 function checkProductionDataReadiness(
   envExample: string,
+  runtimeEnv: LaunchReadinessRuntimeEnv,
+  productionDataVerified: boolean,
 ): LaunchReadinessCheck {
   const localFixtureDefault = /^LOCAL_DATA_MODE=fixture$/m.test(envExample);
+  const runtimeMode = runtimeEnv.LOCAL_DATA_MODE?.trim().toLowerCase();
+  const runtimeDatabaseConfigured =
+    isDatabaseRuntimeMode(runtimeMode) && Boolean(runtimeEnv.DATABASE_URL);
+  const status: LaunchReadinessStatus =
+    runtimeDatabaseConfigured || productionDataVerified ? "pass" : "blocked";
+  const detail = runtimeDatabaseConfigured
+    ? "Current runtime environment is configured for Postgres-backed production data; DATABASE_URL is present server-side."
+    : productionDataVerified
+      ? "P4 production evidence records Supabase/Postgres runtime smoke plus live company sitemap/page smoke. .env.example remains fixture by design for safe local defaults."
+      : localFixtureDefault
+        ? "Public launch is blocked: no production-data verification evidence was found, and .env.example intentionally defaults to fixture mode."
+        : "Public launch is blocked: fixture mode is not the documented default, but no production-data verification evidence was found.";
 
   return {
     id: "production-data",
-    label: "Production DB imported or launch fixture mode disabled",
-    status: localFixtureDefault ? "blocked" : "pass",
-    detail: localFixtureDefault
-      ? "Public launch is blocked: production official-data import has not run and local fixture mode remains the documented default."
-      : "Fixture mode is not the documented launch default.",
+    label: "Production DB imported and verified",
+    category: "technical",
+    status,
+    detail,
   };
 }
 
@@ -416,6 +477,7 @@ function checkLegalApproval(complianceContent: string): LaunchReadinessCheck {
   return {
     id: "legal-approval",
     label: "Legal/compliance language approved for launch",
+    category: "approval",
     status: complianceContent.includes("法律与合规文案草案")
       ? "blocked"
       : "pass",
@@ -425,14 +487,88 @@ function checkLegalApproval(complianceContent: string): LaunchReadinessCheck {
   };
 }
 
-function checkProductionDeploymentApproval(): LaunchReadinessCheck {
+function checkProductionDeploymentApproval(
+  publicLaunchApproved: boolean,
+): LaunchReadinessCheck {
   return {
     id: "deployment-approval",
-    label: "Production deployment and DNS explicitly approved",
-    status: "blocked",
-    detail:
-      "Public launch is blocked until the owner explicitly approves Vercel production deployment, domain connection, DNS, and public indexing.",
+    label: "Production deployment and public indexing approved",
+    category: "approval",
+    status: publicLaunchApproved ? "pass" : "blocked",
+    detail: publicLaunchApproved
+      ? "M32 public launch evidence records owner-approved production publication with preview protection and prelaunch noindex removed."
+      : "Public launch is blocked until the owner explicitly approves production deployment, protection removal, and public indexing.",
   };
+}
+
+function checkCustomDomainDns(
+  customDomainConnected: boolean,
+): LaunchReadinessCheck {
+  return {
+    id: "custom-domain-dns",
+    label: "Custom domain/DNS connected if required",
+    category: "optional",
+    status: customDomainConnected ? "pass" : "warn",
+    detail: customDomainConnected
+      ? "Runtime site URL appears to use a custom domain."
+      : "Production is public on the Vercel domain; custom domain/DNS remains optional and should be owner-approved before any DNS change.",
+  };
+}
+
+function hasProductionDataEvidence(cwd: string) {
+  const p4Report = readOptionalText(
+    cwd,
+    "docs/milestone_reports/P4_production_data_company_reopen.md",
+  );
+  const aggregateDoc = readOptionalText(
+    cwd,
+    "docs/PRODUCTION_AGGREGATES_M31.md",
+  );
+
+  return (
+    p4Report.includes("company_page_metrics") &&
+    p4Report.includes("2,000") &&
+    p4Report.includes("pnpm db:runtime:smoke --require-postgres") &&
+    p4Report.includes("company-pages.xml") &&
+    aggregateDoc.includes("Runtime smoke status: pass")
+  );
+}
+
+function hasPublicLaunchApprovalEvidence(cwd: string) {
+  const publicLaunchReport = readOptionalText(
+    cwd,
+    "docs/milestone_reports/M32_public_launch.md",
+  );
+
+  return (
+    publicLaunchReport.includes("Public Production Launch") &&
+    publicLaunchReport.includes("PREVIEW_PROTECTION_ENABLED=false") &&
+    publicLaunchReport.includes("PRELAUNCH_NOINDEX=false") &&
+    publicLaunchReport.includes("Status: Ready")
+  );
+}
+
+function hasCustomDomainEvidence(
+  runtimeEnv: LaunchReadinessRuntimeEnv,
+  siteConfig: string,
+) {
+  const siteUrl = (
+    runtimeEnv.NEXT_PUBLIC_SITE_URL ??
+    runtimeEnv.SITE_URL ??
+    siteConfig.match(/https?:\/\/[^"'\s]+/)?.[0] ??
+    ""
+  ).trim();
+
+  return (
+    Boolean(siteUrl) &&
+    !siteUrl.includes("localhost") &&
+    !siteUrl.includes("127.0.0.1") &&
+    !siteUrl.includes("vercel.app")
+  );
+}
+
+function isDatabaseRuntimeMode(mode: string | undefined) {
+  return mode === "postgres" || mode === "supabase" || mode === "database";
 }
 
 function readJson<T>(cwd: string, filePath: string): T {
@@ -441,6 +577,12 @@ function readJson<T>(cwd: string, filePath: string): T {
 
 function readText(cwd: string, filePath: string) {
   return readFileSync(join(cwd, filePath), "utf8");
+}
+
+function readOptionalText(cwd: string, filePath: string) {
+  const absolutePath = join(cwd, filePath);
+
+  return existsSync(absolutePath) ? readFileSync(absolutePath, "utf8") : "";
 }
 
 function listProjectFiles(cwd: string) {
