@@ -17,11 +17,15 @@ import type {
   PublicQueryErrorCode,
   PublicQueryResult,
   PublicRelatedEntitiesPayload,
+  PublicVisaBulletinDatesInput,
+  PublicVisaBulletinDatesPayload,
 } from "@/lib/db/public-query-repository";
 import type {
   CompanyPageMetrics,
   CompanyYearlyImmigrationStats,
   Employer,
+  VisaBulletinDate,
+  VisaBulletinMonth,
 } from "@/lib/db/types";
 import type {
   CompanyImmigrationSignal,
@@ -206,6 +210,27 @@ type RelatedCompanyRow = {
   headquarters_location_id: string | null;
   score: string | number;
   shared_signals: string[] | null;
+};
+
+type VisaBulletinMonthRow = {
+  id: string;
+  month_key: string;
+  bulletin_year: string | number;
+  bulletin_month: string | number;
+  source_url: string;
+  published_at: Date | string | null;
+  uscis_filing_chart: string;
+};
+
+type VisaBulletinDateRow = {
+  id: string;
+  bulletin_month_id: string;
+  category: string;
+  chargeability_area: string;
+  chart_type: string;
+  cutoff_date: Date | string | null;
+  cutoff_status: string;
+  raw_value: string;
 };
 
 export async function searchPostgresH1BRecords(
@@ -485,6 +510,98 @@ export async function getPostgresCompanyProfileBySlug(
       noindexReason: indexability?.noindexReason,
       noindexReasonZh: indexability?.noindexReasonZh,
     },
+  });
+}
+
+export async function getPostgresVisaBulletinDates(
+  input: PublicVisaBulletinDatesInput = {},
+): Promise<PublicQueryResult<PublicVisaBulletinDatesPayload>> {
+  const monthKey = input.monthKey?.trim();
+  const category = input.category;
+  const chargeabilityArea = input.chargeabilityArea ?? "china-mainland";
+
+  if (monthKey && !/^\d{4}-(0[1-9]|1[0-2])$/.test(monthKey)) {
+    return failure(
+      "invalid_input",
+      "Visa Bulletin 月份格式无效。",
+      "monthKey",
+      "请使用 YYYY-MM 格式，例如 2026-06。",
+    );
+  }
+
+  if (category && !["EB-1", "EB-2", "EB-3"].includes(category)) {
+    return failure("invalid_input", "职业移民类别无效。", "category");
+  }
+
+  if (chargeabilityArea !== "china-mainland") {
+    return failure(
+      "invalid_input",
+      "当前查询层只支持中国大陆出生 chargeability area。",
+      "chargeabilityArea",
+    );
+  }
+
+  const monthRows = await queryPostgresRows<VisaBulletinMonthRow>(
+    monthKey
+      ? `
+        select id, month_key, bulletin_year, bulletin_month, source_url, published_at, uscis_filing_chart
+        from public.visa_bulletin_months
+        where month_key = $1
+        limit 1
+      `
+      : `
+        select id, month_key, bulletin_year, bulletin_month, source_url, published_at, uscis_filing_chart
+        from public.visa_bulletin_months
+        order by month_key desc
+        limit 1
+      `,
+    monthKey ? [monthKey] : [],
+  );
+  const month = toVisaBulletinMonth(monthRows[0]);
+
+  if (!month) {
+    return failure(
+      "not_found",
+      "未找到对应月份的 Visa Bulletin 数据。",
+      "monthKey",
+    );
+  }
+
+  const dateRows = await queryPostgresRows<VisaBulletinDateRow>(
+    `
+      select id, bulletin_month_id, category, chargeability_area, chart_type, cutoff_date, cutoff_status, raw_value
+      from public.visa_bulletin_dates
+      where bulletin_month_id = $1
+        and chargeability_area = 'china-mainland'
+        and category in ('EB-1', 'EB-2', 'EB-3')
+        and chart_type in ('final_action', 'dates_for_filing')
+      order by category, chart_type
+    `,
+    [month.id],
+  );
+  const records = dateRows.map(toVisaBulletinDate);
+  const categories: VisaBulletinDate["category"][] = ["EB-1", "EB-2", "EB-3"];
+
+  return success({
+    month,
+    rows: categories
+      .filter((rowCategory) => !category || rowCategory === category)
+      .map((rowCategory) => ({
+        category: rowCategory,
+        finalAction: records.find(
+          (record) =>
+            record.category === rowCategory &&
+            record.chartType === "final_action",
+        ),
+        datesForFiling: records.find(
+          (record) =>
+            record.category === rowCategory &&
+            record.chartType === "dates_for_filing",
+        ),
+      })),
+    sourceUrl: month.sourceUrl,
+    interpretationNoteZh:
+      "Visa Bulletin 日期只是公开排期表信号；实际 I-485 filing chart 还需看 USCIS 当月选择和个人情况。",
   });
 }
 
@@ -1387,6 +1504,45 @@ function toEmployer(row: {
     slug: row.slug,
     normalizedName: row.normalized_name,
     headquartersLocationId: row.headquarters_location_id ?? undefined,
+  };
+}
+
+function toVisaBulletinMonth(
+  row: VisaBulletinMonthRow | undefined,
+): VisaBulletinMonth | undefined {
+  if (!row) {
+    return undefined;
+  }
+
+  return {
+    id: row.id,
+    monthKey: row.month_key,
+    bulletinYear: toNumber(row.bulletin_year),
+    bulletinMonth: toNumber(row.bulletin_month),
+    sourceUrl: row.source_url,
+    publishedAt: toDateKey(row.published_at) ?? "",
+    uscisFilingChart:
+      row.uscis_filing_chart === "final_action"
+        ? "final_action"
+        : "dates_for_filing",
+  };
+}
+
+function toVisaBulletinDate(row: VisaBulletinDateRow): VisaBulletinDate {
+  return {
+    id: row.id,
+    bulletinMonthId: row.bulletin_month_id,
+    category:
+      row.category === "EB-1" || row.category === "EB-2" ? row.category : "EB-3",
+    chargeabilityArea: "china-mainland",
+    chartType:
+      row.chart_type === "final_action" ? "final_action" : "dates_for_filing",
+    cutoffDate: toDateKey(row.cutoff_date),
+    cutoffStatus:
+      row.cutoff_status === "current" || row.cutoff_status === "unavailable"
+        ? row.cutoff_status
+        : "date",
+    rawValue: row.raw_value,
   };
 }
 

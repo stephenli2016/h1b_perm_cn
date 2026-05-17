@@ -7,6 +7,8 @@ import { DataTable, type DataTableColumn } from "@/components/ui/data-table";
 import { DisclaimerBox } from "@/components/ui/disclaimer-box";
 import { EmptyState } from "@/components/ui/empty-state";
 import { MetricCard } from "@/components/ui/metric-card";
+import { getPostgresVisaBulletinDates } from "@/lib/db/postgres-directory-queries";
+import { getRuntimeDataMode } from "@/lib/db/postgres-fixture-data";
 import type { PublicVisaBulletinDatesPayload } from "@/lib/db/public-query-repository";
 import { waitForRuntimeDataRequestBoundary } from "@/lib/db/runtime-rendering";
 import { getRuntimePublicQueryRepository } from "@/lib/db/runtime-public-query-repository";
@@ -20,11 +22,16 @@ type VisaBulletinRow = PublicVisaBulletinDatesPayload["rows"][number];
 export default async function VisaBulletinPage() {
   await waitForRuntimeDataRequestBoundary();
 
-  const repo = await getRuntimePublicQueryRepository();
-  const latestMonth = repo.listVisaBulletinMonths()[0];
-  const result = latestMonth
-    ? repo.getVisaBulletinDates({ monthKey: latestMonth.monthKey })
-    : undefined;
+  const result =
+    getRuntimeDataMode() === "postgres"
+      ? await getPostgresVisaBulletinDates()
+      : await getRuntimePublicQueryRepository().then((repo) => {
+          const latestMonth = repo.listVisaBulletinMonths()[0];
+          return latestMonth
+            ? repo.getVisaBulletinDates({ monthKey: latestMonth.monthKey })
+            : undefined;
+        });
+  const latestMonth = result?.ok ? result.data.month : undefined;
   const rows = result?.ok ? result.data.rows : [];
   const tableColumns: DataTableColumn<VisaBulletinRow>[] = [
     {
@@ -66,12 +73,12 @@ export default async function VisaBulletinPage() {
     <PageShell
       breadcrumbs={[{ href: "/", label: "首页" }, { label: "排期" }]}
       canonicalPath="/visa-bulletin"
-      description="中国大陆出生 EB-1、EB-2、EB-3 的 Department of State Visa Bulletin fixture 数据，以及 USCIS 当月 filing chart 选择。"
+      description="中国大陆出生 EB-1、EB-2、EB-3 的 Department of State Visa Bulletin 官方来源数据快照，以及 USCIS 当月 filing chart 选择。"
       eyebrow="Visa Bulletin"
       structuredData={buildDatasetJsonLd({
         name: "中国职业移民排期",
         description:
-          "中国大陆出生 EB-1、EB-2、EB-3 的 Department of State Visa Bulletin fixture 数据，以及 USCIS 当月 filing chart 选择。",
+          "中国大陆出生 EB-1、EB-2、EB-3 的 Department of State Visa Bulletin 官方来源数据快照，以及 USCIS 当月 filing chart 选择。",
         path: "/visa-bulletin",
         dateModified: latestMonth?.publishedAt,
         sources: [
@@ -95,7 +102,7 @@ export default async function VisaBulletinPage() {
           <DataTable
             caption={`${latestMonth.monthKey} 中国大陆出生 EB 排期表`}
             columns={tableColumns}
-            emptyDescription="当前月份 fixture 没有可展示的排期行。"
+            emptyDescription="当前月份没有可展示的排期行。"
             emptyTitle="暂无排期数据"
             getRowKey={(row) => row.category}
             rows={rows}
@@ -128,8 +135,8 @@ export default async function VisaBulletinPage() {
         </section>
       ) : (
         <EmptyState
-          description="请先运行 Visa Bulletin fixture ETL，或在后续里程碑接入官方刷新流程。"
-          title="暂无本地 Visa Bulletin fixture"
+          description="请先导入 Department of State Visa Bulletin 与 USCIS filing chart 官方来源数据。"
+          title="暂无 Visa Bulletin 数据"
           tone="warning"
         />
       )}
@@ -158,8 +165,8 @@ export default async function VisaBulletinPage() {
         <SourceNote
           latestDataLabel={
             latestMonth
-              ? `本页使用本地 fixture 展示 ${latestMonth.monthKey} 及相邻月份的职业移民排期结构；生产发布前仍需按官方页面刷新当月数据。`
-              : "本页尚无本地 Visa Bulletin fixture。"
+              ? `本页使用 ${latestMonth.monthKey} Department of State Visa Bulletin 与 USCIS filing chart 官方来源数据快照，来源发布日期 ${latestMonth.publishedAt}。`
+              : "本页尚无 Visa Bulletin 数据。"
           }
           names={[
             "U.S. Department of State Visa Bulletin",

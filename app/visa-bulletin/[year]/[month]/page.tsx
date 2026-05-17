@@ -7,7 +7,13 @@ import { SourceNote } from "@/components/source-note";
 import { DataTable, type DataTableColumn } from "@/components/ui/data-table";
 import { DisclaimerBox } from "@/components/ui/disclaimer-box";
 import { MetricCard } from "@/components/ui/metric-card";
-import type { PublicVisaBulletinDatesPayload } from "@/lib/db/public-query-repository";
+import { getPostgresVisaBulletinDates } from "@/lib/db/postgres-directory-queries";
+import { getRuntimeDataMode } from "@/lib/db/postgres-fixture-data";
+import type {
+  PublicQueryResult,
+  PublicVisaBulletinDatesPayload,
+} from "@/lib/db/public-query-repository";
+import { waitForRuntimeDataRequestBoundary } from "@/lib/db/runtime-rendering";
 import { getRuntimePublicQueryRepository } from "@/lib/db/runtime-public-query-repository";
 import { chartTypeLabelZh, formatVisaCutoff } from "@/lib/priority-date-tool";
 import { buildDatasetJsonLd } from "@/lib/seo/json-ld";
@@ -23,6 +29,7 @@ type VisaBulletinMonthPageProps = {
 
 type VisaBulletinMonthRow = PublicVisaBulletinDatesPayload["rows"][number];
 
+export const dynamic = "force-dynamic";
 export const dynamicParams = true;
 
 export async function generateStaticParams() {
@@ -41,15 +48,24 @@ export async function generateStaticParams() {
 export async function generateMetadata({
   params,
 }: VisaBulletinMonthPageProps): Promise<Metadata> {
-  const repo = await getRuntimePublicQueryRepository();
   const { year, month } = await params;
   const monthKey = toMonthKey(year, month);
-  const result = monthKey ? repo.getVisaBulletinDates({ monthKey }) : undefined;
+
+  if (getRuntimeDataMode() === "postgres" && monthKey) {
+    return buildSeoMetadata({
+      title: `${monthKey} 中国职业移民排期 EB-1 / EB-2 / EB-3`,
+      description: `查看 ${monthKey} 中国大陆出生 EB-1、EB-2、EB-3 的 Final Action Dates、Dates for Filing 与 USCIS filing chart 公开数据。`,
+      path: `/visa-bulletin/${year}/${month}`,
+      pageType: "data",
+    });
+  }
+
+  const result = monthKey ? await getVisaBulletinPayload(monthKey) : undefined;
 
   if (!result?.ok) {
     return buildNoIndexSeoMetadata({
       title: "未找到 Visa Bulletin 月度页面",
-      description: "当前本地 fixture 中没有这个月份的中国职业移民排期数据。",
+      description: "当前数据快照中没有这个月份的中国职业移民排期数据。",
       path: `/visa-bulletin/${year}/${month}`,
     });
   }
@@ -65,7 +81,8 @@ export async function generateMetadata({
 export default async function VisaBulletinMonthPage({
   params,
 }: VisaBulletinMonthPageProps) {
-  const repo = await getRuntimePublicQueryRepository();
+  await waitForRuntimeDataRequestBoundary();
+
   const { year, month } = await params;
   const monthKey = toMonthKey(year, month);
 
@@ -73,7 +90,7 @@ export default async function VisaBulletinMonthPage({
     notFound();
   }
 
-  const result = repo.getVisaBulletinDates({ monthKey });
+  const result = await getVisaBulletinPayload(monthKey);
 
   if (!result.ok) {
     notFound();
@@ -124,11 +141,11 @@ export default async function VisaBulletinMonthPage({
         { label: payload.month.monthKey },
       ]}
       canonicalPath={`/visa-bulletin/${year}/${month}`}
-      description={`${payload.month.monthKey} 中国大陆出生 EB-1、EB-2、EB-3 的 Visa Bulletin fixture 数据，以及 USCIS 当月职业移民 filing chart 选择。`}
+      description={`${payload.month.monthKey} 中国大陆出生 EB-1、EB-2、EB-3 的 Visa Bulletin 官方来源数据快照，以及 USCIS 当月职业移民 filing chart 选择。`}
       eyebrow="Visa Bulletin 月度页"
       structuredData={buildDatasetJsonLd({
         name: `${payload.month.monthKey} 中国职业移民排期`,
-        description: `${payload.month.monthKey} 中国大陆出生 EB-1、EB-2、EB-3 的 Visa Bulletin fixture 数据，以及 USCIS 当月职业移民 filing chart 选择。`,
+        description: `${payload.month.monthKey} 中国大陆出生 EB-1、EB-2、EB-3 的 Visa Bulletin 官方来源数据快照，以及 USCIS 当月职业移民 filing chart 选择。`,
         path: `/visa-bulletin/${year}/${month}`,
         dateModified: payload.month.publishedAt,
         sources: [
@@ -142,7 +159,7 @@ export default async function VisaBulletinMonthPage({
         <section className="grid gap-4 md:grid-cols-3">
           <MetricCard label="月份" value={payload.month.monthKey} />
           <MetricCard
-            description="该字段来自 USCIS Adjustment of Status filing chart fixture。"
+            description="该字段来自 USCIS Adjustment of Status filing chart 官方页面。"
             label="USCIS filing chart"
             value={chartTypeLabelZh(payload.month.uscisFilingChart)}
           />
@@ -152,7 +169,7 @@ export default async function VisaBulletinMonthPage({
         <DataTable
           caption={`${payload.month.monthKey} China EB visa bulletin rows`}
           columns={tableColumns}
-          emptyDescription="当前月份 fixture 没有可展示的排期行。"
+          emptyDescription="当前月份没有可展示的排期行。"
           emptyTitle="暂无排期数据"
           getRowKey={(row) => row.category}
           rows={payload.rows}
@@ -162,7 +179,7 @@ export default async function VisaBulletinMonthPage({
           <article className="rounded-lg border border-[var(--line)] bg-white p-5 shadow-sm">
             <h2 className="text-lg font-semibold">本月 filing chart 提醒</h2>
             <p className="mt-3 text-sm leading-6 text-[var(--muted)]">
-              USCIS fixture 显示本月职业移民调整身份对照{" "}
+              USCIS 官方页面显示本月职业移民调整身份对照{" "}
               {chartTypeLabelZh(payload.month.uscisFilingChart)}。这只说明 USCIS
               当月公开 chart 选择，不代表任何个人一定可以提交 I-485。
             </p>
@@ -183,7 +200,7 @@ export default async function VisaBulletinMonthPage({
         </section>
 
         <SourceNote
-          latestDataLabel={`本页使用 ${payload.month.monthKey} Department of State Visa Bulletin fixture，来源发布日期 ${payload.month.publishedAt}。生产发布前仍需按官方页面刷新当月数据。`}
+          latestDataLabel={`本页使用 ${payload.month.monthKey} Department of State Visa Bulletin 与 USCIS filing chart 官方来源数据快照，来源发布日期 ${payload.month.publishedAt}。`}
           names={[
             "U.S. Department of State Visa Bulletin",
             "USCIS Adjustment of Status filing chart",
@@ -219,4 +236,15 @@ function toMonthKey(year: string, month: string) {
   }
 
   return `${year}-${month}`;
+}
+
+async function getVisaBulletinPayload(
+  monthKey: string,
+): Promise<PublicQueryResult<PublicVisaBulletinDatesPayload>> {
+  if (getRuntimeDataMode() === "postgres") {
+    return getPostgresVisaBulletinDates({ monthKey });
+  }
+
+  const repo = await getRuntimePublicQueryRepository();
+  return repo.getVisaBulletinDates({ monthKey });
 }
