@@ -1,8 +1,13 @@
 import { normalizeEmployerName } from "@/lib/db/local-repository";
 import { queryPostgresRows } from "@/lib/db/postgres-fixture-data";
 import type {
+  PublicCompanyBreakdownRow,
   PublicCompanyDirectoryPayload,
   PublicCompanyDirectoryResult,
+  PublicCompanyFiscalYearSummary,
+  PublicCompanyPermTimelineRow,
+  PublicCompanyProfilePayload,
+  PublicCompanyWageDistribution,
   PublicDirectoryFilterOptions,
   PublicDirectoryFilters,
   PublicDirectoryPagination,
@@ -11,8 +16,23 @@ import type {
   PublicDisclosureSearchPayload,
   PublicQueryErrorCode,
   PublicQueryResult,
+  PublicRelatedEntitiesPayload,
 } from "@/lib/db/public-query-repository";
-import type { Employer } from "@/lib/db/types";
+import type {
+  CompanyPageMetrics,
+  CompanyYearlyImmigrationStats,
+  Employer,
+} from "@/lib/db/types";
+import type {
+  CompanyImmigrationSignal,
+  CompanyImmigrationSignalDimensionKey,
+} from "@/lib/company-immigration-signals";
+import {
+  COMPANY_IMMIGRATION_SIGNAL_DIMENSIONS,
+  COMPANY_IMMIGRATION_SIGNAL_METHODOLOGY_HREF,
+} from "@/lib/company-immigration-signals";
+import { getCompanyIndexabilityDecision } from "@/lib/db/local-repository";
+import { COMPANY_PAGE_VISIBLE_LIMITS } from "@/lib/seo/company-page-selection";
 
 const DEFAULT_DIRECTORY_PAGE_SIZE = 2;
 const MAX_DIRECTORY_PAGE_SIZE = 50;
@@ -88,6 +108,104 @@ type CompanyDirectoryRow = {
   noindex_reason: string | null;
   top_job_titles: unknown;
   top_locations: unknown;
+};
+
+type CompanyProfileBaseRow = {
+  employer_id: string;
+  canonical_name: string;
+  display_name: string;
+  slug: string;
+  normalized_name: string;
+  headquarters_location_id: string | null;
+  metrics_id: string | null;
+  lca_count_5y: string | number | null;
+  perm_count_5y: string | number | null;
+  uscis_record_count_5y: string | number | null;
+  job_title_count: string | number | null;
+  location_count: string | number | null;
+  latest_fiscal_year: string | number | null;
+  quality_score: string | number | null;
+  indexable: boolean | null;
+  noindex_reason: string | null;
+};
+
+type AliasRow = {
+  raw_name: string;
+  review_status: string;
+};
+
+type YearlyStatsRow = {
+  id: string;
+  employer_id: string;
+  fiscal_year: number;
+  h1b_total: number;
+  h1b_certified: number;
+  h1b_withdrawn: number;
+  h1b_denied: number;
+  perm_total: number;
+  perm_certified: number;
+  perm_denied: number;
+  perm_withdrawn: number;
+  uscis_record_count: number;
+  uscis_initial_approvals: number;
+  uscis_initial_denials: number;
+  uscis_continuing_approvals: number;
+  uscis_continuing_denials: number;
+};
+
+type BreakdownStatsRow = {
+  key: string;
+  label: string;
+  soc_code: string | null;
+  soc_title: string | null;
+  city: string | null;
+  state: string | null;
+  h1b_count: number;
+  perm_count: number;
+  total_count: number;
+};
+
+type WageStatsRow = {
+  record_count: string | number;
+  min_wage: string | number;
+  p25_wage: string | number;
+  median_wage: string | number;
+  p75_wage: string | number;
+  max_wage: string | number;
+  fiscal_years_json: unknown;
+};
+
+type SourceStatsRow = {
+  source_names_json: unknown;
+  latest_data_date: Date | string | null;
+};
+
+type PermTimelineRow = {
+  id: string;
+  fiscal_year: number;
+  case_number: string;
+  case_status: string;
+  job_title: string;
+  soc_code: string;
+  soc_title: string;
+  worksite_city: string;
+  worksite_state: string;
+  wage_offer_from: string | number | null;
+  wage_unit: string | null;
+  priority_date: Date | string | null;
+  received_date: Date | string | null;
+  decision_date: Date | string | null;
+};
+
+type RelatedCompanyRow = {
+  employer_id: string;
+  canonical_name: string;
+  display_name: string;
+  slug: string;
+  normalized_name: string;
+  headquarters_location_id: string | null;
+  score: string | number;
+  shared_signals: string[] | null;
 };
 
 export async function searchPostgresH1BRecords(
@@ -209,6 +327,167 @@ export async function searchPostgresCompanyDirectory(
   });
 }
 
+export async function getPostgresCompanyProfileBySlug(
+  slug: string,
+): Promise<PublicQueryResult<PublicCompanyProfilePayload>> {
+  if (!/^[a-z0-9](?:[a-z0-9-]{0,78}[a-z0-9])?$/.test(slug)) {
+    return failure(
+      "invalid_input",
+      "公司 slug 格式无效。",
+      "slug",
+      "slug 只能包含小写英文字母、数字和连字符，且不能包含路径符号。",
+    );
+  }
+
+  const baseRows = await queryPostgresRows<CompanyProfileBaseRow>(
+    `
+      select
+        e.id as employer_id,
+        e.canonical_name,
+        e.display_name,
+        e.slug,
+        e.normalized_name,
+        e.headquarters_location_id,
+        m.id as metrics_id,
+        m.lca_count_5y::text as lca_count_5y,
+        m.perm_count_5y::text as perm_count_5y,
+        m.uscis_record_count_5y::text as uscis_record_count_5y,
+        m.job_title_count::text as job_title_count,
+        m.location_count::text as location_count,
+        m.latest_fiscal_year::text as latest_fiscal_year,
+        m.quality_score::text as quality_score,
+        m.indexable,
+        m.noindex_reason
+      from public.employers e
+      left join public.company_page_metrics m on m.employer_id = e.id
+      where e.slug = $1
+      limit 1
+    `,
+    [slug],
+  );
+  const base = baseRows[0];
+
+  if (!base) {
+    return failure(
+      "not_found",
+      "未找到对应公司的公开数据页面。",
+      "slug",
+      "请检查公司 URL，或从公司目录重新进入。",
+    );
+  }
+
+  const employer = toEmployer(base);
+  const [
+    aliases,
+    yearly,
+    h1bRecentRecords,
+    permTimeline,
+    jobBreakdown,
+    locationBreakdown,
+    wageDistribution,
+    sourceInfo,
+    relatedCompanies,
+  ] = await Promise.all([
+    getCompanyAliases(employer.id),
+    getCompanyYearlyStats(employer.id),
+    getCompanyRecentH1BRecords(employer.id),
+    getCompanyPermTimeline(employer.id),
+    getCompanyBreakdown(employer.id, "job_title"),
+    getCompanyBreakdown(employer.id, "location"),
+    getCompanyWageDistribution(employer.id),
+    getCompanySourceInfo(employer.id),
+    getRelatedCompanies(employer.id),
+  ]);
+
+  const metrics = toCompanyPageMetrics(base);
+
+  if (yearly.length === 0 && !metrics) {
+    return failure(
+      "not_found",
+      "未找到对应公司的聚合数据页面。",
+      "slug",
+      "请检查公司 URL，或从公司目录重新进入。",
+    );
+  }
+
+  const indexability = metrics
+    ? getCompanyIndexabilityDecision(metrics)
+    : undefined;
+
+  return success({
+    employer,
+    aliases: aliases.map((alias) => alias.raw_name),
+    metrics,
+    h1b: {
+      total: sum(yearly.map((row) => row.h1bTotal)),
+      certified: sum(yearly.map((row) => row.h1bCertified)),
+      withdrawn: sum(yearly.map((row) => row.h1bWithdrawn)),
+      denied: sum(yearly.map((row) => row.h1bDenied)),
+      fiscalYears: yearly
+        .filter((row) => row.h1bTotal > 0)
+        .map((row) => row.fiscalYear),
+    },
+    perm: {
+      total: sum(yearly.map((row) => row.permTotal)),
+      certified: sum(yearly.map((row) => row.permCertified)),
+      denied: sum(yearly.map((row) => row.permDenied)),
+      withdrawn: sum(yearly.map((row) => row.permWithdrawn)),
+      fiscalYears: yearly
+        .filter((row) => row.permTotal > 0)
+        .map((row) => row.fiscalYear),
+    },
+    uscis: {
+      totalRecords: sum(yearly.map((row) => row.uscisRecordCount)),
+      initialApprovals: sum(yearly.map((row) => row.uscisInitialApprovals)),
+      initialDenials: sum(yearly.map((row) => row.uscisInitialDenials)),
+      continuingApprovals: sum(
+        yearly.map((row) => row.uscisContinuingApprovals),
+      ),
+      continuingDenials: sum(
+        yearly.map((row) => row.uscisContinuingDenials),
+      ),
+    },
+    fiscalYears: yearly
+      .slice(0, COMPANY_PAGE_VISIBLE_LIMITS.fiscalYearRows)
+      .map(toFiscalYearSummary),
+    h1bRecentRecords,
+    permTimeline,
+    jobBreakdown,
+    locationBreakdown,
+    wageDistribution,
+    immigrationSignal: buildPostgresImmigrationSignal({
+      yearly,
+      aliases,
+      jobBreakdown,
+      locationBreakdown,
+      wageDistribution,
+      sourceNames: sourceInfo.sourceNames,
+      latestDataDate: sourceInfo.latestDataDate,
+    }),
+    relatedCompanies,
+    relatedJobTitles: jobBreakdown.map((row) => ({
+      value: row.label,
+      count: row.totalCount,
+    })),
+    relatedLocations: locationBreakdown.map((row) => ({
+      value: row.label,
+      count: row.totalCount,
+    })),
+    sourceNames: sourceInfo.sourceNames,
+    latestDataDate: sourceInfo.latestDataDate,
+    interpretationNoteZh:
+      "公司页把 H-1B LCA、PERM 和 USCIS Employer Data Hub 公开记录的聚合结果作为历史活动信号展示，不代表个案批准、实际录用、未来 sponsor 承诺或法律意见。",
+    seo: {
+      indexable: indexability?.indexable ?? false,
+      noindex: !(indexability?.indexable ?? false),
+      qualityScore: metrics?.qualityScore ?? 0,
+      matchedThresholds: indexability?.matchedThresholds ?? [],
+      noindexReason: indexability?.noindexReason,
+      noindexReasonZh: indexability?.noindexReasonZh,
+    },
+  });
+}
+
 async function searchPostgresDisclosureRecords(
   dataset: Dataset,
   input: PublicDirectorySearchInput,
@@ -296,6 +575,310 @@ async function searchPostgresDisclosureRecords(
         : "PERM certification 是劳工认证公开记录，不等于 I-140、I-485 或绿卡最终获批。",
     seo: noindexDirectorySeo(normalized.data.filters),
   });
+}
+
+async function getCompanyAliases(employerId: string) {
+  return queryPostgresRows<AliasRow>(
+    `
+      select raw_name, review_status
+      from public.employer_aliases
+      where employer_id = $1
+      order by
+        case review_status when 'manual' then 0 when 'auto' then 1 else 2 end,
+        raw_name
+      limit 20
+    `,
+    [employerId],
+  );
+}
+
+async function getCompanyYearlyStats(
+  employerId: string,
+): Promise<CompanyYearlyImmigrationStats[]> {
+  const rows = await queryPostgresRows<YearlyStatsRow>(
+    `
+      select
+        id,
+        employer_id,
+        fiscal_year,
+        h1b_total,
+        h1b_certified,
+        h1b_withdrawn,
+        h1b_denied,
+        perm_total,
+        perm_certified,
+        perm_denied,
+        perm_withdrawn,
+        uscis_record_count,
+        uscis_initial_approvals,
+        uscis_initial_denials,
+        uscis_continuing_approvals,
+        uscis_continuing_denials
+      from public.company_yearly_immigration_stats
+      where employer_id = $1
+      order by fiscal_year desc
+    `,
+    [employerId],
+  );
+
+  return rows.map((row) => ({
+    id: row.id,
+    employerId: row.employer_id,
+    fiscalYear: toNumber(row.fiscal_year),
+    h1bTotal: toNumber(row.h1b_total),
+    h1bCertified: toNumber(row.h1b_certified),
+    h1bWithdrawn: toNumber(row.h1b_withdrawn),
+    h1bDenied: toNumber(row.h1b_denied),
+    permTotal: toNumber(row.perm_total),
+    permCertified: toNumber(row.perm_certified),
+    permDenied: toNumber(row.perm_denied),
+    permWithdrawn: toNumber(row.perm_withdrawn),
+    uscisRecordCount: toNumber(row.uscis_record_count),
+    uscisInitialApprovals: toNumber(row.uscis_initial_approvals),
+    uscisInitialDenials: toNumber(row.uscis_initial_denials),
+    uscisContinuingApprovals: toNumber(row.uscis_continuing_approvals),
+    uscisContinuingDenials: toNumber(row.uscis_continuing_denials),
+  }));
+}
+
+async function getCompanyRecentH1BRecords(
+  employerId: string,
+): Promise<PublicDisclosureRecordRow[]> {
+  const rows = await queryPostgresRows<DisclosureRow>(
+    `
+      select
+        s.id,
+        s.source_file_id,
+        e.id as employer_id,
+        e.canonical_name,
+        e.display_name,
+        e.slug,
+        e.normalized_name,
+        e.headquarters_location_id,
+        s.case_number,
+        s.case_status,
+        s.fiscal_year,
+        s.job_title,
+        s.soc_code,
+        s.soc_title,
+        s.worksite_city,
+        s.worksite_state,
+        s.annualized_wage_from::text as wage_amount,
+        s.wage_unit,
+        s.decision_date
+      from public.company_recent_h1b_samples s
+      join public.employers e on e.id = s.employer_id
+      where s.employer_id = $1
+      order by s.decision_date desc nulls last, s.fiscal_year desc, s.id asc
+      limit $2
+    `,
+    [employerId, COMPANY_PAGE_VISIBLE_LIMITS.h1bRecentRecords],
+  );
+
+  return rows.map((row) => toDisclosureRecordRow(row, "h1b", "/h1b/company"));
+}
+
+async function getCompanyPermTimeline(
+  employerId: string,
+): Promise<PublicCompanyPermTimelineRow[]> {
+  const rows = await queryPostgresRows<PermTimelineRow>(
+    `
+      select
+        id,
+        fiscal_year,
+        case_number,
+        case_status,
+        job_title,
+        soc_code,
+        soc_title,
+        worksite_city,
+        worksite_state,
+        wage_offer_from::text as wage_offer_from,
+        wage_unit,
+        priority_date,
+        received_date,
+        decision_date
+      from public.company_recent_perm_samples
+      where employer_id = $1
+      order by decision_date desc nulls last, case_number asc, id asc
+      limit $2
+    `,
+    [employerId, COMPANY_PAGE_VISIBLE_LIMITS.permTimelineRows],
+  );
+
+  return rows.map((row) => ({
+    id: row.id,
+    fiscalYear: toNumber(row.fiscal_year),
+    caseNumber: row.case_number,
+    caseStatus:
+      row.case_status === "Denied" || row.case_status === "Withdrawn"
+        ? row.case_status
+        : "Certified",
+    jobTitle: row.job_title,
+    socCode: row.soc_code,
+    socTitle: row.soc_title,
+    city: row.worksite_city,
+    state: row.worksite_state,
+    wageOfferFrom: toNumber(row.wage_offer_from),
+    wageUnit: row.wage_unit === "Hour" ? "Hour" : "Year",
+    priorityDate: toDateKey(row.priority_date),
+    receivedDate: toDateKey(row.received_date) ?? "",
+    decisionDate: toDateKey(row.decision_date) ?? "",
+  }));
+}
+
+async function getCompanyBreakdown(
+  employerId: string,
+  kind: "job_title" | "location",
+): Promise<PublicCompanyBreakdownRow[]> {
+  const limit =
+    kind === "job_title"
+      ? COMPANY_PAGE_VISIBLE_LIMITS.jobBreakdownRows
+      : COMPANY_PAGE_VISIBLE_LIMITS.locationBreakdownRows;
+  const rows = await queryPostgresRows<BreakdownStatsRow>(
+    `
+      select
+        key,
+        label,
+        soc_code,
+        soc_title,
+        city,
+        state,
+        h1b_count,
+        perm_count,
+        total_count
+      from public.company_breakdown_stats
+      where employer_id = $1 and kind = $2
+      order by total_count desc, latest_fiscal_year desc, label asc
+      limit $3
+    `,
+    [employerId, kind, limit],
+  );
+
+  return rows.map((row) => ({
+    key: row.key,
+    label: row.label,
+    socCode: row.soc_code ?? undefined,
+    socTitle: row.soc_title ?? undefined,
+    city: row.city ?? undefined,
+    state: row.state ?? undefined,
+    h1bCount: toNumber(row.h1b_count),
+    permCount: toNumber(row.perm_count),
+    totalCount: toNumber(row.total_count),
+  }));
+}
+
+async function getCompanyWageDistribution(
+  employerId: string,
+): Promise<PublicCompanyWageDistribution | undefined> {
+  const rows = await queryPostgresRows<WageStatsRow>(
+    `
+      select
+        record_count::text as record_count,
+        min_wage::text as min_wage,
+        p25_wage::text as p25_wage,
+        median_wage::text as median_wage,
+        p75_wage::text as p75_wage,
+        max_wage::text as max_wage,
+        fiscal_years_json
+      from public.company_wage_stats
+      where employer_id = $1
+      limit 1
+    `,
+    [employerId],
+  );
+  const row = rows[0];
+  const count = toNumber(row?.record_count);
+
+  if (!row || count === 0) {
+    return undefined;
+  }
+
+  return {
+    count,
+    wageUnit: "Year",
+    min: toNumber(row.min_wage),
+    p25: toNumber(row.p25_wage),
+    median: toNumber(row.median_wage),
+    p75: toNumber(row.p75_wage),
+    max: toNumber(row.max_wage),
+    fiscalYears: parseNumberArray(row.fiscal_years_json),
+    sampleWarningZh:
+      count < 3
+        ? "样本少于 3 条，只能作为非常粗略的公开数据参考。"
+        : undefined,
+  };
+}
+
+async function getCompanySourceInfo(employerId: string) {
+  const rows = await queryPostgresRows<SourceStatsRow>(
+    `
+      select source_names_json, latest_data_date
+      from public.company_source_stats
+      where employer_id = $1
+      limit 1
+    `,
+    [employerId],
+  );
+  const row = rows[0];
+
+  if (!row) {
+    return getGlobalSourceInfo();
+  }
+
+  return {
+    sourceNames: parseStringArray(row.source_names_json),
+    latestDataDate: toDateKey(row.latest_data_date),
+  };
+}
+
+async function getRelatedCompanies(
+  employerId: string,
+): Promise<PublicRelatedEntitiesPayload["relatedEmployers"]> {
+  const rows = await queryPostgresRows<RelatedCompanyRow>(
+    `
+      with current_keys as (
+        select kind, key
+        from public.company_breakdown_stats
+        where employer_id = $1
+        order by total_count desc
+        limit 40
+      ),
+      scored as (
+        select
+          e.id as employer_id,
+          e.canonical_name,
+          e.display_name,
+          e.slug,
+          e.normalized_name,
+          e.headquarters_location_id,
+          sum(case when b.kind = 'job_title' then 2 else 1 end) as score,
+          array_agg(
+            distinct case
+              when b.kind = 'job_title' and b.soc_code is not null then 'SOC: ' || b.soc_code
+              when b.kind = 'job_title' then '职位: ' || b.label
+              else '地点: ' || b.label
+            end
+          ) as shared_signals
+        from current_keys ck
+        join public.company_breakdown_stats b
+          on b.kind = ck.kind and b.key = ck.key and b.employer_id <> $1
+        join public.employers e on e.id = b.employer_id
+        group by e.id, e.canonical_name, e.display_name, e.slug, e.normalized_name, e.headquarters_location_id
+      )
+      select *
+      from scored
+      order by score desc, display_name asc
+      limit 5
+    `,
+    [employerId],
+  );
+
+  return rows.map((row) => ({
+    employer: toEmployer(row),
+    sharedSignals: row.shared_signals ?? [],
+    score: toNumber(row.score),
+  }));
 }
 
 function addDisclosureFilters(
@@ -561,6 +1144,232 @@ function toCompanyDirectoryResult(
     indexable: Boolean(row.indexable),
     noindexReason: row.noindex_reason ?? undefined,
   };
+}
+
+function toCompanyPageMetrics(
+  row: CompanyProfileBaseRow,
+): CompanyPageMetrics | undefined {
+  if (!row.metrics_id) {
+    return undefined;
+  }
+
+  return {
+    id: row.metrics_id,
+    employerId: row.employer_id,
+    lcaCount5y: toNumber(row.lca_count_5y),
+    permCount5y: toNumber(row.perm_count_5y),
+    uscisRecordCount5y: toNumber(row.uscis_record_count_5y),
+    jobTitleCount: toNumber(row.job_title_count),
+    locationCount: toNumber(row.location_count),
+    latestFiscalYear: toNumber(row.latest_fiscal_year),
+    qualityScore: toNumber(row.quality_score),
+    indexable: Boolean(row.indexable),
+    noindexReason: row.noindex_reason ?? undefined,
+  };
+}
+
+function toFiscalYearSummary(
+  row: CompanyYearlyImmigrationStats,
+): PublicCompanyFiscalYearSummary {
+  return {
+    fiscalYear: row.fiscalYear,
+    h1bTotal: row.h1bTotal,
+    h1bCertified: row.h1bCertified,
+    h1bWithdrawn: row.h1bWithdrawn,
+    h1bDenied: row.h1bDenied,
+    permTotal: row.permTotal,
+    permCertified: row.permCertified,
+    permDenied: row.permDenied,
+    permWithdrawn: row.permWithdrawn,
+  };
+}
+
+function buildPostgresImmigrationSignal(input: {
+  yearly: readonly CompanyYearlyImmigrationStats[];
+  aliases: readonly AliasRow[];
+  jobBreakdown: readonly PublicCompanyBreakdownRow[];
+  locationBreakdown: readonly PublicCompanyBreakdownRow[];
+  wageDistribution?: PublicCompanyWageDistribution;
+  sourceNames: readonly string[];
+  latestDataDate?: string;
+}): CompanyImmigrationSignal {
+  const recentRows = input.yearly.slice(0, 5);
+  const h1bTotal = sum(recentRows.map((row) => row.h1bTotal));
+  const h1bCertified = sum(recentRows.map((row) => row.h1bCertified));
+  const permTotal = sum(recentRows.map((row) => row.permTotal));
+  const permCertified = sum(recentRows.map((row) => row.permCertified));
+  const uscisRows = sum(recentRows.map((row) => row.uscisRecordCount));
+  const fiscalYears = recentRows
+    .filter((row) => row.h1bTotal + row.permTotal + row.uscisRecordCount > 0)
+    .map((row) => row.fiscalYear);
+  const hasH1B = h1bTotal + uscisRows > 0;
+  const hasPerm = permTotal > 0;
+  const dimensions = [
+    buildSignalDimension({
+      key: "recent_lca_activity",
+      score:
+        Math.min(h1bTotal * 3, 12) +
+        (h1bCertified > 0 ? 3 : 0) +
+        Math.min(uscisRows * 1.5, 3),
+      evidenceZh: [
+        `近 5 年 LCA 记录：${h1bTotal} 条`,
+        `Certified LCA：${h1bCertified} 条`,
+        `USCIS Employer Data Hub 行：${uscisRows} 条`,
+      ],
+      explanationZh:
+        "LCA 与 USCIS Employer Data Hub 只能说明公开记录中有 H-1B 相关活动，不代表 petition 批准或未来 sponsor 承诺。",
+    }),
+    buildSignalDimension({
+      key: "perm_activity",
+      score: Math.min(permTotal * 5, 15) + (permCertified > 0 ? 3 : 0),
+      evidenceZh: [
+        `近 5 年 PERM 记录：${permTotal} 条`,
+        `Certified PERM：${permCertified} 条`,
+      ],
+      explanationZh:
+        "PERM certification 是劳工认证公开记录，不等于 I-140、I-485 或绿卡最终获批。",
+    }),
+    buildSignalDimension({
+      key: "repeat_filing_history",
+      score: Math.min(fiscalYears.length * 4, 12) + (hasH1B && hasPerm ? 4 : 0),
+      evidenceZh: [
+        `覆盖 fiscal years：${fiscalYears.length > 0 ? fiscalYears.map((year) => `FY${year}`).join("、") : "暂无"}`,
+        `同时有 H-1B 与 PERM 公开活动：${hasH1B && hasPerm ? "是" : "否"}`,
+      ],
+      explanationZh:
+        "跨年记录说明公开活动有一定连续性，但不能说明雇主一定会为某个候选人继续办理。",
+    }),
+    buildSignalDimension({
+      key: "data_consistency",
+      score:
+        Math.min(input.sourceNames.length * 4, 8) +
+        (input.latestDataDate ? 4 : 0) +
+        Math.min(input.aliases.length, 4),
+      evidenceZh: [
+        `官方来源数：${input.sourceNames.length}`,
+        `最新数据日期：${input.latestDataDate ?? "暂无"}`,
+        `别名映射数：${input.aliases.length}`,
+      ],
+      explanationZh:
+        "来源和别名越完整，页面越容易审计；仍可能存在雇主名称拆分或合并误差。",
+    }),
+    buildSignalDimension({
+      key: "job_location_diversity",
+      score:
+        Math.min(input.jobBreakdown.length * 2, 8) +
+        Math.min(input.locationBreakdown.length * 2, 8),
+      evidenceZh: [
+        `职位/SOC 聚合项：${input.jobBreakdown.length}`,
+        `地点聚合项：${input.locationBreakdown.length}`,
+      ],
+      explanationZh:
+        "职位和地点覆盖越多，可比较背景越丰富；这不是对岗位质量或 sponsor 意愿的判断。",
+    }),
+    buildSignalDimension({
+      key: "wage_context",
+      score: input.wageDistribution
+        ? Math.min(input.wageDistribution.count * 2, 10) +
+          (input.wageDistribution.median > 0 ? 4 : 0) +
+          (input.wageDistribution.fiscalYears.length > 1 ? 2 : 0)
+        : 0,
+      evidenceZh: input.wageDistribution
+        ? [
+            `H-1B 工资样本：${input.wageDistribution.count} 条`,
+            `工资年份：${input.wageDistribution.fiscalYears.map((year) => `FY${year}`).join("、")}`,
+            `中位数：USD ${Math.round(input.wageDistribution.median).toLocaleString("en-US")}`,
+          ]
+        : ["暂无 H-1B 工资样本"],
+      explanationZh:
+        "工资上下文帮助理解公开记录中的职位/地点背景，但不能直接判断 offer 合规性。",
+    }),
+  ];
+  const rawScore = dimensions.reduce((total, dimension) => {
+    return total + dimension.score;
+  }, 0);
+  const filingRecordCount = h1bTotal + permTotal;
+  const totalPublicRecordCount = filingRecordCount + uscisRows;
+  const lowSampleFlagged = totalPublicRecordCount < 3 || filingRecordCount < 3;
+  const score = lowSampleFlagged ? Math.min(rawScore, 45) : rawScore;
+  const band = signalBand(score, lowSampleFlagged);
+
+  return {
+    score,
+    maxScore: 100,
+    labelZh: "公开数据友好度信号",
+    band,
+    bandLabelZh: signalBandLabelZh(band),
+    lowSample: {
+      flagged: lowSampleFlagged,
+      messageZh: lowSampleFlagged
+        ? `近 5 个 fiscal years 只有 ${filingRecordCount} 条 H-1B/PERM 公开记录、${totalPublicRecordCount} 条相关公开记录。样本太少，只能说明公开数据覆盖有限，不能推断雇主政策或个案结果。`
+        : undefined,
+    },
+    dimensions,
+    methodologyHref: COMPANY_IMMIGRATION_SIGNAL_METHODOLOGY_HREF,
+    interpretationNoteZh:
+      "公开数据友好度信号只衡量官方公开记录的覆盖、连续性和可解释程度，不是 H-1B、PERM、I-140、I-485 或绿卡结果的获批概率。",
+  };
+}
+
+function buildSignalDimension(input: {
+  key: CompanyImmigrationSignalDimensionKey;
+  score: number;
+  evidenceZh: readonly string[];
+  explanationZh: string;
+}): CompanyImmigrationSignal["dimensions"][number] {
+  const definition = COMPANY_IMMIGRATION_SIGNAL_DIMENSIONS.find(
+    (item) => item.key === input.key,
+  );
+  const maxScore = definition?.maxScore ?? 0;
+  const score = Math.max(0, Math.min(input.score, maxScore));
+  const ratio = maxScore > 0 ? score / maxScore : 0;
+
+  return {
+    key: input.key,
+    labelZh: definition?.labelZh ?? input.key,
+    maxScore,
+    score,
+    level: ratio >= 0.67 ? "strong" : ratio >= 0.28 ? "some" : "limited",
+    explanationZh: input.explanationZh,
+    evidenceZh: input.evidenceZh,
+  };
+}
+
+function signalBand(score: number, lowSample: boolean) {
+  if (lowSample) {
+    return "low_sample";
+  }
+
+  if (score >= 82) {
+    return "rich_public_record";
+  }
+
+  if (score >= 66) {
+    return "multi_signal";
+  }
+
+  if (score >= 46) {
+    return "visible_activity";
+  }
+
+  return "limited_public_record";
+}
+
+function signalBandLabelZh(
+  band: CompanyImmigrationSignal["band"],
+): string {
+  switch (band) {
+    case "rich_public_record":
+      return "公开记录丰富";
+    case "multi_signal":
+      return "多维公开信号";
+    case "visible_activity":
+      return "有可见活动";
+    case "limited_public_record":
+      return "公开记录有限";
+    case "low_sample":
+      return "低样本";
+  }
 }
 
 function toEmployer(row: {
@@ -846,10 +1655,30 @@ function parseTopCounts(value: unknown): readonly { value: string; count: number
     .filter((item) => item.value);
 }
 
+function parseStringArray(value: unknown): string[] {
+  const parsed = typeof value === "string" ? JSON.parse(value) : value;
+
+  if (!Array.isArray(parsed)) {
+    return [];
+  }
+
+  return parsed.map(String).filter(Boolean);
+}
+
+function parseNumberArray(value: unknown): number[] {
+  return parseStringArray(value)
+    .map((item) => Number(item))
+    .filter((item) => Number.isFinite(item));
+}
+
 function toNumber(value: unknown) {
   const numberValue = typeof value === "number" ? value : Number(value ?? 0);
 
   return Number.isFinite(numberValue) ? numberValue : 0;
+}
+
+function sum(values: readonly number[]) {
+  return values.reduce((total, value) => total + value, 0);
 }
 
 function toDateKey(value: Date | string | null | undefined) {

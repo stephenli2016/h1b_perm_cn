@@ -3,6 +3,8 @@ import { notFound } from "next/navigation";
 
 import { CompanyProfile } from "@/components/company/company-profile";
 import { PageShell } from "@/components/page-shell";
+import { getRuntimeDataMode } from "@/lib/db/postgres-fixture-data";
+import { getPostgresCompanyProfileBySlug } from "@/lib/db/postgres-directory-queries";
 import { getRuntimePublicQueryRepository } from "@/lib/db/runtime-public-query-repository";
 import { shouldGenerateCompanyStaticParams } from "@/lib/seo/company-static-generation";
 import { getCompanyPageSeo } from "@/lib/seo/company-quality";
@@ -30,9 +32,13 @@ export async function generateStaticParams() {
 export async function generateMetadata({
   params,
 }: CompanyPageProps): Promise<Metadata> {
-  const repo = await getRuntimePublicQueryRepository();
   const { slug } = await params;
-  const result = repo.getCompanyProfileBySlug({ slug });
+  const result =
+    getRuntimeDataMode() === "postgres"
+      ? await getPostgresCompanyProfileBySlug(slug)
+      : (await getRuntimePublicQueryRepository()).getCompanyProfileBySlug({
+          slug,
+        });
 
   if (!result.ok) {
     return buildNoIndexSeoMetadata({
@@ -53,9 +59,13 @@ export async function generateMetadata({
 }
 
 export default async function H1BCompanyPage({ params }: CompanyPageProps) {
-  const repo = await getRuntimePublicQueryRepository();
   const { slug } = await params;
-  const result = repo.getCompanyProfileBySlug({ slug });
+  const result =
+    getRuntimeDataMode() === "postgres"
+      ? await getPostgresCompanyProfileBySlug(slug)
+      : (await getRuntimePublicQueryRepository()).getCompanyProfileBySlug({
+          slug,
+        });
 
   if (!result.ok) {
     notFound();
