@@ -10,6 +10,7 @@
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
+    "launch:readiness": "node --no-warnings --experimental-strip-types scripts/launch-readiness.ts",
     "deploy:validate": "node --no-warnings --experimental-strip-types scripts/validate-vercel-prep.ts",
     "db:validate": "vitest run tests/schema.test.ts tests/local-repository.test.ts",
     "db:production:validate": "node --no-warnings --experimental-strip-types scripts/validate-production-db.ts",
