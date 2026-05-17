@@ -137,6 +137,55 @@ class EmployerCanonicalizationTest(unittest.TestCase):
             },
         )
 
+    def test_project_alias_seeds_cover_high_value_groups_conservatively(self) -> None:
+        seeds = load_manual_alias_seeds("data/manual/employer_alias_seeds.json")
+        records = (
+            _record("GOOGLE LLC"),
+            _record("ALPHABET INC"),
+            _record("Meta Platforms, Inc."),
+            _record("FACEBOOK, INC."),
+            _record("WHATSAPP LLC"),
+            _record("TATA CONSULTANCY SERVICES LIMITED"),
+            _record("TATA CONSULTANCY SVCS LTD"),
+            _record("Tata Technologies, Inc."),
+            _record("Microsoft Corporation"),
+            _record("LINKEDIN CORPORATION"),
+            _record("GITHUB, INC."),
+            _record("AMDOCS INC."),
+        )
+
+        result = build_company_canonicalization(records, manual_alias_seeds=seeds)
+        aliases_by_slug = {
+            employer.slug: {
+                alias.raw_name
+                for alias in result.aliases
+                if alias.employer_id == employer.id
+            }
+            for employer in result.employers
+        }
+        slugs_by_normalized = {
+            employer.normalized_name: employer.slug for employer in result.employers
+        }
+
+        self.assertEqual(
+            aliases_by_slug["google"],
+            {"GOOGLE LLC", "ALPHABET INC"},
+        )
+        self.assertEqual(
+            aliases_by_slug["meta"],
+            {"Meta Platforms, Inc.", "FACEBOOK, INC.", "WHATSAPP LLC"},
+        )
+        self.assertEqual(
+            aliases_by_slug["tata-consultancy-services"],
+            {"TATA CONSULTANCY SERVICES LIMITED", "TATA CONSULTANCY SVCS LTD"},
+        )
+        self.assertEqual(
+            aliases_by_slug["microsoft"],
+            {"Microsoft Corporation", "LINKEDIN CORPORATION", "GITHUB, INC."},
+        )
+        self.assertEqual(slugs_by_normalized["tata technologies"], "tata-technologies")
+        self.assertEqual(slugs_by_normalized["amdocs"], "amdocs")
+
     def test_scores_and_indexability_thresholds(self) -> None:
         noindex = decide_indexability(
             lca_count_5y=3,
@@ -227,6 +276,18 @@ class EmployerCanonicalizationTest(unittest.TestCase):
 
             candidate = json.loads(candidates_path.read_text(encoding="utf-8"))
             self.assertEqual(candidate["slug"], "acme-analytics")
+
+def _record(raw_name: str) -> SourceEmployerRecord:
+    return SourceEmployerRecord(
+        source_system="oflc_lca",
+        raw_employer_name=raw_name,
+        normalized_employer_name=normalize_employer_name(raw_name),
+        fiscal_year=2026,
+        job_title="Software Engineer",
+        city="Seattle",
+        state="WA",
+        soc_code="15-1252",
+    )
 
 
 if __name__ == "__main__":

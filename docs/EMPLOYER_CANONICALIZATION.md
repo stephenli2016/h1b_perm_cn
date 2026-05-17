@@ -67,6 +67,15 @@ Manual seeds live in:
 
 Seeds are exact-match aids only. They do not create public company pages by themselves and do not add company data. A seeded employer appears only when an official source record contains a matching raw employer name.
 
+The seed file is intentionally conservative: it covers high-volume company
+groups, known renamed/acquired brands, subsidiaries, and common official-record
+spelling variants only when the raw name normalizes to an exact seed alias.
+Examples include Google/Alphabet, Meta/Facebook/WhatsApp, Microsoft/LinkedIn,
+Tata Consultancy Services/TCS variants, large IT consultancies, major banks, and
+high-volume technology platforms. Similar-looking names are not merged unless
+listed exactly; for example, `Tata Technologies` and `Amdocs` remain separate
+from `Tata Consultancy Services` and `AMD`.
+
 Each alias output includes:
 
 - raw name

@@ -72,7 +72,7 @@ Latest import package row counts:
 | ---------------------------- | --------: |
 | `locations`                  |   143,022 |
 | `source_files`               |       106 |
-| `employers`                  |   236,666 |
+| `employers`                  |   236,586 |
 | `employer_aliases`           |   415,179 |
 | `h1b_lca_records`            | 3,464,585 |
 | `h1b_lca_worksite_records`   | 4,428,017 |

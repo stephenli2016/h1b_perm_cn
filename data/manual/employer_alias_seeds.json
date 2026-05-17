@@ -3,13 +3,23 @@
   "seeds": [
     {
       "canonical_name": "Amazon.com Services LLC",
-      "display_name": "Amazon.com Services",
-      "slug": "amazon-com-services",
+      "display_name": "Amazon",
+      "slug": "amazon",
       "confidence_score": 1,
       "aliases": [
         "AMAZON.COM SERVICES LLC",
         "AMAZON COM SERVICES LLC",
-        "AMAZON.COM SERVICES, LLC"
+        "AMAZON.COM SERVICES, LLC",
+        "Amazon Web Services, Inc.",
+        "AMAZON WEB SERVICES, INC.",
+        "Amazon Web Services Inc",
+        "Amazon Development Center U.S., Inc.",
+        "AMAZON DEVELOPMENT CENTER U.S., INC.",
+        "AMAZON DEVELOPMENT CENTER U.S., INC",
+        "Amazon Data Services, Inc",
+        "Amazon Data Services, Inc.",
+        "AMAZON DATA SERVICES, INC.",
+        "Amazon Advertising LLC"
       ]
     },
     {
@@ -17,14 +27,589 @@
       "display_name": "Google",
       "slug": "google",
       "confidence_score": 1,
-      "aliases": ["GOOGLE LLC", "GOOGLE INC", "GOOGLE INC."]
+      "aliases": [
+        "GOOGLE LLC",
+        "GOOGLE INC",
+        "GOOGLE INC.",
+        "Google Inc.",
+        "ALPHABET INC",
+        "ALPHABET INC.",
+        "Alphabet Inc.",
+        "Google Public Sector LLC",
+        "GOOGLE PUBLIC SECTOR LLC"
+      ]
+    },
+    {
+      "canonical_name": "Meta Platforms, Inc.",
+      "display_name": "Meta",
+      "slug": "meta",
+      "confidence_score": 1,
+      "aliases": [
+        "Meta Platforms, Inc",
+        "Meta Platforms, Inc.",
+        "META PLATFORMS, INC.",
+        "FACEBOOK, INC.",
+        "Facebook, Inc.",
+        "FACEBOOK INC.",
+        "FACEBOOK INC",
+        "Facebook Inc.",
+        "Facebook Payments Inc.",
+        "FACEBOOK PAYMENTS INC",
+        "Meta Payments Inc. (formerly known as Facebook Payments, Inc)",
+        "WhatsApp LLC",
+        "WHATSAPP LLC",
+        "WHATSAPP LLC.",
+        "WhatsApp Inc.",
+        "WHATSAPP INC.",
+        "WHATSAPP, INC.",
+        "WhatsApp, LLC"
+      ]
     },
     {
       "canonical_name": "Microsoft Corporation",
       "display_name": "Microsoft",
       "slug": "microsoft",
       "confidence_score": 1,
-      "aliases": ["MICROSOFT CORPORATION", "MICROSOFT CORP", "MICROSOFT CORP."]
+      "aliases": [
+        "MICROSOFT CORPORATION",
+        "MICROSOFT CORP",
+        "MICROSOFT CORP.",
+        "Microsoft Coporation",
+        "MICROSOFT CORPORTION",
+        "Microsoft Online, Inc.",
+        "LINKEDIN CORPORATION",
+        "LinkedIn Corporation",
+        "LINKEDIN CORP",
+        "GITHUB, INC.",
+        "GitHub, Inc.",
+        "GITHUB INC"
+      ]
+    },
+    {
+      "canonical_name": "Tata Consultancy Services Limited",
+      "display_name": "Tata Consultancy Services",
+      "slug": "tata-consultancy-services",
+      "confidence_score": 1,
+      "aliases": [
+        "TATA CONSULTANCY SERVICES LIMITED",
+        "Tata Consultancy Services Limited",
+        "TATA CONSULTANCY SVCS LTD",
+        "TCS E SERVE INTERNATIONAL LIMITED",
+        "TCS E-Serve International Ltd",
+        "TCS E-Serve International Ltd.",
+        "TCS ESERVE INTERNATIONAL LIMITED"
+      ]
+    },
+    {
+      "canonical_name": "Infosys Limited",
+      "display_name": "Infosys",
+      "slug": "infosys",
+      "confidence_score": 1,
+      "aliases": [
+        "INFOSYS LIMITED",
+        "INFOSYS LTD.",
+        "INFOSYS BPM LIMITED",
+        "INFOSYS PUBLIC SERVICES, INC."
+      ]
+    },
+    {
+      "canonical_name": "Wipro Limited",
+      "display_name": "Wipro",
+      "slug": "wipro",
+      "confidence_score": 1,
+      "aliases": [
+        "WIPRO LIMITED",
+        "Wipro Limited",
+        "Wipro VLSI Design Services, LLC",
+        "WIPRO VLSI DESIGN SERVICES, LLC",
+        "WIPRO VLSI DESIGN SERVICES LLC",
+        "Wipro Appirio INC",
+        "Wipro Appirio Inc."
+      ]
+    },
+    {
+      "canonical_name": "Cognizant Technology Solutions US Corp",
+      "display_name": "Cognizant",
+      "slug": "cognizant",
+      "confidence_score": 1,
+      "aliases": [
+        "COGNIZANT TECHNOLOGY SOLUTIONS US CORP",
+        "COGNIZANT TECHNOLOGY SOLUTIONS US CORPORATION",
+        "Cognizant Technology Solutions US Corporation",
+        "COGNIZANT TECHNOLOGY SOLUTIONS US",
+        "COGNIZANT WORLDWIDE LIMITED",
+        "Cognizant TriZetto Software Group, Inc.",
+        "COGNIZANT TRIZETTO SOFTWARE GROUP",
+        "COGNIZANT TRIZETTO SOFTWARE GRP IN",
+        "COGNIZANT TRIZETTO SOFTWARE GROUP INC CTSG",
+        "Trizetto Corporation - A Cognizant Company"
+      ]
+    },
+    {
+      "canonical_name": "Accenture LLP",
+      "display_name": "Accenture",
+      "slug": "accenture",
+      "confidence_score": 1,
+      "aliases": [
+        "Accenture LLP",
+        "ACCENTURE LLP",
+        "Accenture Infrastructure and Capital Projects, LLC",
+        "Accenture Infrastructure & Capital Projects, LLC",
+        "Accenture Infrastructure and Capital Projects LLC",
+        "ACCENTURE NATIONAL INC",
+        "ACCENTURE LLP DBA IMAGINEA TECH"
+      ]
+    },
+    {
+      "canonical_name": "Deloitte Consulting LLP",
+      "display_name": "Deloitte",
+      "slug": "deloitte",
+      "confidence_score": 1,
+      "aliases": [
+        "Deloitte Consulting LLP",
+        "DELOITTE CONSULTING LLP",
+        "Deloitte & Touche LLP",
+        "DELOITTE TOUCHE LLP",
+        "DELOITTE & TOUCHE LLP",
+        "Deloitte Tax LLP",
+        "Deloitte Services LP",
+        "Deloitte Transactions and Business Analytics LLP",
+        "Deloitte Touche Tohmatsu Services, LLC",
+        "DELOITTE TOUCHE TOHMATSU SERVICES, LLC",
+        "Deloitte LLP",
+        "Deloitte Financial Advisory Services LLP"
+      ]
+    },
+    {
+      "canonical_name": "Capgemini America Inc",
+      "display_name": "Capgemini",
+      "slug": "capgemini",
+      "confidence_score": 1,
+      "aliases": [
+        "CAPGEMINI AMERICA INC",
+        "CAPGEMINI AMERICA, INC.",
+        "Capgemini America, Inc.",
+        "Capgemini America Inc",
+        "Capgemini America Inc.",
+        "CAPGEMINI GOVERNMENT SOLUTIONS LLC",
+        "Capgemini Government Solutions LLC",
+        "CAPGEMINI GOVERNMENT SOLUTIONS, LLC"
+      ]
+    },
+    {
+      "canonical_name": "EPAM Systems Inc.",
+      "display_name": "EPAM",
+      "slug": "epam",
+      "confidence_score": 1,
+      "aliases": [
+        "EPAM Systems Inc.",
+        "EPAM SYSTEMS, INC",
+        "EPAM Systems, Inc.",
+        "EPAM Systems Inc",
+        "EPAM SYSTEMS INC"
+      ]
+    },
+    {
+      "canonical_name": "IBM Corporation",
+      "display_name": "IBM",
+      "slug": "ibm",
+      "confidence_score": 1,
+      "aliases": [
+        "IBM Corporation",
+        "IBM CORPORATION",
+        "IBM INDIA PRIVATE LIMITED",
+        "IBM India Private Limited",
+        "IBM GLOBAL SYSTEMS INC",
+        "IBM Global Systems Inc",
+        "IBM Global Systems, Inc.",
+        "Red Hat, Inc.",
+        "RED HAT, INC.",
+        "RED HAT, INC",
+        "Red Hat Inc",
+        "RED HAT INC",
+        "Red Hat, LLC",
+        "RED HAT, LLC"
+      ]
+    },
+    {
+      "canonical_name": "Oracle America, Inc.",
+      "display_name": "Oracle",
+      "slug": "oracle",
+      "confidence_score": 1,
+      "aliases": [
+        "Oracle America, Inc.",
+        "ORACLE AMERICA, INC.",
+        "Oracle America Inc.",
+        "Oracle America, Inc",
+        "ORACLE AMERICA INC",
+        "ORACLE FINANCIAL SERVICES SOFTWARE, INC.",
+        "Oracle Financial Services Software, Inc.",
+        "ORACLE FINANCIAL SERVICES SOFTWARE INC.",
+        "Oracle Financial Services Software, Inc",
+        "ORACLE FINANCIAL SVCS SOFTWARE INC",
+        "ORACLE FINANCIAL SERVICES SOFTWARE INC"
+      ]
+    },
+    {
+      "canonical_name": "Salesforce, Inc.",
+      "display_name": "Salesforce",
+      "slug": "salesforce",
+      "confidence_score": 1,
+      "aliases": [
+        "Salesforce, Inc.",
+        "Salesforce Inc.",
+        "SALESFORCE INC",
+        "Salesforce.com, Inc.",
+        "SALESFORCE.COM",
+        "SALESFORCE.COM INC.",
+        "SALESFORCE COM INC",
+        "Slack Technologies, Inc.",
+        "SLACK TECHNOLOGIES, INC.",
+        "SLACK TECHNOLOGIES INC",
+        "TABLEAU SOFTWARE INC"
+      ]
+    },
+    {
+      "canonical_name": "Apple Inc.",
+      "display_name": "Apple",
+      "slug": "apple",
+      "confidence_score": 1,
+      "aliases": ["Apple Inc.", "APPLE INC.", "APPLE INC", "Apple Inc"]
+    },
+    {
+      "canonical_name": "NVIDIA Corporation",
+      "display_name": "NVIDIA",
+      "slug": "nvidia",
+      "confidence_score": 1,
+      "aliases": ["NVIDIA Corporation", "NVIDIA CORPORATION", "NVIDIA CORP"]
+    },
+    {
+      "canonical_name": "Advanced Micro Devices, Inc.",
+      "display_name": "AMD",
+      "slug": "amd",
+      "confidence_score": 1,
+      "aliases": [
+        "ADVANCED MICRO DEVICES, INC. AMD",
+        "Advanced Micro Devices, Inc.",
+        "ADVANCED MICRO DEVICES, INC.",
+        "AMD Design LLC"
+      ]
+    },
+    {
+      "canonical_name": "Qualcomm Technologies, Inc.",
+      "display_name": "Qualcomm",
+      "slug": "qualcomm",
+      "confidence_score": 1,
+      "aliases": [
+        "Qualcomm Technologies, Inc.",
+        "QUALCOMM TECHNOLOGIES INC.",
+        "QUALCOMM TECHNOLOGIES INC",
+        "Qualcomm Incorporated",
+        "QUALCOMM INCORPORATED",
+        "QUALCOMM, INC.",
+        "Qualcomm Atheros, Inc.",
+        "QUALCOMM ATHEROS, INC.",
+        "QUALCOMM ATHEROS INC",
+        "Qualcomm Innovation Center, Inc.",
+        "QUALCOMM INNOVATION CENTER, INC.",
+        "QUALCOMM INNOVATION CENTER INC"
+      ]
+    },
+    {
+      "canonical_name": "Broadcom Corporation",
+      "display_name": "Broadcom",
+      "slug": "broadcom",
+      "confidence_score": 1,
+      "aliases": ["Broadcom Corporation", "BROADCOM CORPORATION"]
+    },
+    {
+      "canonical_name": "Cisco Systems, Inc.",
+      "display_name": "Cisco",
+      "slug": "cisco",
+      "confidence_score": 1,
+      "aliases": ["Cisco Systems, Inc.", "CISCO SYSTEMS, INC."]
+    },
+    {
+      "canonical_name": "Adobe Inc.",
+      "display_name": "Adobe",
+      "slug": "adobe",
+      "confidence_score": 1,
+      "aliases": [
+        "Adobe Inc.",
+        "ADOBE INC.",
+        "ADOBE INC",
+        "Adobe Inc",
+        "Adobe, Inc."
+      ]
+    },
+    {
+      "canonical_name": "JPMorgan Chase & Co.",
+      "display_name": "JPMorgan Chase",
+      "slug": "jpmorgan-chase",
+      "confidence_score": 1,
+      "aliases": [
+        "JPMorgan Chase & Co.",
+        "JPMORGAN CHASE & CO.",
+        "JPMORGAN CHASE & CO",
+        "JPMorgan Chase & Co",
+        "JPMORGAN CHASE CO",
+        "JPMORGAN CHASE AND CO",
+        "JPMorgan & Chase Co.",
+        "JPMorgan Chase& Co.",
+        "JP MORGAN CHASE CO",
+        "JP Morgan Chase & Co."
+      ]
+    },
+    {
+      "canonical_name": "Bank of America N.A.",
+      "display_name": "Bank of America",
+      "slug": "bank-of-america",
+      "confidence_score": 1,
+      "aliases": [
+        "BANK OF AMERICA N.A.",
+        "Bank of America N.A.",
+        "BANK OF AMERICA",
+        "BANK OF AMERICA CORPORATION",
+        "Bank of America Corporation",
+        "BANK OF AMERICA NA",
+        "MERRILL LYNCH",
+        "Merrill Lynch Commodities Inc.",
+        "Merrill Lynch Commodities, Inc.",
+        "MERRILL LYNCH COMMODITIES INC"
+      ]
+    },
+    {
+      "canonical_name": "Morgan Stanley Services Group Inc.",
+      "display_name": "Morgan Stanley",
+      "slug": "morgan-stanley",
+      "confidence_score": 1,
+      "aliases": [
+        "Morgan Stanley Services Group Inc.",
+        "MORGAN STANLEY SERVICES GROUP, INC.",
+        "MORGAN STANLEY SERVICES GROUP INC",
+        "Morgan Stanley Services Group, Inc.",
+        "Morgan Stanley & Co., LLC",
+        "Morgan Stanley & Co, LLC",
+        "MORGAN STANLEY & CO. LLC",
+        "MORGAN STANLEY CO. LLC",
+        "MORGAN STANLEY & CO LLC",
+        "Morgan Stanley & Co. LLC",
+        "Morgan Stanley Smith Barney LLC",
+        "MORGAN STANLEY SMITH BARNEY LLC"
+      ]
+    },
+    {
+      "canonical_name": "Goldman Sachs & Co. LLC",
+      "display_name": "Goldman Sachs",
+      "slug": "goldman-sachs",
+      "confidence_score": 1,
+      "aliases": [
+        "GOLDMAN SACHS & CO. LLC",
+        "Goldman Sachs & Co. LLC",
+        "GOLDMAN SACHS CO. LLC",
+        "GOLDMAN SACHS & CO LLC",
+        "GOLDMAN SACHS SERVICES LLC",
+        "Goldman Sachs Services LLC",
+        "GOLDMAN SACHS BANK USA",
+        "Goldman Sachs Bank USA",
+        "The Ayco Company, L.P., a Goldman Sachs Company",
+        "THE AYCO COMPANY, L.P., A GOLDMAN SACHS COMPANY",
+        "THE AYCO COMPANY, L.P., A GOLDMAN SACH COMPANY"
+      ]
+    },
+    {
+      "canonical_name": "Citigroup Global Markets Inc.",
+      "display_name": "Citigroup",
+      "slug": "citigroup",
+      "confidence_score": 1,
+      "aliases": [
+        "Citigroup Global Markets Inc.",
+        "CITIGROUP GLOBAL MARKETS INC.",
+        "CITIGROUP GLOBAL MARKETS INC",
+        "Citigroup Technology, Inc.",
+        "CITIGROUP TECHNOLOGY, INC.",
+        "CITIGROUP TECHNOLOGY INC",
+        "Citigroup Energy Inc.",
+        "CITIGROUP ENERGY INC",
+        "CITIGROUP ENERGY INC.",
+        "Citibank, N.A.",
+        "CITIBANK, N.A",
+        "Citicorp Credit Services, Inc. (USA)"
+      ]
+    },
+    {
+      "canonical_name": "Walmart Associates, Inc.",
+      "display_name": "Walmart",
+      "slug": "walmart",
+      "confidence_score": 1,
+      "aliases": ["WALMART ASSOCIATES, INC.", "WALMART ASSOCIATES INC"]
+    },
+    {
+      "canonical_name": "ByteDance Inc.",
+      "display_name": "ByteDance / TikTok",
+      "slug": "bytedance-tiktok",
+      "confidence_score": 1,
+      "aliases": [
+        "BYTEDANCE INC.",
+        "ByteDance Inc.",
+        "BYTEDANCE INC",
+        "TikTok Inc.",
+        "TIKTOK INC.",
+        "TIKTOK INC",
+        "TikTok U.S. Data Security Inc.",
+        "TIKTOK U S DATA SECURITY INC",
+        "TIKTOK US DATA SECURITY INC",
+        "TikTok USDS Joint Venture LLC"
+      ]
+    },
+    {
+      "canonical_name": "Alibaba Group (U.S.) Inc.",
+      "display_name": "Alibaba",
+      "slug": "alibaba",
+      "confidence_score": 1,
+      "aliases": [
+        "Alibaba Group (U.S.) Inc.",
+        "ALIBABA GROUP U.S. INC.",
+        "Alibaba Group (U.S.) Inc",
+        "Alibaba Group (U.S) Inc.",
+        "ALIBABA GROUP U S INC",
+        "Alibaba Group U.S. Inc.",
+        "Alibaba Cloud US LLC",
+        "ALIBABA CLOUD US LLC",
+        "Alibaba Cloud US Inc.",
+        "Alibaba.com US E-commerce Corporation",
+        "ALIBABA.COM US E-COMMERCE CORP",
+        "Alibaba.com US E-commerce Corp"
+      ]
+    },
+    {
+      "canonical_name": "Tencent America LLC",
+      "display_name": "Tencent",
+      "slug": "tencent",
+      "confidence_score": 1,
+      "aliases": [
+        "Tencent America LLC",
+        "TENCENT AMERICA LLC",
+        "Tencent Cloud LLC",
+        "TENCENT CLOUD LLC"
+      ]
+    },
+    {
+      "canonical_name": "Baidu USA LLC",
+      "display_name": "Baidu",
+      "slug": "baidu",
+      "confidence_score": 1,
+      "aliases": ["Baidu USA LLC", "BAIDU USA LLC"]
+    },
+    {
+      "canonical_name": "Tesla, Inc.",
+      "display_name": "Tesla",
+      "slug": "tesla",
+      "confidence_score": 1,
+      "aliases": [
+        "Tesla, Inc.",
+        "TESLA, INC.",
+        "TESLA INC",
+        "TESLA, Inc.",
+        "Tesla Inc."
+      ]
+    },
+    {
+      "canonical_name": "Uber Technologies, Inc.",
+      "display_name": "Uber",
+      "slug": "uber",
+      "confidence_score": 1,
+      "aliases": [
+        "UBER TECHNOLOGIES, INC.",
+        "Uber Technologies, Inc.",
+        "UBER TECHNOLOGIES INC.",
+        "UBER TECHNOLOGIES INC",
+        "Uber Freight US LLC",
+        "Uber Freight US LP LLC"
+      ]
+    },
+    {
+      "canonical_name": "Lyft, Inc.",
+      "display_name": "Lyft",
+      "slug": "lyft",
+      "confidence_score": 1,
+      "aliases": ["LYFT, INC.", "LYFT, Inc.", "LYFT INC", "Lyft, Inc."]
+    },
+    {
+      "canonical_name": "Airbnb, Inc.",
+      "display_name": "Airbnb",
+      "slug": "airbnb",
+      "confidence_score": 1,
+      "aliases": [
+        "AIRBNB, INC.",
+        "Airbnb, Inc.",
+        "AIRBNB INC",
+        "AIRBNB PAYMENTS, INC."
+      ]
+    },
+    {
+      "canonical_name": "DoorDash, Inc.",
+      "display_name": "DoorDash",
+      "slug": "doordash",
+      "confidence_score": 1,
+      "aliases": [
+        "DoorDash, Inc.",
+        "DOORDASH INC.",
+        "DOORDASH, INC.",
+        "DOORDASH INC",
+        "Doordash, Inc.",
+        "DOORDASH,inc.",
+        "DoorDash, Inc"
+      ]
+    },
+    {
+      "canonical_name": "Snowflake Inc.",
+      "display_name": "Snowflake",
+      "slug": "snowflake",
+      "confidence_score": 1,
+      "aliases": [
+        "Snowflake Inc.",
+        "SNOWFLAKE INC",
+        "Snowflake, Inc.",
+        "SNOWFLAKE INC."
+      ]
+    },
+    {
+      "canonical_name": "Databricks, Inc.",
+      "display_name": "Databricks",
+      "slug": "databricks",
+      "confidence_score": 1,
+      "aliases": [
+        "Databricks, Inc.",
+        "DATABRICKS INC.",
+        "DATABRICKS INC",
+        "Databricks Inc."
+      ]
+    },
+    {
+      "canonical_name": "Palantir Technologies Inc.",
+      "display_name": "Palantir",
+      "slug": "palantir",
+      "confidence_score": 1,
+      "aliases": [
+        "PALANTIR TECHNOLOGIES INC.",
+        "Palantir Technologies, Inc.",
+        "PALANTIR TECHNOLOGIES",
+        "Palantir Technologies Inc.",
+        "PALANTIR TECHNOLOGIES INC"
+      ]
+    },
+    {
+      "canonical_name": "ServiceNow, Inc.",
+      "display_name": "ServiceNow",
+      "slug": "servicenow",
+      "confidence_score": 1,
+      "aliases": [
+        "ServiceNow, Inc.",
+        "SERVICENOW, INC.",
+        "SERVICENOW INC",
+        "ServiceNow Inc."
+      ]
     }
   ]
 }
