@@ -2,8 +2,9 @@
 
 ## Status
 
-Partially completed / Code complete; Supabase-backed Preview runtime is blocked
-until Vercel Preview environment variables are added
+Partially completed / Branch Preview build is READY; Supabase-backed Preview
+runtime verification is blocked until Vercel Preview environment variables are
+added
 
 ## Built
 
@@ -39,6 +40,8 @@ until Vercel Preview environment variables are added
   database access.
 - Pushed the M32 branch `m32-vercel-supabase-preview` to GitHub for Vercel
   branch Preview builds.
+- Confirmed the latest Vercel branch Preview deployment for commit `9b58778` is
+  `READY` and no longer fails during the build.
 
 ## Files changed
 
@@ -71,6 +74,19 @@ until Vercel Preview environment variables are added
 - Command: Vercel connector `get_deployment_build_logs`
 - Result: pass; confirmed latest deployment failure is missing
   `DATABASE_URL`.
+
+- Command: Vercel connector `get_deployment_build_logs` for
+  `dpl_375pW8Rfk7aNRYbUvst3uUACyQDo`
+- Result: pass; latest M32 branch Preview completed `pnpm build`, generated 80
+  static pages, and deployed successfully.
+
+- Command: Vercel connector `get_deployment` for
+  `dpl_375pW8Rfk7aNRYbUvst3uUACyQDo`
+- Result: pass; state `READY`, target `null` branch Preview.
+
+- Command: `curl -L -sS -i https://h1b-perm-ge0o3bof8-yuchenli2015-6323s-projects.vercel.app/health`
+- Result: expected protected response; Vercel Deployment Protection returned
+  `401 Authentication Required` with `x-robots-tag: noindex`.
 
 - Command: Vercel docs search for environment variables and protected
   deployments
@@ -121,12 +137,12 @@ until Vercel Preview environment variables are added
 
 ## Screenshots / local URLs
 
-- Branch Preview URL created by Vercel after the first M32 push:
+- Latest Vercel Preview deployment:
+  `https://h1b-perm-ge0o3bof8-yuchenli2015-6323s-projects.vercel.app`
+- Stable branch alias:
   `https://h1b-perm-cn-git-m32-vercel-s-533b91-yuchenli2015-6323s-projects.vercel.app`
-- That first branch Preview failed because Vercel still lacked `DATABASE_URL`
-  and the app still had build-time data access on Visa Bulletin routes. The
-  latest M32 code removes that build-time dependency; the next Vercel branch
-  build should compile even before the secret is added.
+- The deployment is protected by Vercel Authentication and returns `401` to
+  unauthenticated requests, which is appropriate for a private preview.
 
 ## Decisions made without owner input
 
@@ -146,8 +162,11 @@ until Vercel Preview environment variables are added
   deployments, logs, protected URLs, and deploy, but it does not expose a tool
   for writing Project Settings environment variables.
 - `vercel` CLI and `VERCEL_TOKEN` are not available in the local environment.
-- Therefore the Supabase-backed protected Vercel Preview cannot be completed
-  from Codex alone until the required Vercel env vars are added.
+- The branch Preview build is green, but runtime pages cannot be verified as
+  Supabase-backed from Codex alone until the required Vercel env vars are added.
+- Vercel Deployment Protection is enabled. Codex can confirm the deployment is
+  protected, but authenticated page verification requires owner dashboard access
+  or a Vercel protection bypass flow.
 
 ## Owner action needed
 
