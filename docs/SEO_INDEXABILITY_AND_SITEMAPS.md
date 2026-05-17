@@ -94,6 +94,15 @@ M16 adds `selectCompanyPageRoutes(data)`, which selects the first indexable rout
 
 M17 also adds company sitemap pagination. When the selected company route set exceeds 500 URLs, `/sitemap.xml` points to chunked sitemap files such as `/sitemaps/company-pages/1.xml`, `/sitemaps/company-pages/2.xml`, and so on. The legacy `/sitemaps/company-pages.xml` remains valid for the default one-page fixture state.
 
+After the production aggregate import, `LOCAL_DATA_MODE=postgres` uses a
+lightweight runtime SQL selector for `/sitemaps/company-pages.xml`. It reads
+`company_page_metrics`, `employers`, and `company_source_stats` directly and
+publishes the first 2,000 H-1B/PERM company routes that meet the same
+mode-specific thresholds: at least 10 recent LCA rows or 3 USCIS Employer Data
+Hub rows for H-1B pages, and at least 3 recent PERM rows for PERM pages. If the
+production database connection is not configured, the company sitemap returns an
+empty URL set instead of exposing fixture-only company URLs.
+
 M23 adds `app/robots.ts`, which allows crawling public pages and advertises the sitemap index. It does not disallow filter URLs in `robots.txt`, because page-level `noindex` must be crawlable to be seen by search engines.
 
 M23 also adds `lib/seo/internal-link-graph.ts` to verify registered related links, sitemap URLs, and noindex exclusions.

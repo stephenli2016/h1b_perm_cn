@@ -171,7 +171,9 @@ describe("M15 SEO indexability and sitemaps", () => {
 
   it("does not expose fixture-only company sitemap URLs in postgres mode", async () => {
     const originalMode = process.env.LOCAL_DATA_MODE;
+    const originalDatabaseUrl = process.env.DATABASE_URL;
     process.env.LOCAL_DATA_MODE = "postgres";
+    delete process.env.DATABASE_URL;
 
     try {
       await expect(listRuntimeCompanySitemapEntries()).resolves.toEqual([]);
@@ -180,6 +182,11 @@ describe("M15 SEO indexability and sitemaps", () => {
         delete process.env.LOCAL_DATA_MODE;
       } else {
         process.env.LOCAL_DATA_MODE = originalMode;
+      }
+      if (originalDatabaseUrl === undefined) {
+        delete process.env.DATABASE_URL;
+      } else {
+        process.env.DATABASE_URL = originalDatabaseUrl;
       }
     }
   });

@@ -75,6 +75,20 @@ With `LOCAL_DATA_MODE=postgres`, the app now reads:
 - full employer, alias, location, source, visa bulletin, and page-metric tables;
 - compact company aggregate tables for H-1B/PERM/USCIS totals;
 - bounded recent sample tables for visible recent-record examples.
+- a lightweight production company sitemap query that selects 2,000 indexable
+  H-1B/PERM company routes from aggregate metrics without loading the full
+  runtime data package.
+
+Production verification on 2026-05-17 confirmed:
+
+- Postgres version: 17.6.
+- Remote database size: about 348 MB.
+- `company_page_metrics`: 2,000 rows, all indexable.
+- `company_yearly_immigration_stats`: 13,620 rows.
+- `company_breakdown_stats`: 111,857 rows.
+- `company_recent_h1b_samples`: 16,000 rows.
+- `company_recent_perm_samples`: 16,000 rows.
+- Runtime smoke status: pass in `LOCAL_DATA_MODE=postgres`.
 
 The server-side database path should use Supabase Session Pooler:
 
