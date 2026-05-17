@@ -2,6 +2,10 @@ export const migrationFiles = [
   "data/migrations/0001_initial_schema.sql",
 ] as const;
 
+export const productionMigrationFiles = [
+  "data/migrations/postgres/0001_initial_schema.sql",
+] as const;
+
 export const requiredTableNames = [
   "employers",
   "employer_aliases",
@@ -38,7 +42,15 @@ export const requiredIndexNames = [
   "idx_uscis_h1b_city_state",
   "idx_uscis_h1b_source_record_id",
   "idx_visa_bulletin_dates_lookup",
+  "idx_guide_pages_section_priority",
+  "idx_guide_pages_status",
+  "idx_correction_requests_status",
+  "idx_correction_requests_employer_id",
 ] as const;
+
+export const requiredProductionTableNames = requiredTableNames;
+
+export const requiredProductionIndexNames = requiredIndexNames;
 
 export const databaseStrategy = {
   productionTarget: "Supabase Postgres",

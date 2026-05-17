@@ -21,6 +21,27 @@ Primary migration:
 
 The migration is written to run locally in SQLite for validation. It uses conservative column types (`TEXT`, `INTEGER`, `REAL`) so the model is easy to port to Postgres later. Date values are stored as ISO text in local mode and can become `date` / `timestamptz` in production migrations.
 
+M26 production migration:
+
+- `data/migrations/postgres/0001_initial_schema.sql`
+
+The production migration mirrors the normalized local model in Postgres/Supabase
+with native `date`, `timestamptz`, `numeric`, `boolean`, and `jsonb` types. It
+keeps deterministic text IDs so local fixture-derived records and production
+ETL outputs can share the same identifiers.
+
+Security defaults:
+
+- RLS is enabled on every table in the `public` schema.
+- No `anon` or `authenticated` Data API policies are created in the baseline
+  migration.
+- The Supabase `service_role` role receives table privileges only when that role
+  exists, and it must remain server-side only.
+- Future browser-side Data API access must add narrow grants and table-specific
+  RLS policies in the same migration.
+
+Production setup details live in `docs/PRODUCTION_DATABASE_M26.md`.
+
 ## Tables
 
 ### `employers`

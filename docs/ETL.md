@@ -94,3 +94,31 @@ The command reads `data/source_manifest.json` and reports local official-source 
 - missing required fixture files
 
 Local fixture mode does not require downloaded production files to exist. Missing downloaded files are reported as warnings, not failures, so development remains unblocked without network or production storage.
+
+## M26 Production Database Preparation
+
+Production schema preparation lives in:
+
+- `data/migrations/postgres/0001_initial_schema.sql`
+- `docs/PRODUCTION_DATABASE_M26.md`
+
+Run:
+
+```bash
+pnpm db:production:validate
+```
+
+The first production import should still be built as a later milestone. The
+recommended order is:
+
+1. Refresh `data/source_manifest.json` with current official source files.
+2. Run the existing parsers against official downloads or fixture mode.
+3. Load dimensions first: `locations`, `employers`, `employer_aliases`, and
+   `source_files`.
+4. Load normalized source records: LCA, PERM, PWD, USCIS Employer Data Hub, and
+   Visa Bulletin rows.
+5. Load derived rows: `company_page_metrics` and `guide_pages`.
+6. Record every production import in `etl_runs` with source IDs, counts, and
+   errors.
+
+No Supabase key is required for local fixture mode.
