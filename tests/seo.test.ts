@@ -8,6 +8,7 @@ import {
   getCompanyPageSeo,
 } from "@/lib/seo/company-quality";
 import {
+  listRuntimeCompanySitemapEntries,
   listSitemapEntries,
   renderSitemapIndex,
   renderUrlSet,
@@ -166,6 +167,21 @@ describe("M15 SEO indexability and sitemaps", () => {
     expect(coreUrls).not.toContain(
       "http://localhost:3000/corrections/received",
     );
+  });
+
+  it("does not expose fixture-only company sitemap URLs in postgres mode", async () => {
+    const originalMode = process.env.LOCAL_DATA_MODE;
+    process.env.LOCAL_DATA_MODE = "postgres";
+
+    try {
+      await expect(listRuntimeCompanySitemapEntries()).resolves.toEqual([]);
+    } finally {
+      if (originalMode === undefined) {
+        delete process.env.LOCAL_DATA_MODE;
+      } else {
+        process.env.LOCAL_DATA_MODE = originalMode;
+      }
+    }
   });
 
   it("renders valid sitemap XML shells without noindex URLs", () => {

@@ -21,7 +21,7 @@ Completed, committed, pushed, and production-deployed.
 - Expanded `/disclaimer` with a decision checklist for users before relying on any public-data page.
 - Added tests for footer quick actions, source trust sections, disclaimer checklist, and 404 recovery links.
 - After production smoke testing, removed stale dynamic company sample links from public navigation and changed the company-signal example CTA back to the company directory.
-- Made the company-pages sitemap read runtime data in production so it does not list fixture-only company URLs when the production database does not contain those companies yet.
+- Made the company-pages sitemap return no company URLs in production database mode until the production import contains indexable company rows, avoiding fixture-only URLs.
 
 ## Files changed
 

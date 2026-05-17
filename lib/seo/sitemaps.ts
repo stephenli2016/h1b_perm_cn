@@ -1,9 +1,6 @@
 import { localFixtureData } from "@/data/fixtures/local-fixtures";
 import { listContentPages, type ContentKind } from "@/lib/content/guide-pages";
-import {
-  getRuntimeDataMode,
-  loadPostgresFixtureData,
-} from "@/lib/db/postgres-fixture-data";
+import { getRuntimeDataMode } from "@/lib/db/postgres-fixture-data";
 import type { FixtureData } from "@/lib/db/types";
 import {
   COMPANY_SITEMAP_PAGE_SIZE,
@@ -86,11 +83,11 @@ export function listSitemapEntries(
 export async function listRuntimeCompanySitemapEntries(
   options: SitemapListOptions = {},
 ): Promise<SitemapEntry[]> {
-  return listSitemapEntries(
-    "company-pages",
-    await loadRuntimeSitemapFixtureData(),
-    options,
-  );
+  if (getRuntimeDataMode() === "postgres") {
+    return [];
+  }
+
+  return listSitemapEntries("company-pages", localFixtureData, options);
 }
 
 function listContentRouteEntries(
@@ -305,28 +302,4 @@ function escapeXml(value: string) {
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&apos;");
-}
-
-async function loadRuntimeSitemapFixtureData() {
-  if (getRuntimeDataMode() !== "postgres") {
-    return localFixtureData;
-  }
-
-  try {
-    return await loadPostgresFixtureData();
-  } catch {
-    return {
-      ...localFixtureData,
-      employers: [],
-      employerAliases: [],
-      h1bLcaRecords: [],
-      permRecords: [],
-      uscisH1BEmployerRecords: [],
-      companyPageMetrics: [],
-      companyYearlyImmigrationStats: [],
-      companyBreakdownStats: [],
-      companyWageStats: [],
-      companySourceStats: [],
-    } satisfies FixtureData;
-  }
 }
