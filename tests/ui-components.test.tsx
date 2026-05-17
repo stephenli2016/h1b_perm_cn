@@ -57,6 +57,9 @@ describe("M12 UI components", () => {
     expect(html).toContain("查排期");
     expect(html).toContain("提交纠错");
     expect(html).toContain("不提供法律、移民、税务、职业或财务建议");
+    expect(html).toContain("/perm/company/brightline-health");
+    expect(html).not.toContain("example-employer");
+    expect(html).not.toContain("/h1b/company/[slug]");
   });
 
   it("renders page shell with breadcrumbs", () => {

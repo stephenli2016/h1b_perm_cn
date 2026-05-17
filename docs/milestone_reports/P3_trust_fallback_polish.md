@@ -2,7 +2,7 @@
 
 ## Status
 
-Completed locally. P3 changes are not committed yet.
+Completed, committed, pushed, and production-deployed.
 
 ## Built
 
@@ -20,10 +20,12 @@ Completed locally. P3 changes are not committed yet.
   - “不会作为数据输入的来源”
 - Expanded `/disclaimer` with a decision checklist for users before relying on any public-data page.
 - Added tests for footer quick actions, source trust sections, disclaimer checklist, and 404 recovery links.
+- After production smoke testing, removed stale `example-employer` footer links and pointed the PERM company sample link to the real indexable `brightline-health` page.
 
 ## Files changed
 
 - `components/site-footer.tsx`
+- `lib/site.ts`
 - `app/not-found.tsx`
 - `app/sources/page.tsx`
 - `app/disclaimer/page.tsx`
@@ -47,10 +49,15 @@ Completed locally. P3 changes are not committed yet.
 - Result: expected `blocked`, with no failures. Remaining blockers are owner-gated production data/deployment checks in the launch script.
 - Command: `pnpm build`
 - Result: pass, 80 static pages generated
+- Command: production Vercel deployment check
+- Result: pass, GitHub push triggered a production Vercel deployment that reached `READY`
+- Command: production smoke checks for `/`, `/sources`, `/disclaimer`, `/not-a-real-page`, `/robots.txt`, `/sitemap.xml`, `/companies`, `/tools`, `/guides`, and `/visa-bulletin`
+- Result: pass after stale footer sample company links were fixed; footer no longer exposes `example-employer` or unresolved dynamic company paths
 
 ## Screenshots / local URLs
 
 - Browser-verified local production server at `http://127.0.0.1:3000`.
+- Production verified at `https://h1b-perm-cn.vercel.app`.
 - Verified `/`:
   - footer contains `常用动作`, `查公司`, `查工资`, `查排期`, `提交纠错`
   - canonical `https://h1b-perm-cn.vercel.app`
@@ -76,15 +83,12 @@ Completed locally. P3 changes are not committed yet.
 
 ## Known limitations
 
-- P3 is complete locally but not committed, pushed, or deployed.
 - No site search was added; current content volume can still be served by task-based navigation and category pages.
 
 ## Owner action needed
 
-- Confirm whether P3 is accepted.
-- Confirm whether to commit P3.
-- Separately approve if you want me to push the P0/P1/P2/P3 commits to GitHub and let Vercel deploy.
+None for P3.
 
 ## Recommended next milestone
 
-After P3 commit, the four priority polish buckets are complete. Recommended next step: push to GitHub and run production deploy verification if you approve.
+The four priority polish buckets are complete. Recommended next step: review the next product gap list and choose the next priority bucket.
