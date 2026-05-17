@@ -1,7 +1,15 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 
+import { JsonLdScript } from "@/components/seo/json-ld-script";
 import { RouteCard } from "@/components/route-card";
+import { buildJsonLdGraph, buildWebsiteJsonLd } from "@/lib/seo/json-ld";
+import { buildRouteSeoMetadata } from "@/lib/seo/metadata";
 import { getRoute, siteConfig } from "@/lib/site";
+
+export const metadata: Metadata = buildRouteSeoMetadata("/", {
+  pageType: "website",
+});
 
 const focusAreas = [
   {
@@ -25,6 +33,7 @@ const focusAreas = [
 export default function Home() {
   return (
     <main className="mx-auto w-full max-w-6xl px-5 py-10 sm:px-8 lg:px-10">
+      <JsonLdScript data={buildJsonLdGraph([buildWebsiteJsonLd()])} />
       <section className="grid items-center gap-10 py-8 lg:grid-cols-[1.1fr_0.9fr] lg:py-14">
         <div>
           <p className="text-sm font-semibold text-[var(--accent)]">

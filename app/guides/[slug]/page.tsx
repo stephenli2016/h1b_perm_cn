@@ -6,6 +6,7 @@ import {
   getContentPageBySlug,
   listContentPages,
 } from "@/lib/content/guide-pages";
+import { buildSeoMetadata } from "@/lib/seo/metadata";
 
 type GuideContentPageProps = {
   params: Promise<{
@@ -32,15 +33,12 @@ export async function generateMetadata({
   }
 
   return {
-    title: page.title,
-    description: page.metaDescription,
-    alternates: {
-      canonical: page.path,
-    },
-    robots: {
-      index: true,
-      follow: true,
-    },
+    ...buildSeoMetadata({
+      title: page.title,
+      description: page.metaDescription,
+      path: page.path,
+      pageType: "article",
+    }),
   };
 }
 

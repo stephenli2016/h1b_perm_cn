@@ -19,6 +19,8 @@ import {
   parseWageLevelSearchParams,
   wageLevelValuesWithDefaults,
 } from "@/lib/wage-level-tool";
+import { buildWebApplicationJsonLd } from "@/lib/seo/json-ld";
+import { buildSeoMetadata, hasSubmittedSearchParams } from "@/lib/seo/metadata";
 import { siteConfig } from "@/lib/site";
 
 type H1BWageLevelCheckerPageProps = {
@@ -28,18 +30,22 @@ type H1BWageLevelCheckerPageProps = {
 type RelatedCompanyRow =
   PublicH1BWageLevelCheckPayload["related"]["companies"][number];
 
-export const metadata: Metadata = {
-  title: "H-1B 工资 Level 中文判断工具",
-  description:
-    "输入 SOC 或职位、worksite、offered wage 和 wage year，对照 DOL/FLAG prevailing wage level 公开数据，并查看相关 H-1B 工资样本。",
-  alternates: {
-    canonical: "/tools/h1b-wage-level-checker",
-  },
-  robots: {
-    index: true,
-    follow: true,
-  },
-};
+export async function generateMetadata({
+  searchParams,
+}: H1BWageLevelCheckerPageProps): Promise<Metadata> {
+  const hasQuery = hasSubmittedSearchParams(await searchParams);
+
+  return buildSeoMetadata({
+    title: hasQuery
+      ? "H-1B 工资 Level 查询结果"
+      : "H-1B 工资 Level 中文判断工具",
+    description:
+      "输入 SOC 或职位、worksite、offered wage 和 wage year，对照 DOL/FLAG prevailing wage level 公开数据，并查看相关 H-1B 工资样本。",
+    path: "/tools/h1b-wage-level-checker",
+    index: !hasQuery,
+    pageType: "tool",
+  });
+}
 
 const wageLevelColumns: DataTableColumn<PublicWageLevelRow>[] = [
   {
@@ -103,8 +109,16 @@ export default async function H1BWageLevelCheckerPage({
         { href: "/tools", label: "工具" },
         { label: "H-1B 工资 Level" },
       ]}
+      canonicalPath="/tools/h1b-wage-level-checker"
       description="输入 SOC 或英文职位关键词、worksite、工资和年份，把 offer wage 与 DOL/FLAG prevailing wage level 公开数值做近似对照。输出只解释公开数据位置，不判断个案是否合规。"
       eyebrow="H-1B 工具"
+      structuredData={buildWebApplicationJsonLd({
+        title: "H-1B 工资 Level 中文判断工具",
+        description:
+          "输入 SOC 或职位、worksite、offered wage 和 wage year，对照 DOL/FLAG prevailing wage level 公开数据，并查看相关 H-1B 工资样本。",
+        path: "/tools/h1b-wage-level-checker",
+        dateModified: "2026-05-16",
+      })}
       title="H-1B 工资 Level 中文判断工具"
     >
       <div className="space-y-6">

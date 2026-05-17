@@ -33,7 +33,7 @@ describe("company immigration public-data signals", () => {
     ).toEqual(COMPANY_IMMIGRATION_SIGNAL_DIMENSIONS.map((row) => row.key));
     expect(result.data.immigrationSignal.dimensions).toHaveLength(6);
     expect(result.data.immigrationSignal.interpretationNoteZh).toContain(
-      "不是 H-1B、PERM、I-140、I-485 或绿卡结果的成功率",
+      "不是 H-1B、PERM、I-140、I-485 或绿卡结果的获批概率",
     );
     expect(result.data.immigrationSignal.dimensions[1]?.evidenceZh).toContain(
       "近 5 年 PERM 记录：3 条",

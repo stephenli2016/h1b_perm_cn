@@ -15,24 +15,30 @@ import {
   type PermStage,
 } from "@/lib/career-decision-tools";
 import type { RawSearchParams } from "@/lib/directory-search";
+import { buildWebApplicationJsonLd } from "@/lib/seo/json-ld";
+import { buildSeoMetadata, hasSubmittedSearchParams } from "@/lib/seo/metadata";
 import { siteConfig } from "@/lib/site";
 
 type PermRestartTimelineEstimatorPageProps = {
   searchParams?: Promise<RawSearchParams>;
 };
 
-export const metadata: Metadata = {
-  title: "跳槽后 PERM 重办时间线估算器",
-  description:
-    "用通用教育性场景理解跳槽、换职位或换地点后 PERM 可能涉及的重新规划节点，并连接公司 PERM/H-1B 公开数据。",
-  alternates: {
-    canonical: "/tools/perm-restart-timeline-estimator",
-  },
-  robots: {
-    index: true,
-    follow: true,
-  },
-};
+export async function generateMetadata({
+  searchParams,
+}: PermRestartTimelineEstimatorPageProps): Promise<Metadata> {
+  const hasQuery = hasSubmittedSearchParams(await searchParams);
+
+  return buildSeoMetadata({
+    title: hasQuery
+      ? "跳槽后 PERM 重办时间线结果"
+      : "跳槽后 PERM 重办时间线估算器",
+    description:
+      "用通用教育性场景理解跳槽、换职位或换地点后 PERM 可能涉及的重新规划节点，并连接公司 PERM/H-1B 公开数据。",
+    path: "/tools/perm-restart-timeline-estimator",
+    index: !hasQuery,
+    pageType: "tool",
+  });
+}
 
 export default async function PermRestartTimelineEstimatorPage({
   searchParams,
@@ -57,8 +63,16 @@ export default async function PermRestartTimelineEstimatorPage({
         { href: "/tools", label: "工具" },
         { label: "跳槽后 PERM 重办时间线估算器" },
       ]}
+      canonicalPath="/tools/perm-restart-timeline-estimator"
       description="选择一个通用场景，查看 PERM 相关节点的相对顺序。页面不要求输入 priority date、I-140 receipt、工资、身份日期或雇主名称。"
       eyebrow="PERM 工具"
+      structuredData={buildWebApplicationJsonLd({
+        title: "跳槽后 PERM 重办时间线估算器",
+        description:
+          "用通用教育性场景理解跳槽、换职位或换地点后 PERM 可能涉及的重新规划节点，并连接公司 PERM/H-1B 公开数据。",
+        path: "/tools/perm-restart-timeline-estimator",
+        dateModified: "2026-05-16",
+      })}
       title="跳槽后 PERM 重办时间线估算器"
     >
       <div className="space-y-6">

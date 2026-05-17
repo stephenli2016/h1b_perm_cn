@@ -170,7 +170,7 @@ export function calculateCompanyImmigrationSignal(
     dimensions,
     methodologyHref: COMPANY_IMMIGRATION_SIGNAL_METHODOLOGY_HREF,
     interpretationNoteZh:
-      "公开数据友好度信号只衡量官方公开记录的覆盖、连续性和可解释程度，不是 H-1B、PERM、I-140、I-485 或绿卡结果的成功率。",
+      "公开数据友好度信号只衡量官方公开记录的覆盖、连续性和可解释程度，不是 H-1B、PERM、I-140、I-485 或绿卡结果的获批概率。",
   };
 }
 

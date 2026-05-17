@@ -20,6 +20,8 @@ import {
   statusLabel,
   type RawSearchParams,
 } from "@/lib/directory-search";
+import { buildWebPageJsonLd } from "@/lib/seo/json-ld";
+import { buildSeoMetadata } from "@/lib/seo/metadata";
 import { siteConfig } from "@/lib/site";
 
 type H1BPageProps = {
@@ -32,18 +34,14 @@ export async function generateMetadata({
   const parsed = parseDirectorySearchParams(await searchParams);
   const filterCount = activeFilterCount(parsed.values);
 
-  return {
+  return buildSeoMetadata({
     title: filterCount > 0 ? "H-1B 公司搜索结果" : "H-1B 公司数据库",
     description:
       "按雇主、年份、州/城市、职位/SOC 和 case status 查询本地 H-1B LCA fixture 记录。",
-    alternates: {
-      canonical: "/h1b",
-    },
-    robots: {
-      index: false,
-      follow: true,
-    },
-  };
+    path: "/h1b",
+    index: false,
+    pageType: "data",
+  });
 }
 
 const h1bColumns: DataTableColumn<PublicDisclosureRecordRow>[] = [
@@ -117,8 +115,15 @@ export default async function H1BPage({ searchParams }: H1BPageProps) {
   return (
     <PageShell
       breadcrumbs={[{ href: "/", label: "首页" }, { label: "H-1B" }]}
+      canonicalPath="/h1b"
       description="按雇主、年份、地区、职位/SOC 和 case status 查看本地 H-1B LCA fixture 记录。生产数据接入前，本目录和筛选 URL 均保持 noindex。"
       eyebrow={siteConfig.tagline}
+      structuredData={buildWebPageJsonLd({
+        title: "H-1B 公司数据库",
+        description:
+          "基于 DOL OFLC LCA 和 USCIS Employer Data Hub 的 H-1B 雇主公开数据信号入口。",
+        path: "/h1b",
+      })}
       title="H-1B 公司数据库"
     >
       <div className="space-y-6">

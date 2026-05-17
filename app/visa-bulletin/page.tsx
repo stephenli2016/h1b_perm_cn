@@ -11,19 +11,10 @@ import {
   getLatestVisaBulletinMonth,
   listVisaBulletinRows,
 } from "@/lib/db/local-repository";
+import { buildDatasetJsonLd } from "@/lib/seo/json-ld";
+import { buildRouteSeoMetadata } from "@/lib/seo/metadata";
 
-export const metadata: Metadata = {
-  title: "中国职业移民排期",
-  description:
-    "中国大陆出生 EB-1、EB-2、EB-3 Visa Bulletin 和 USCIS filing chart 中文解释入口。",
-  alternates: {
-    canonical: "/visa-bulletin",
-  },
-  robots: {
-    index: false,
-    follow: true,
-  },
-};
+export const metadata: Metadata = buildRouteSeoMetadata("/visa-bulletin");
 
 export default function VisaBulletinPage() {
   const latestMonth = getLatestVisaBulletinMonth();
@@ -67,8 +58,20 @@ export default function VisaBulletinPage() {
   return (
     <PageShell
       breadcrumbs={[{ href: "/", label: "首页" }, { label: "排期" }]}
+      canonicalPath="/visa-bulletin"
       description="中国大陆出生 EB-1、EB-2、EB-3 的 Department of State Visa Bulletin fixture 数据，以及 USCIS 当月 filing chart 选择。"
       eyebrow="Visa Bulletin"
+      structuredData={buildDatasetJsonLd({
+        name: "中国职业移民排期",
+        description:
+          "中国大陆出生 EB-1、EB-2、EB-3 的 Department of State Visa Bulletin fixture 数据，以及 USCIS 当月 filing chart 选择。",
+        path: "/visa-bulletin",
+        dateModified: latestMonth?.publishedAt,
+        sources: [
+          "U.S. Department of State Visa Bulletin",
+          "USCIS Adjustment of Status filing chart",
+        ],
+      })}
       title="中国职业移民排期"
     >
       {latestMonth ? (

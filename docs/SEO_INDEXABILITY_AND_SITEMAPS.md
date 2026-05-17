@@ -1,6 +1,6 @@
-# SEO Indexability and Sitemaps — M15-M22
+# SEO Indexability and Sitemaps — M15-M23
 
-Milestones: M15 — Company page quality scoring, noindex, and sitemap logic; M16 — Generate first 500 high-quality company pages; M17 — Expand toward 2,000 company pages and performance hardening; M18 — H-1B wage-level checker tool; M19 — EB priority date calculator; M20 — Company immigration public-data signal; M21 — H-1B transfer and PERM restart tools; M22 — 50 guide/tool content pages
+Milestones: M15 — Company page quality scoring, noindex, and sitemap logic; M16 — Generate first 500 high-quality company pages; M17 — Expand toward 2,000 company pages and performance hardening; M18 — H-1B wage-level checker tool; M19 — EB priority date calculator; M20 — Company immigration public-data signal; M21 — H-1B transfer and PERM restart tools; M22 — 50 guide/tool content pages; M23 — Technical SEO hardening
 
 ## Purpose
 
@@ -40,6 +40,29 @@ Company page metadata now uses `getCompanyPageSeo(metrics, mode)`:
 
 The public page copy continues to explain that LCA, PERM, and USCIS rows are official-data signals only, not approval odds, hiring promises, or legal conclusions.
 
+M23 centralizes route metadata in `lib/seo/metadata.ts`:
+
+- All public page types emit title, description, canonical, robots, OpenGraph, and Twitter metadata through shared helpers where practical.
+- Query-result URLs for interactive tools are `noindex, follow` and canonicalize back to the base tool URL.
+- Directory and filter URLs remain `noindex, follow` in local/fixture mode.
+- Canonical paths drop query strings and fragments.
+
+## Structured Data
+
+M23 adds shared JSON-LD helpers in `lib/seo/json-ld.ts` and a renderer in `components/seo/json-ld-script.tsx`.
+
+Allowed structured data is limited to visible content:
+
+- `BreadcrumbList` only where breadcrumbs render on the page.
+- `WebSite` for the homepage.
+- `WebPage`, `CollectionPage`, or `AboutPage` for visible public pages.
+- `Article` for guide-like content.
+- `WebApplication` for tools.
+- `Dataset` for visible official-data table pages.
+- `FAQPage` only when the FAQ questions and answers are visible.
+
+M23 intentionally avoids fake ratings, reviews, `JobPosting`, and hidden-content markup.
+
 ## Fixture Decisions
 
 M15 keeps local fixtures intentionally small, but creates one high-data validation case:
@@ -71,6 +94,10 @@ M16 adds `selectCompanyPageRoutes(data)`, which selects the first indexable rout
 
 M17 also adds company sitemap pagination. When the selected company route set exceeds 500 URLs, `/sitemap.xml` points to chunked sitemap files such as `/sitemaps/company-pages/1.xml`, `/sitemaps/company-pages/2.xml`, and so on. The legacy `/sitemaps/company-pages.xml` remains valid for the default one-page fixture state.
 
+M23 adds `app/robots.ts`, which allows crawling public pages and advertises the sitemap index. It does not disallow filter URLs in `robots.txt`, because page-level `noindex` must be crawlable to be seen by search engines.
+
+M23 also adds `lib/seo/internal-link-graph.ts` to verify registered related links, sitemap URLs, and noindex exclusions.
+
 ## Validation Coverage
 
 `tests/seo.test.ts` covers:
@@ -87,5 +114,9 @@ M17 also adds company sitemap pagination. When the selected company route set ex
 - Sitemap XML rendering.
 
 `tests/content-pages.test.tsx` covers M22-specific content quality checks: exact 50-page coverage, priority 1 coverage, source-backed non-thin content fields, forbidden-language guards, rendered source links, disclaimers, review dates, and representative dynamic route rendering.
+
+`tests/technical-seo.test.tsx` covers M23 shared metadata, query-result noindex, visible JSON-LD, internal link graph integrity, robots config, and 404/500 rendering.
+
+`vitest.config.ts` now includes both `.test.ts` and `.test.tsx` files so component and content rendering tests are part of the default `pnpm test` run.
 
 `tests/company-page-scale.test.ts` covers the M16/M17 generated fixture validation, 500-page and 2,000-page route pre-generation limits, sitemap pagination, duplicate-fingerprint check, low-data exclusion, page-size estimates, and selection performance budget.

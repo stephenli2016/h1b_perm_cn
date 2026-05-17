@@ -1,21 +1,25 @@
 import type { Metadata } from "next";
 
 import { PageShell } from "@/components/page-shell";
+import { buildWebPageJsonLd } from "@/lib/seo/json-ld";
+import { buildRouteSeoMetadata } from "@/lib/seo/metadata";
 import { siteConfig } from "@/lib/site";
 
-export const metadata: Metadata = {
-  title: "免责声明",
-  description: "本站内容仅供信息参考，不构成法律、移民、税务、职业或财务建议。",
-  alternates: {
-    canonical: "/disclaimer",
-  },
-};
+export const metadata: Metadata = buildRouteSeoMetadata("/disclaimer");
 
 export default function DisclaimerPage() {
   return (
     <PageShell
+      breadcrumbs={[{ href: "/", label: "首页" }, { label: "免责声明" }]}
+      canonicalPath="/disclaimer"
       description="所有数据页、工具页和指南页都必须在这个边界内解释公开数据。"
       eyebrow="合规"
+      structuredData={buildWebPageJsonLd({
+        title: "免责声明",
+        description:
+          "本站内容仅供信息参考，不构成法律、移民、税务、职业或财务建议。",
+        path: "/disclaimer",
+      })}
       title="免责声明"
     >
       <section className="rounded-lg border border-[var(--line)] bg-white p-6 shadow-sm">

@@ -2,20 +2,25 @@ import type { Metadata } from "next";
 
 import { PageShell } from "@/components/page-shell";
 import { RouteCard } from "@/components/route-card";
+import { buildWebPageJsonLd } from "@/lib/seo/json-ld";
+import { buildRouteSeoMetadata } from "@/lib/seo/metadata";
 
-export const metadata: Metadata = {
-  title: "关于 VisaRadar CN",
-  description: "了解本站目标、数据原则和为什么用谨慎方式呈现公开移民数据。",
-  alternates: {
-    canonical: "/about",
-  },
-};
+export const metadata: Metadata = buildRouteSeoMetadata("/about");
 
 export default function AboutPage() {
   return (
     <PageShell
+      breadcrumbs={[{ href: "/", label: "首页" }, { label: "关于" }]}
+      canonicalPath="/about"
       description="VisaRadar CN 面向海外华人，把 H-1B、PERM、工资和排期公开数据整理成中文决策支持页面。"
       eyebrow="关于"
+      structuredData={buildWebPageJsonLd({
+        title: "关于 VisaRadar CN",
+        description:
+          "了解本站目标、数据原则和为什么用谨慎方式呈现公开移民数据。",
+        path: "/about",
+        pageType: "AboutPage",
+      })}
       title="关于 VisaRadar CN"
     >
       <section className="grid gap-4 md:grid-cols-3">

@@ -198,7 +198,7 @@ describe("M12 UI components", () => {
     expect(html).toContain("公司职业移民公开数据友好度信号");
     expect(html).toContain("近期 LCA 活动");
     expect(html).toContain("低样本规则");
-    expect(html).toContain("不是 H-1B 成功率");
+    expect(html).toContain("不是 H-1B 或绿卡获批概率");
     expect(html).toContain("Brightline Health");
   });
 

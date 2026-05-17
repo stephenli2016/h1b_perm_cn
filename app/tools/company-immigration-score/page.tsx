@@ -12,6 +12,8 @@ import {
   type CompanyImmigrationSignalDimension,
 } from "@/lib/company-immigration-signals";
 import { publicQueryRepository } from "@/lib/db/public-query-repository";
+import { buildWebApplicationJsonLd } from "@/lib/seo/json-ld";
+import { buildSeoMetadata } from "@/lib/seo/metadata";
 import { siteConfig } from "@/lib/site";
 
 type MethodologyRow = (typeof COMPANY_IMMIGRATION_SIGNAL_DIMENSIONS)[number];
@@ -59,18 +61,13 @@ const exampleColumns: DataTableColumn<CompanyImmigrationSignalDimension>[] = [
   },
 ];
 
-export const metadata: Metadata = {
+export const metadata: Metadata = buildSeoMetadata({
   title: "公司职业移民公开数据友好度信号方法说明",
   description:
     "解释 VisaRadar CN 如何用官方 H-1B LCA、PERM、USCIS Employer Data Hub 和工资公开数据生成谨慎的公司公开数据友好度信号。",
-  alternates: {
-    canonical: "/tools/company-immigration-score",
-  },
-  robots: {
-    index: true,
-    follow: true,
-  },
-};
+  path: "/tools/company-immigration-score",
+  pageType: "tool",
+});
 
 export default function CompanyImmigrationScorePage() {
   const example = publicQueryRepository.getCompanyProfileBySlug({
@@ -85,8 +82,16 @@ export default function CompanyImmigrationScorePage() {
         { href: "/tools", label: "工具" },
         { label: "公开数据友好度信号" },
       ]}
-      description="这个页面解释公司页里的“公开数据友好度信号”怎么计算、能看什么、不能看什么。它衡量官方公开数据的覆盖和可解释程度，不是 sponsor 成功率。"
+      canonicalPath="/tools/company-immigration-score"
+      description="这个页面解释公司页里的“公开数据友好度信号”怎么计算、能看什么、不能看什么。它衡量官方公开数据的覆盖和可解释程度，不是 sponsor 获批概率。"
       eyebrow="方法说明"
+      structuredData={buildWebApplicationJsonLd({
+        title: "公司职业移民公开数据友好度信号",
+        description:
+          "解释公司页公开数据友好度信号如何按 H-1B、PERM、跨年记录、来源、职位地点和工资上下文生成。",
+        path: "/tools/company-immigration-score",
+        dateModified: "2026-05-16",
+      })}
       title="公司职业移民公开数据友好度信号"
     >
       <div className="space-y-6">
@@ -113,7 +118,7 @@ export default function CompanyImmigrationScorePage() {
         <section className="rounded-lg border border-[var(--line)] bg-white p-5 shadow-sm">
           <h2 className="text-lg font-semibold">先说边界</h2>
           <p className="mt-3 text-sm leading-7 text-[var(--muted)]">
-            公开数据友好度信号不是 H-1B 成功率、绿卡成功率、雇主承诺或法律结论。
+            公开数据友好度信号不是 H-1B 或绿卡获批概率、雇主承诺或法律结论。
             它只回答一个更窄的问题：这个公司在官方公开数据里是否有足够多、足够清楚、足够可解释的职业移民相关记录，方便求职者做背景研究。
           </p>
         </section>
@@ -171,10 +176,10 @@ export default function CompanyImmigrationScorePage() {
 
         <section className="grid gap-4 md:grid-cols-2">
           <article className="rounded-lg border border-[var(--line)] bg-white p-5 shadow-sm">
-            <h2 className="text-lg font-semibold">为什么不叫成功率</h2>
+            <h2 className="text-lg font-semibold">为什么不叫获批概率</h2>
             <p className="mt-3 text-sm leading-7 text-[var(--muted)]">
               公开 LCA、PERM 和 USCIS employer-level
-              数据不是同一个流程节点，也没有覆盖一个人的完整移民路径。把这些数字叫成功率会误导用户，所以本站只展示信号维度和证据。
+              数据不是同一个流程节点，也没有覆盖一个人的完整移民路径。把这些数字叫获批概率会误导用户，所以本站只展示信号维度和证据。
             </p>
           </article>
           <article className="rounded-lg border border-[var(--line)] bg-white p-5 shadow-sm">

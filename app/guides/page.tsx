@@ -6,19 +6,10 @@ import {
   type ContentCategory,
   listContentPages,
 } from "@/lib/content/guide-pages";
+import { buildWebPageJsonLd } from "@/lib/seo/json-ld";
+import { buildRouteSeoMetadata } from "@/lib/seo/metadata";
 
-export const metadata: Metadata = {
-  title: "职业移民中文指南",
-  description:
-    "50 个中文职业移民工具/指南页面，解释 LCA、PERM、Prevailing Wage、Visa Bulletin 和求职决策。",
-  alternates: {
-    canonical: "/guides",
-  },
-  robots: {
-    index: true,
-    follow: true,
-  },
-};
+export const metadata: Metadata = buildRouteSeoMetadata("/guides");
 
 const guideCategories: ContentCategory[] = [
   "H-1B 数据解释",
@@ -33,8 +24,17 @@ export default function GuidesPage() {
 
   return (
     <PageShell
+      breadcrumbs={[{ href: "/", label: "首页" }, { label: "指南" }]}
+      canonicalPath="/guides"
       description="面向海外华人求职者和职业移民申请人的中文指南目录。每篇内容都包含官方来源、示例或清单、常见误区、相关链接和免责声明。"
       eyebrow="指南目录"
+      structuredData={buildWebPageJsonLd({
+        title: "职业移民中文指南",
+        description:
+          "38 篇解释 LCA、PERM、Prevailing Wage、Visa Bulletin 和求职决策的中文指南目录。",
+        path: "/guides",
+        pageType: "CollectionPage",
+      })}
       title="职业移民中文指南"
     >
       <div className="space-y-8">

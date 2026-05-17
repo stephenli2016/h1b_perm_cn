@@ -21,6 +21,8 @@ import {
   priorityDateResultLabel,
   priorityDateValuesWithDefaults,
 } from "@/lib/priority-date-tool";
+import { buildWebApplicationJsonLd } from "@/lib/seo/json-ld";
+import { buildSeoMetadata, hasSubmittedSearchParams } from "@/lib/seo/metadata";
 import { siteConfig } from "@/lib/site";
 
 type PriorityDateCalculatorPageProps = {
@@ -29,18 +31,22 @@ type PriorityDateCalculatorPageProps = {
 
 type VisaBulletinRow = PublicVisaBulletinPriorityDatePayload["rows"][number];
 
-export const metadata: Metadata = {
-  title: "中国 EB-2 / EB-3 优先日排期计算器",
-  description:
-    "输入职业移民类别、priority date、Final Action 或 Dates for Filing，对照 Department of State Visa Bulletin 和 USCIS filing chart 公开信息。",
-  alternates: {
-    canonical: "/tools/eb2-eb3-china-priority-date-calculator",
-  },
-  robots: {
-    index: true,
-    follow: true,
-  },
-};
+export async function generateMetadata({
+  searchParams,
+}: PriorityDateCalculatorPageProps): Promise<Metadata> {
+  const hasQuery = hasSubmittedSearchParams(await searchParams);
+
+  return buildSeoMetadata({
+    title: hasQuery
+      ? "中国 EB-2 / EB-3 优先日排期查询结果"
+      : "中国 EB-2 / EB-3 优先日排期计算器",
+    description:
+      "输入职业移民类别、priority date、Final Action 或 Dates for Filing，对照 Department of State Visa Bulletin 和 USCIS filing chart 公开信息。",
+    path: "/tools/eb2-eb3-china-priority-date-calculator",
+    index: !hasQuery,
+    pageType: "tool",
+  });
+}
 
 const bulletinColumns: DataTableColumn<VisaBulletinRow>[] = [
   {
@@ -89,8 +95,16 @@ export default async function PriorityDateCalculatorPage({
         { href: "/tools", label: "工具" },
         { label: "EB 优先日排期计算器" },
       ]}
+      canonicalPath="/tools/eb2-eb3-china-priority-date-calculator"
       description="输入 priority date 后，对照中国大陆出生 EB-1、EB-2、EB-3 在所选月份和所选排期表中的公开日期。结果只解释公开表格关系，不判断个人 I-485 或签证资格。"
       eyebrow="Visa Bulletin 工具"
+      structuredData={buildWebApplicationJsonLd({
+        title: "中国 EB-2 / EB-3 优先日排期计算器",
+        description:
+          "输入职业移民类别、priority date、Final Action 或 Dates for Filing，对照 Department of State Visa Bulletin 和 USCIS filing chart 公开信息。",
+        path: "/tools/eb2-eb3-china-priority-date-calculator",
+        dateModified: "2026-05-16",
+      })}
       title="中国 EB-2 / EB-3 优先日排期计算器"
     >
       <div className="space-y-6">

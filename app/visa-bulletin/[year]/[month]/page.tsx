@@ -10,6 +10,8 @@ import { MetricCard } from "@/components/ui/metric-card";
 import type { PublicVisaBulletinDatesPayload } from "@/lib/db/public-query-repository";
 import { publicQueryRepository } from "@/lib/db/public-query-repository";
 import { chartTypeLabelZh, formatVisaCutoff } from "@/lib/priority-date-tool";
+import { buildDatasetJsonLd } from "@/lib/seo/json-ld";
+import { buildNoIndexSeoMetadata, buildSeoMetadata } from "@/lib/seo/metadata";
 
 type VisaBulletinMonthPageProps = {
   params: Promise<{
@@ -39,27 +41,19 @@ export async function generateMetadata({
     : undefined;
 
   if (!result?.ok) {
-    return {
+    return buildNoIndexSeoMetadata({
       title: "未找到 Visa Bulletin 月度页面",
       description: "当前本地 fixture 中没有这个月份的中国职业移民排期数据。",
-      robots: {
-        index: false,
-        follow: true,
-      },
-    };
+      path: `/visa-bulletin/${year}/${month}`,
+    });
   }
 
-  return {
+  return buildSeoMetadata({
     title: `${result.data.month.monthKey} 中国职业移民排期 EB-1 / EB-2 / EB-3`,
     description: `查看 ${result.data.month.monthKey} 中国大陆出生 EB-1、EB-2、EB-3 的 Final Action Dates、Dates for Filing 与 USCIS filing chart 公开数据。`,
-    alternates: {
-      canonical: `/visa-bulletin/${year}/${month}`,
-    },
-    robots: {
-      index: true,
-      follow: true,
-    },
-  };
+    path: `/visa-bulletin/${year}/${month}`,
+    pageType: "data",
+  });
 }
 
 export default async function VisaBulletinMonthPage({
@@ -122,8 +116,19 @@ export default async function VisaBulletinMonthPage({
         { href: "/visa-bulletin", label: "排期" },
         { label: payload.month.monthKey },
       ]}
+      canonicalPath={`/visa-bulletin/${year}/${month}`}
       description={`${payload.month.monthKey} 中国大陆出生 EB-1、EB-2、EB-3 的 Visa Bulletin fixture 数据，以及 USCIS 当月职业移民 filing chart 选择。`}
       eyebrow="Visa Bulletin 月度页"
+      structuredData={buildDatasetJsonLd({
+        name: `${payload.month.monthKey} 中国职业移民排期`,
+        description: `${payload.month.monthKey} 中国大陆出生 EB-1、EB-2、EB-3 的 Visa Bulletin fixture 数据，以及 USCIS 当月职业移民 filing chart 选择。`,
+        path: `/visa-bulletin/${year}/${month}`,
+        dateModified: payload.month.publishedAt,
+        sources: [
+          "U.S. Department of State Visa Bulletin",
+          "USCIS Adjustment of Status filing chart",
+        ],
+      })}
       title={`${payload.month.monthKey} 中国职业移民排期`}
     >
       <div className="space-y-6">

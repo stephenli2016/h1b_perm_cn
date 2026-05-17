@@ -370,7 +370,7 @@ export const contentPages = [
     priority: 2,
     title: "跳槽后 PERM 重办时间线估算器",
     metaDescription:
-      "用教育性场景理解跳槽、换职位或换地点后 PERM 可能涉及的重新规划节点。",
+      "用教育性场景理解跳槽、换职位或换地点后 PERM 可能涉及的重新规划节点、公开数据参考和需要提前确认的问题。",
     summary:
       "PERM 重启时间线展示雇主、职位机会、PWD、recruitment、ETA-9089 和 I-140 后续节点的相对顺序，不计算个人日期，也不判断旧 PERM 是否可继续使用。",
     sourceContext:
@@ -477,7 +477,7 @@ export const contentPages = [
     metaDescription:
       "解释公司公开数据友好度信号如何按 H-1B、PERM、跨年记录、来源、职位地点和工资上下文生成。",
     summary:
-      "这个信号只衡量公开数据是否足够丰富、连续和可解释，帮助求职者做背景研究。它不是 sponsor 成功率、雇主承诺或法律判断。",
+      "这个信号只衡量公开数据是否足够丰富、连续和可解释，帮助求职者做背景研究。它不是 sponsor 审批概率、雇主承诺或法律判断。",
     sourceContext:
       "信号维度来自 DOL LCA、PERM、prevailing wage 和 USCIS Employer Data Hub 等官方公开来源，各来源流程节点不同。",
     checklistTitle: "读分数时看证据",
@@ -543,7 +543,7 @@ export const contentPages = [
     metaDescription:
       "用中文理解每月 Visa Bulletin 更新、USCIS filing chart 选择和中国 EB 类别排期变化的提醒口径。",
     summary:
-      "排期提醒页目前提供本地解释和后续提醒功能占位。它帮助用户知道每月应看哪两类官方页面，不预测未来排期。",
+      "排期提醒页目前提供本地解释和后续提醒功能占位。它帮助用户知道每月应看哪两类官方页面、如何记录 priority date 对照，并明确不预测未来排期。",
     sourceContext:
       "Department of State 发布 Visa Bulletin；USCIS 单独公布调整身份当月使用 Final Action Date 还是 Dates for Filing。",
     checklistTitle: "每月更新时看",
@@ -613,7 +613,7 @@ export const contentPages = [
     metaDescription:
       "解释 USCIS H-1B Employer Data Hub 的雇主层面 petition 决定数据、字段含义和与 LCA 数据的区别。",
     summary:
-      "Employer Data Hub 是 USCIS 按雇主展示的 H-1B petition 决定数据。它和 DOL LCA 属于不同机构、不同流程节点，适合结合使用但不能混成同一个成功率。",
+      "Employer Data Hub 是 USCIS 按雇主展示的 H-1B petition 决定数据。它和 DOL LCA 属于不同机构、不同流程节点，适合结合使用但不能混成同一个审批概率指标。",
     sourceContext:
       "USCIS Employer Data Hub 和历史下载文件是官方 employer-level H-1B petition 数据来源；DOL LCA 数据用于补充职位和 worksite 背景。",
     checklistTitle: "使用 Employer Data Hub",
@@ -1276,7 +1276,7 @@ export const contentPages = [
     priority: 2,
     title: "PERM Certified 不等于绿卡获批",
     metaDescription:
-      "解释 PERM certified 的含义、它与 I-140/I-485 的关系，以及为什么公开页面不应写成绿卡成功率。",
+      "解释 PERM certified 的含义、它与 I-140/I-485 的关系，以及为什么公开页面不应写成绿卡获批概率。",
     summary:
       "PERM certified 是 DOL 劳工认证环节的一个结果，不是 USCIS 对移民 petition 或调整身份的批准。它是重要节点，但后面还有 I-140、排期和身份路径。",
     sourceContext:
@@ -1293,7 +1293,7 @@ export const contentPages = [
       "一条 certified PERM 可说明劳工认证完成，但不能说明申请人已经提交或获批 I-485。",
     mistakes: [
       "把 certified 记录展示为绿卡成功案例。",
-      "用 certified 数除以 filed 数称为成功率。",
+      "用 certified 数除以 filed 数当作获批概率。",
       "忽略 I-140 和排期。",
     ],
     relatedPaths: [
@@ -1531,7 +1531,7 @@ export const contentPages = [
     priority: 2,
     title: "PERM 期间跳槽要注意什么",
     metaDescription:
-      "解释 PERM 期间换雇主、换职位或换地点时需要核对的流程问题和公开数据边界。",
+      "解释 PERM 期间换雇主、换职位或换地点时需要核对的流程问题、公开数据边界和与雇主律师沟通的重点。",
     summary:
       "PERM 绑定雇主和特定 permanent job opportunity。跳槽、换组或换地点时，需要逐项核对旧流程和新岗位关系，而不是只看是否已经 filed。",
     sourceContext:
@@ -1823,7 +1823,7 @@ export const contentPages = [
     summary:
       "问移民政策时要具体、礼貌、可执行。与其问“公司办不办”，不如问当前岗位 legal entity、H-1B transfer 流程、绿卡启动时间和律师沟通方式。",
     sourceContext:
-      "官方 H-1B、PERM 和 wage 来源帮助你准备问题，但公司政策仍需要公司正式确认。",
+      "官方 H-1B、PERM 和 wage 来源帮助你准备问题和背景材料，但公司政策、时间线和支持范围仍需要公司正式确认。",
     checklistTitle: "可直接改写的问题",
     checklist: [
       "这个岗位由哪个 legal entity 雇佣并提交 petition？",
@@ -1889,7 +1889,7 @@ export const contentPages = [
     priority: 3,
     title: "华人求职者职业移民友好公司清单",
     metaDescription:
-      "把 H-1B、PERM、工资、排期和面试问题合并成职业移民友好公司研究清单。",
+      "把 H-1B、PERM、工资、排期和面试问题合并成职业移民友好公司研究清单，并提醒公开数据不能替代个案确认。",
     summary:
       "职业移民友好公司不是一个绝对标签。更稳妥的做法是用公开数据和面试问题判断公司是否有相关经验、流程透明度和与你岗位相近的历史记录。",
     sourceContext:

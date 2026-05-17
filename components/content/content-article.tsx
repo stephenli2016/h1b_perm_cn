@@ -14,6 +14,7 @@ import {
   getContentRelatedPages,
   getContentSources,
 } from "@/lib/content/guide-pages";
+import { buildContentPageJsonLd } from "@/lib/seo/json-ld";
 import { siteConfig } from "@/lib/site";
 
 type ContentArticleProps = {
@@ -32,8 +33,10 @@ export function ContentArticle({ page }: ContentArticleProps) {
   return (
     <PageShell
       breadcrumbs={[homeCrumb, directoryCrumb, { label: page.title }]}
+      canonicalPath={page.path}
       description={page.metaDescription}
       eyebrow={page.eyebrow}
+      structuredData={buildContentPageJsonLd(page)}
       title={page.title}
     >
       <article className="space-y-6">

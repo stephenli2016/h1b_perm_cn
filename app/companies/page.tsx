@@ -18,6 +18,8 @@ import {
   parseDirectorySearchParams,
   type RawSearchParams,
 } from "@/lib/directory-search";
+import { buildWebPageJsonLd } from "@/lib/seo/json-ld";
+import { buildSeoMetadata } from "@/lib/seo/metadata";
 import { siteConfig } from "@/lib/site";
 
 type CompaniesPageProps = {
@@ -30,17 +32,13 @@ export async function generateMetadata({
   const parsed = parseDirectorySearchParams(await searchParams);
   const filterCount = activeFilterCount(parsed.values);
 
-  return {
+  return buildSeoMetadata({
     title: filterCount > 0 ? "公司目录搜索结果" : "公司目录",
     description: "合并查看本地 H-1B LCA 与 PERM fixture 中的公司公开数据信号。",
-    alternates: {
-      canonical: "/companies",
-    },
-    robots: {
-      index: false,
-      follow: true,
-    },
-  };
+    path: "/companies",
+    index: false,
+    pageType: "data",
+  });
 }
 
 const companyColumns: DataTableColumn<PublicCompanyDirectoryResult>[] = [
@@ -125,8 +123,16 @@ export default async function CompaniesPage({
   return (
     <PageShell
       breadcrumbs={[{ href: "/", label: "首页" }, { label: "公司目录" }]}
+      canonicalPath="/companies"
       description="把 H-1B LCA 与 PERM fixture 中的雇主记录合并成公司目录，方便从一个入口查看公开数据活动信号。筛选 URL 默认 noindex。"
       eyebrow={siteConfig.tagline}
+      structuredData={buildWebPageJsonLd({
+        title: "公司目录",
+        description:
+          "合并查看 H-1B LCA、PERM 和 USCIS Employer Data Hub 的雇主公开数据信号。",
+        path: "/companies",
+        pageType: "CollectionPage",
+      })}
       title="公司目录"
     >
       <div className="space-y-6">

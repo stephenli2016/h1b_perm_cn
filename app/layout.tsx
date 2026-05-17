@@ -15,6 +15,19 @@ export const metadata: Metadata = {
   },
   description: siteConfig.description,
   applicationName: siteConfig.name,
+  openGraph: {
+    title: siteConfig.chineseName,
+    description: siteConfig.description,
+    url: siteConfig.url,
+    siteName: `${siteConfig.chineseName} | ${siteConfig.name}`,
+    locale: "zh_CN",
+    type: "website",
+  },
+  twitter: {
+    card: "summary",
+    title: siteConfig.chineseName,
+    description: siteConfig.description,
+  },
 };
 
 export default function RootLayout({

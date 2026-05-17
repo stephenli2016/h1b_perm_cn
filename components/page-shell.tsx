@@ -1,13 +1,21 @@
 import type { ReactNode } from "react";
 
+import { JsonLdScript } from "@/components/seo/json-ld-script";
 import type { BreadcrumbItem } from "@/components/ui/breadcrumbs";
 import { Breadcrumbs } from "@/components/ui/breadcrumbs";
+import {
+  buildBreadcrumbListJsonLd,
+  buildJsonLdGraph,
+  type JsonLdNode,
+} from "@/lib/seo/json-ld";
 
 type PageShellProps = {
   eyebrow?: string;
   title: string;
   description: string;
   breadcrumbs?: readonly BreadcrumbItem[];
+  canonicalPath?: string;
+  structuredData?: JsonLdNode | readonly JsonLdNode[];
   actions?: ReactNode;
   children: ReactNode;
 };
@@ -17,11 +25,26 @@ export function PageShell({
   title,
   description,
   breadcrumbs,
+  canonicalPath,
+  structuredData,
   actions,
   children,
 }: PageShellProps) {
+  const structuredDataNodes = Array.isArray(structuredData)
+    ? structuredData
+    : structuredData
+      ? [structuredData]
+      : [];
+  const jsonLd = buildJsonLdGraph([
+    breadcrumbs && canonicalPath
+      ? buildBreadcrumbListJsonLd(breadcrumbs, canonicalPath)
+      : undefined,
+    ...structuredDataNodes,
+  ]);
+
   return (
     <main className="mx-auto w-full max-w-6xl px-5 py-10 sm:px-8 lg:px-10">
+      <JsonLdScript data={jsonLd} id="page-structured-data" />
       {breadcrumbs ? <Breadcrumbs items={breadcrumbs} /> : null}
       <section className="pb-8">
         {eyebrow ? (

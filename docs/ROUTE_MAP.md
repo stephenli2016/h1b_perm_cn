@@ -28,6 +28,8 @@ This document is the first public information architecture draft for VisaRadar C
 | `/disclaimer`                                   | Legal and immigration advice boundary               | `compliance`     | Indexable                                                 |
 | `/privacy`                                      | Privacy principles and sensitive-data warning       | `compliance`     | Indexable                                                 |
 | `/corrections`                                  | Correction/removal request path                     | `compliance`     | Indexable                                                 |
+| `/robots.txt`                                   | Crawl policy and sitemap index pointer              | n/a              | Allows public crawl; not a sitemap URL                    |
+| `/404`                                          | Not-found recovery experience                       | n/a              | Noindex                                                   |
 
 ## Public Sitemap Draft
 
@@ -46,7 +48,9 @@ Initial sitemap groups:
 - Placeholder and thin data pages are `noindex` until they include official data, source dates, useful explanations, and internal links.
 - Company pages are indexable only when they meet the quality thresholds in `docs/DATA_AND_SEO_POLICY.md`.
 - Dynamic company pages enter the company sitemap only when they pass route-specific quality checks and are selected within the current launch cap.
-- Public visible content must match any future structured data.
+- Interactive tool query-result URLs are `noindex, follow` and canonicalize back to the base tool route.
+- Public visible content must match structured data. M23 supports `BreadcrumbList`, `WebSite`, `WebPage`, `CollectionPage`, `AboutPage`, `Article`, `WebApplication`, `Dataset`, and visible `FAQPage` only.
+- `robots.txt` does not block filter/query URLs because page-level `noindex` must be crawlable to work.
 
 ## Current Navigation
 

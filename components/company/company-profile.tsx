@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 
 import { CompanyImmigrationSignalPanel } from "@/components/company/company-immigration-signal";
 import { InterpretationPanel } from "@/components/search/interpretation-panel";
+import { JsonLdScript } from "@/components/seo/json-ld-script";
 import { SourceNote } from "@/components/source-note";
 import { DataTable, type DataTableColumn } from "@/components/ui/data-table";
 import { DisclaimerBox } from "@/components/ui/disclaimer-box";
@@ -23,6 +24,7 @@ import {
   statusLabel,
 } from "@/lib/directory-search";
 import { getCompanyPageSeo } from "@/lib/seo/company-quality";
+import { buildFaqPageJsonLd, buildJsonLdGraph } from "@/lib/seo/json-ld";
 import { getCanonicalUrl, siteConfig } from "@/lib/site";
 
 export type CompanyProfileMode = "h1b" | "perm";
@@ -272,14 +274,11 @@ export function CompanyProfile({ mode, profile }: CompanyProfileProps) {
         { label: "最高值", value: profile.wageDistribution.max },
       ]
     : [];
-  const jsonLd = buildJsonLd(profile, mode, faqItems);
+  const jsonLd = buildJsonLd(faqItems);
 
   return (
     <div className="space-y-8">
-      <script
-        dangerouslySetInnerHTML={{ __html: safeJson(jsonLd) }}
-        type="application/ld+json"
-      />
+      <JsonLdScript data={jsonLd} id="company-faq-structured-data" />
 
       <section>
         <h2 className="text-xl font-semibold">雇主摘要</h2>
@@ -538,53 +537,8 @@ function buildFaqItems(profile: PublicCompanyProfilePayload): FaqItem[] {
   ];
 }
 
-function buildJsonLd(
-  profile: PublicCompanyProfilePayload,
-  mode: CompanyProfileMode,
-  faqItems: readonly FaqItem[],
-) {
-  const path = `/${mode}/company/${profile.employer.slug}`;
-  const sectionLabel = mode === "h1b" ? "H-1B 公司页" : "PERM 公司页";
-
-  return {
-    "@context": "https://schema.org",
-    "@graph": [
-      {
-        "@type": "BreadcrumbList",
-        itemListElement: [
-          {
-            "@type": "ListItem",
-            position: 1,
-            name: "首页",
-            item: getCanonicalUrl("/"),
-          },
-          {
-            "@type": "ListItem",
-            position: 2,
-            name: sectionLabel,
-            item: getCanonicalUrl(mode === "h1b" ? "/h1b" : "/perm"),
-          },
-          {
-            "@type": "ListItem",
-            position: 3,
-            name: profile.employer.displayName,
-            item: getCanonicalUrl(path),
-          },
-        ],
-      },
-      {
-        "@type": "FAQPage",
-        mainEntity: faqItems.map((item) => ({
-          "@type": "Question",
-          name: item.question,
-          acceptedAnswer: {
-            "@type": "Answer",
-            text: item.answer,
-          },
-        })),
-      },
-    ],
-  };
+function buildJsonLd(faqItems: readonly FaqItem[]) {
+  return buildJsonLdGraph([buildFaqPageJsonLd(faqItems)]);
 }
 
 function locationHref(value: string) {
@@ -599,8 +553,4 @@ function locationHref(value: string) {
   }
 
   return `/companies?${params.toString()}`;
-}
-
-function safeJson(value: unknown) {
-  return JSON.stringify(value).replace(/</g, "\\u003c");
 }

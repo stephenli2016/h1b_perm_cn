@@ -1,21 +1,24 @@
 import type { Metadata } from "next";
 
 import { PageShell } from "@/components/page-shell";
+import { buildWebPageJsonLd } from "@/lib/seo/json-ld";
+import { buildRouteSeoMetadata } from "@/lib/seo/metadata";
 import { siteConfig } from "@/lib/site";
 
-export const metadata: Metadata = {
-  title: "数据纠错与移除请求",
-  description: "提交雇主名称、页面展示或隐私相关问题的纠错请求路径。",
-  alternates: {
-    canonical: "/corrections",
-  },
-};
+export const metadata: Metadata = buildRouteSeoMetadata("/corrections");
 
 export default function CorrectionsPage() {
   return (
     <PageShell
+      breadcrumbs={[{ href: "/", label: "首页" }, { label: "纠错" }]}
+      canonicalPath="/corrections"
       description="如果页面展示、雇主名称归并、数据解释或隐私处理存在问题，可以通过这里提交纠错线索。MVP 阶段先提供静态路径。"
       eyebrow="纠错"
+      structuredData={buildWebPageJsonLd({
+        title: "数据纠错与移除请求",
+        description: "提交雇主名称、页面展示或隐私相关问题的纠错请求路径。",
+        path: "/corrections",
+      })}
       title="数据纠错与移除请求"
     >
       <section className="rounded-lg border border-[var(--line)] bg-white p-6 shadow-sm">

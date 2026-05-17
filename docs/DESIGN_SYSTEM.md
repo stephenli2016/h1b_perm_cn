@@ -13,7 +13,7 @@ Layout and navigation:
 - `SiteHeader` — desktop top navigation plus CSS-only mobile menu.
 - `MobileNav` — mobile navigation using native `details` / `summary`.
 - `SiteFooter` — grouped footer links.
-- `PageShell` — consistent page width, title, description, optional breadcrumbs, and optional actions.
+- `PageShell` — consistent page width, title, description, optional breadcrumbs, optional actions, and M23 structured-data rendering.
 - `Breadcrumbs` — accessible breadcrumb navigation.
 
 Data display:
@@ -39,6 +39,7 @@ M12 adds:
 - Chinese navigation labels.
 - Desktop and mobile navigation landmarks.
 - Breadcrumb `aria-current="page"`.
+- Breadcrumb JSON-LD generated only from visible breadcrumb items.
 - Table captions and `scope="col"`.
 - Loading state `aria-busy`.
 - Error state `role="alert"`.
@@ -71,5 +72,6 @@ M12 wires representative components into:
 - `/guides`
 - `/guides/[slug]` M22 shared content pages
 - `/visa-bulletin/[year]/[month]`
+- M23 not-found and error experiences
 
 Later milestones will reuse the same components in search, company pages, tools, and guide templates.

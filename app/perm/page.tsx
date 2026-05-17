@@ -20,6 +20,8 @@ import {
   statusLabel,
   type RawSearchParams,
 } from "@/lib/directory-search";
+import { buildWebPageJsonLd } from "@/lib/seo/json-ld";
+import { buildSeoMetadata } from "@/lib/seo/metadata";
 import { siteConfig } from "@/lib/site";
 
 type PermPageProps = {
@@ -32,19 +34,15 @@ export async function generateMetadata({
   const parsed = parseDirectorySearchParams(await searchParams);
   const filterCount = activeFilterCount(parsed.values);
 
-  return {
+  return buildSeoMetadata({
     title:
       filterCount > 0 ? "PERM / 绿卡公司搜索结果" : "PERM / 绿卡公司数据库",
     description:
       "按雇主、年份、州/城市、职位/SOC 和 case status 查询本地 PERM fixture 记录。",
-    alternates: {
-      canonical: "/perm",
-    },
-    robots: {
-      index: false,
-      follow: true,
-    },
-  };
+    path: "/perm",
+    index: false,
+    pageType: "data",
+  });
 }
 
 const permColumns: DataTableColumn<PublicDisclosureRecordRow>[] = [
@@ -118,8 +116,15 @@ export default async function PermPage({ searchParams }: PermPageProps) {
   return (
     <PageShell
       breadcrumbs={[{ href: "/", label: "首页" }, { label: "PERM" }]}
+      canonicalPath="/perm"
       description="按雇主、年份、地区、职位/SOC 和 case status 查看本地 PERM fixture 记录。PERM 公开记录是职业移民信号，不等于 I-140、I-485 或绿卡结果。"
       eyebrow={siteConfig.tagline}
+      structuredData={buildWebPageJsonLd({
+        title: "PERM / 绿卡公司数据库",
+        description:
+          "基于 DOL OFLC PERM disclosure data 的雇主职业移民公开数据信号入口。",
+        path: "/perm",
+      })}
       title="PERM / 绿卡公司数据库"
     >
       <div className="space-y-6">

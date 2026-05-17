@@ -15,24 +15,28 @@ import {
   type H1BTransferStartTiming,
 } from "@/lib/career-decision-tools";
 import type { RawSearchParams } from "@/lib/directory-search";
+import { buildWebApplicationJsonLd } from "@/lib/seo/json-ld";
+import { buildSeoMetadata, hasSubmittedSearchParams } from "@/lib/seo/metadata";
 import { siteConfig } from "@/lib/site";
 
 type H1BTransferChecklistPageProps = {
   searchParams?: Promise<RawSearchParams>;
 };
 
-export const metadata: Metadata = {
-  title: "H-1B Transfer 风险清单",
-  description:
-    "用通用场景核对 H-1B 换雇主前需要问 HR、律师和新雇主 immigration team 的问题，并连接公司 H-1B/PERM 公开数据。",
-  alternates: {
-    canonical: "/tools/h1b-transfer-risk-checklist",
-  },
-  robots: {
-    index: true,
-    follow: true,
-  },
-};
+export async function generateMetadata({
+  searchParams,
+}: H1BTransferChecklistPageProps): Promise<Metadata> {
+  const hasQuery = hasSubmittedSearchParams(await searchParams);
+
+  return buildSeoMetadata({
+    title: hasQuery ? "H-1B Transfer 风险清单结果" : "H-1B Transfer 风险清单",
+    description:
+      "用通用场景核对 H-1B 换雇主前需要问 HR、律师和新雇主 immigration team 的问题，并连接公司 H-1B/PERM 公开数据。",
+    path: "/tools/h1b-transfer-risk-checklist",
+    index: !hasQuery,
+    pageType: "tool",
+  });
+}
 
 export default async function H1BTransferRiskChecklistPage({
   searchParams,
@@ -60,8 +64,16 @@ export default async function H1BTransferRiskChecklistPage({
         { href: "/tools", label: "工具" },
         { label: "H-1B Transfer 风险清单" },
       ]}
+      canonicalPath="/tools/h1b-transfer-risk-checklist"
       description="选择一个通用场景，生成 H-1B transfer 前的核对清单。页面不要求输入身份日期、receipt number、工资或雇主名称。"
       eyebrow="H-1B 工具"
+      structuredData={buildWebApplicationJsonLd({
+        title: "H-1B Transfer 风险清单",
+        description:
+          "用通用场景核对 H-1B 换雇主前需要问 HR、律师和新雇主 immigration team 的问题，并连接公司 H-1B/PERM 公开数据。",
+        path: "/tools/h1b-transfer-risk-checklist",
+        dateModified: "2026-05-16",
+      })}
       title="H-1B Transfer 风险清单"
     >
       <div className="space-y-6">
