@@ -420,6 +420,7 @@ CREATE TABLE IF NOT EXISTS public.correction_requests (
 
 CREATE INDEX IF NOT EXISTS idx_employers_slug ON public.employers(slug);
 CREATE INDEX IF NOT EXISTS idx_employers_normalized_name ON public.employers(normalized_name);
+CREATE INDEX IF NOT EXISTS idx_employers_headquarters_location_id ON public.employers(headquarters_location_id);
 
 CREATE INDEX IF NOT EXISTS idx_employer_aliases_raw_name ON public.employer_aliases(raw_name);
 CREATE INDEX IF NOT EXISTS idx_employer_aliases_normalized_name ON public.employer_aliases(normalized_name);
@@ -430,9 +431,13 @@ CREATE INDEX IF NOT EXISTS idx_locations_state ON public.locations(state);
 
 CREATE INDEX IF NOT EXISTS idx_source_files_source_year ON public.source_files(source_name, fiscal_year);
 
+CREATE INDEX IF NOT EXISTS idx_etl_runs_source_file_id ON public.etl_runs(source_file_id);
+
 CREATE INDEX IF NOT EXISTS idx_h1b_lca_source_record_id ON public.h1b_lca_records(source_record_id);
+CREATE INDEX IF NOT EXISTS idx_h1b_lca_source_file_id ON public.h1b_lca_records(source_file_id);
 CREATE INDEX IF NOT EXISTS idx_h1b_lca_raw_employer_name ON public.h1b_lca_records(raw_employer_name);
 CREATE INDEX IF NOT EXISTS idx_h1b_lca_employer_year ON public.h1b_lca_records(employer_id, fiscal_year);
+CREATE INDEX IF NOT EXISTS idx_h1b_lca_location_id ON public.h1b_lca_records(location_id);
 CREATE INDEX IF NOT EXISTS idx_h1b_lca_fiscal_year ON public.h1b_lca_records(fiscal_year);
 CREATE INDEX IF NOT EXISTS idx_h1b_lca_soc_code ON public.h1b_lca_records(soc_code);
 CREATE INDEX IF NOT EXISTS idx_h1b_lca_city_state ON public.h1b_lca_records(worksite_city, worksite_state);
@@ -440,14 +445,19 @@ CREATE INDEX IF NOT EXISTS idx_h1b_lca_job_title ON public.h1b_lca_records(job_t
 CREATE INDEX IF NOT EXISTS idx_h1b_lca_case_status ON public.h1b_lca_records(case_status);
 
 CREATE INDEX IF NOT EXISTS idx_h1b_lca_worksite_case_number ON public.h1b_lca_worksite_records(case_number);
+CREATE INDEX IF NOT EXISTS idx_h1b_lca_worksite_source_file_id ON public.h1b_lca_worksite_records(source_file_id);
+CREATE INDEX IF NOT EXISTS idx_h1b_lca_worksite_location_id ON public.h1b_lca_worksite_records(location_id);
 CREATE INDEX IF NOT EXISTS idx_h1b_lca_worksite_year ON public.h1b_lca_worksite_records(fiscal_year);
 CREATE INDEX IF NOT EXISTS idx_h1b_lca_worksite_city_state ON public.h1b_lca_worksite_records(worksite_city, worksite_state);
 CREATE INDEX IF NOT EXISTS idx_h1b_lca_appendix_case_number ON public.h1b_lca_appendix_a_records(case_number);
+CREATE INDEX IF NOT EXISTS idx_h1b_lca_appendix_source_file_id ON public.h1b_lca_appendix_a_records(source_file_id);
 CREATE INDEX IF NOT EXISTS idx_h1b_lca_appendix_year ON public.h1b_lca_appendix_a_records(fiscal_year);
 
 CREATE INDEX IF NOT EXISTS idx_perm_source_record_id ON public.perm_records(source_record_id);
+CREATE INDEX IF NOT EXISTS idx_perm_source_file_id ON public.perm_records(source_file_id);
 CREATE INDEX IF NOT EXISTS idx_perm_raw_employer_name ON public.perm_records(raw_employer_name);
 CREATE INDEX IF NOT EXISTS idx_perm_employer_year ON public.perm_records(employer_id, fiscal_year);
+CREATE INDEX IF NOT EXISTS idx_perm_location_id ON public.perm_records(location_id);
 CREATE INDEX IF NOT EXISTS idx_perm_fiscal_year ON public.perm_records(fiscal_year);
 CREATE INDEX IF NOT EXISTS idx_perm_soc_code ON public.perm_records(soc_code);
 CREATE INDEX IF NOT EXISTS idx_perm_city_state ON public.perm_records(worksite_city, worksite_state);
@@ -455,18 +465,23 @@ CREATE INDEX IF NOT EXISTS idx_perm_job_title ON public.perm_records(job_title);
 CREATE INDEX IF NOT EXISTS idx_perm_case_status ON public.perm_records(case_status);
 
 CREATE INDEX IF NOT EXISTS idx_pwd_source_record_id ON public.pwd_records(source_record_id);
+CREATE INDEX IF NOT EXISTS idx_pwd_source_file_id ON public.pwd_records(source_file_id);
+CREATE INDEX IF NOT EXISTS idx_pwd_location_id ON public.pwd_records(location_id);
 CREATE INDEX IF NOT EXISTS idx_pwd_soc_location_year ON public.pwd_records(soc_code, state, city, effective_year);
 CREATE INDEX IF NOT EXISTS idx_pwd_effective_year ON public.pwd_records(effective_year);
 CREATE INDEX IF NOT EXISTS idx_pwd_city_state ON public.pwd_records(city, state);
 
 CREATE INDEX IF NOT EXISTS idx_pwd_case_source_record_id ON public.pwd_case_records(source_record_id);
+CREATE INDEX IF NOT EXISTS idx_pwd_case_source_file_id ON public.pwd_case_records(source_file_id);
 CREATE INDEX IF NOT EXISTS idx_pwd_case_employer_year ON public.pwd_case_records(employer_id, fiscal_year);
+CREATE INDEX IF NOT EXISTS idx_pwd_case_location_id ON public.pwd_case_records(location_id);
 CREATE INDEX IF NOT EXISTS idx_pwd_case_fiscal_year ON public.pwd_case_records(fiscal_year);
 CREATE INDEX IF NOT EXISTS idx_pwd_case_soc_code ON public.pwd_case_records(soc_code);
 CREATE INDEX IF NOT EXISTS idx_pwd_case_city_state ON public.pwd_case_records(worksite_city, worksite_state);
 CREATE INDEX IF NOT EXISTS idx_pwd_case_status ON public.pwd_case_records(case_status);
 
 CREATE INDEX IF NOT EXISTS idx_uscis_h1b_source_record_id ON public.uscis_h1b_employer_records(source_record_id);
+CREATE INDEX IF NOT EXISTS idx_uscis_h1b_source_file_id ON public.uscis_h1b_employer_records(source_file_id);
 CREATE INDEX IF NOT EXISTS idx_uscis_h1b_raw_employer_name ON public.uscis_h1b_employer_records(raw_employer_name);
 CREATE INDEX IF NOT EXISTS idx_uscis_h1b_employer_year ON public.uscis_h1b_employer_records(employer_id, fiscal_year);
 CREATE INDEX IF NOT EXISTS idx_uscis_h1b_fiscal_year ON public.uscis_h1b_employer_records(fiscal_year);
@@ -481,15 +496,20 @@ CREATE INDEX IF NOT EXISTS idx_visa_bulletin_dates_lookup ON public.visa_bulleti
 );
 
 CREATE INDEX IF NOT EXISTS idx_bls_oews_occupation_code ON public.bls_oews_occupations(occupation_code);
+CREATE INDEX IF NOT EXISTS idx_bls_oews_occupations_source_file_id ON public.bls_oews_occupations(source_file_id);
 CREATE INDEX IF NOT EXISTS idx_bls_oews_area_code ON public.bls_oews_areas(area_code);
 CREATE INDEX IF NOT EXISTS idx_bls_oews_area_name ON public.bls_oews_areas(area_name);
+CREATE INDEX IF NOT EXISTS idx_bls_oews_areas_source_file_id ON public.bls_oews_areas(source_file_id);
 
 CREATE INDEX IF NOT EXISTS idx_naics_industries_code ON public.naics_industries(naics_code);
 CREATE INDEX IF NOT EXISTS idx_naics_industries_sector ON public.naics_industries(sector_code);
+CREATE INDEX IF NOT EXISTS idx_naics_industries_source_file_id ON public.naics_industries(source_file_id);
 CREATE INDEX IF NOT EXISTS idx_onet_occupations_soc_code ON public.onet_occupations(soc_code);
 CREATE INDEX IF NOT EXISTS idx_onet_occupations_onet_soc_code ON public.onet_occupations(onet_soc_code);
+CREATE INDEX IF NOT EXISTS idx_onet_occupations_source_file_id ON public.onet_occupations(source_file_id);
 CREATE INDEX IF NOT EXISTS idx_onet_job_zones_soc_code ON public.onet_job_zones(soc_code);
 CREATE INDEX IF NOT EXISTS idx_onet_job_zones_job_zone ON public.onet_job_zones(job_zone);
+CREATE INDEX IF NOT EXISTS idx_onet_job_zones_source_file_id ON public.onet_job_zones(source_file_id);
 
 CREATE INDEX IF NOT EXISTS idx_company_page_metrics_indexable ON public.company_page_metrics(indexable, quality_score);
 CREATE INDEX IF NOT EXISTS idx_company_page_metrics_latest_year ON public.company_page_metrics(latest_fiscal_year);
