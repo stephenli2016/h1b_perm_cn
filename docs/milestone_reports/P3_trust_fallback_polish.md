@@ -20,15 +20,20 @@ Completed, committed, pushed, and production-deployed.
   - “不会作为数据输入的来源”
 - Expanded `/disclaimer` with a decision checklist for users before relying on any public-data page.
 - Added tests for footer quick actions, source trust sections, disclaimer checklist, and 404 recovery links.
-- After production smoke testing, removed stale `example-employer` footer links and pointed the PERM company sample link to the real indexable `brightline-health` page.
+- After production smoke testing, removed stale dynamic company sample links from public navigation and changed the company-signal example CTA back to the company directory.
+- Made the company-pages sitemap read runtime data in production so it does not list fixture-only company URLs when the production database does not contain those companies yet.
 
 ## Files changed
 
 - `components/site-footer.tsx`
 - `lib/site.ts`
+- `lib/seo/sitemaps.ts`
 - `app/not-found.tsx`
 - `app/sources/page.tsx`
 - `app/disclaimer/page.tsx`
+- `app/sitemaps/company-pages.xml/route.ts`
+- `app/sitemaps/company-pages/[page]/route.ts`
+- `app/tools/company-immigration-score/page.tsx`
 - `tests/ui-components.test.tsx`
 - `tests/compliance-pages.test.tsx`
 - `tests/technical-seo.test.tsx`
@@ -52,7 +57,7 @@ Completed, committed, pushed, and production-deployed.
 - Command: production Vercel deployment check
 - Result: pass, GitHub push triggered a production Vercel deployment that reached `READY`
 - Command: production smoke checks for `/`, `/sources`, `/disclaimer`, `/not-a-real-page`, `/robots.txt`, `/sitemap.xml`, `/companies`, `/tools`, `/guides`, and `/visa-bulletin`
-- Result: pass after stale footer sample company links were fixed; footer no longer exposes `example-employer` or unresolved dynamic company paths
+- Result: pass after stale dynamic company links were fixed; public navigation no longer exposes fixture-only company URLs
 
 ## Screenshots / local URLs
 

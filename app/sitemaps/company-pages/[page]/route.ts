@@ -1,5 +1,5 @@
 import {
-  listSitemapEntries,
+  listRuntimeCompanySitemapEntries,
   renderUrlSet,
   sitemapXmlResponse,
 } from "@/lib/seo/sitemaps";
@@ -9,6 +9,8 @@ type CompanySitemapPageRouteContext = {
     page: string;
   }>;
 };
+
+export const dynamic = "force-dynamic";
 
 export async function GET(
   _request: Request,
@@ -25,7 +27,7 @@ export async function GET(
 
   return sitemapXmlResponse(
     renderUrlSet(
-      listSitemapEntries("company-pages", undefined, {
+      await listRuntimeCompanySitemapEntries({
         page: pageNumber,
       }),
     ),

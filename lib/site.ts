@@ -99,7 +99,6 @@ export const publicRoutes = [
   },
   {
     path: "/perm/company/[slug]",
-    samplePath: "/perm/company/brightline-health",
     label: "PERM 公司页",
     title: "PERM 公司公开数据页",
     description: "单个雇主的 PERM 年度、职位、地点和状态公开数据信号页面。",
@@ -403,8 +402,7 @@ export const footerNavGroups = [
       (route) =>
         ["companies", "h1b", "perm", "tools", "visa-bulletin"].includes(
           route.section,
-        ) &&
-        (!route.path.includes("[") || "samplePath" in route),
+        ) && !route.path.includes("["),
     ),
   },
   {

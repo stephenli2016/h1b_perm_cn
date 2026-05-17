@@ -1,11 +1,13 @@
 import {
-  listSitemapEntries,
+  listRuntimeCompanySitemapEntries,
   renderUrlSet,
   sitemapXmlResponse,
 } from "@/lib/seo/sitemaps";
 
-export const dynamic = "force-static";
+export const dynamic = "force-dynamic";
 
-export function GET() {
-  return sitemapXmlResponse(renderUrlSet(listSitemapEntries("company-pages")));
+export async function GET() {
+  return sitemapXmlResponse(
+    renderUrlSet(await listRuntimeCompanySitemapEntries()),
+  );
 }

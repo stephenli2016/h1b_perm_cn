@@ -170,9 +170,9 @@ export default async function CompanyImmigrationScorePage() {
             />
             <Link
               className="inline-flex text-sm font-semibold text-[var(--accent-strong)] underline-offset-4 hover:underline"
-              href="/perm/company/brightline-health"
+              href="/companies"
             >
-              查看示例页面
+              回到公司目录
             </Link>
           </section>
         ) : null}

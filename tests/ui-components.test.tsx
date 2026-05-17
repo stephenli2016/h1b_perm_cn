@@ -57,8 +57,8 @@ describe("M12 UI components", () => {
     expect(html).toContain("查排期");
     expect(html).toContain("提交纠错");
     expect(html).toContain("不提供法律、移民、税务、职业或财务建议");
-    expect(html).toContain("/perm/company/brightline-health");
     expect(html).not.toContain("example-employer");
+    expect(html).not.toContain("/perm/company/brightline-health");
     expect(html).not.toContain("/h1b/company/[slug]");
   });
 
@@ -220,6 +220,7 @@ describe("M12 UI components", () => {
     expect(html).toContain("低样本规则");
     expect(html).toContain("不是 H-1B 或绿卡获批概率");
     expect(html).toContain("示例信号");
+    expect(html).toContain("回到公司目录");
   });
 
   it("renders the H-1B transfer checklist without sensitive data fields", async () => {
