@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import csv
+import gzip
 import json
 import re
 from dataclasses import dataclass
@@ -49,24 +50,27 @@ def prepare_postgres_import_package(
     csv_dir = output_path / "csv"
     csv_dir.mkdir(parents=True, exist_ok=True)
 
+    lca_path = _normalized_input_path(normalized_path, "h1b_lca_records.jsonl")
+    perm_path = _normalized_input_path(normalized_path, "perm_records.jsonl")
+    pwd_path = _normalized_input_path(normalized_path, "pwd_records.jsonl")
+    uscis_path = _normalized_input_path(
+        normalized_path,
+        "uscis_h1b_employer_records.jsonl",
+    )
     employers = _read_jsonl(normalized_path / "employers.jsonl")
     aliases = _read_jsonl(normalized_path / "employer_aliases.jsonl")
     candidates = _read_jsonl(normalized_path / "company_page_candidates.jsonl")
-    lca_records = _read_jsonl(normalized_path / "h1b_lca_records.jsonl")
-    perm_records = _read_jsonl(normalized_path / "perm_records.jsonl")
-    pwd_records = _read_jsonl(normalized_path / "pwd_records.jsonl")
-    uscis_records = _read_jsonl(normalized_path / "uscis_h1b_employer_records.jsonl")
     visa_records = _read_jsonl(normalized_path / "visa_bulletin_dates.jsonl")
     filing_chart_records = _read_jsonl(normalized_path / "uscis_filing_charts.jsonl")
 
     employer_id_by_normalized_name = _employer_id_by_normalized_name(employers, aliases)
-    locations = _build_locations(lca_records, perm_records, pwd_records, uscis_records)
+    locations = _build_locations_from_paths(lca_path, perm_path, pwd_path, uscis_path)
     location_id_lookup = {
         _location_lookup_key(row["city"], row["state"], row.get("postal_code")): row["id"]
         for row in locations
     }
     first_location_by_employer = _first_location_by_employer(
-        [*lca_records, *perm_records, *uscis_records],
+        _iter_records_from_paths(lca_path, perm_path, uscis_path),
         employer_id_by_normalized_name,
         location_id_lookup,
     )
@@ -104,21 +108,6 @@ def prepare_postgres_import_package(
         }
         for row in aliases
     ]
-    h1b_rows, unmatched_h1b = _build_h1b_rows(
-        lca_records,
-        employer_id_by_normalized_name,
-        location_id_lookup,
-    )
-    perm_rows, unmatched_perm = _build_perm_rows(
-        perm_records,
-        employer_id_by_normalized_name,
-        location_id_lookup,
-    )
-    uscis_rows, unmatched_uscis = _build_uscis_rows(
-        uscis_records,
-        employer_id_by_normalized_name,
-    )
-    pwd_rows = [_build_pwd_row(record, location_id_lookup) for record in pwd_records]
     metrics_rows = [
         {
             "id": f"metrics-{row['employer_id']}",
@@ -136,24 +125,77 @@ def prepare_postgres_import_package(
         for row in candidates
     ]
 
-    table_rows: dict[str, list[dict[str, object | None]]] = {
-        "locations": locations,
-        "source_files": source_file_rows,
-        "employers": employer_rows,
-        "employer_aliases": alias_rows,
-        "h1b_lca_records": h1b_rows,
-        "perm_records": perm_rows,
-        "pwd_records": pwd_rows,
-        "uscis_h1b_employer_records": uscis_rows,
-        "visa_bulletin_months": visa_months,
-        "visa_bulletin_dates": visa_dates,
-        "company_page_metrics": metrics_rows,
-    }
-
     table_counts: dict[str, int] = {}
-    for table_name in POSTGRES_IMPORT_TABLES:
-        rows = table_rows[table_name]
-        table_counts[table_name] = _write_csv(csv_dir / f"{table_name}.csv", rows)
+    table_counts["locations"] = _write_csv(csv_dir / "locations.csv", locations)
+    table_counts["source_files"] = _write_csv(csv_dir / "source_files.csv", source_file_rows)
+    table_counts["employers"] = _write_csv(csv_dir / "employers.csv", employer_rows)
+    table_counts["employer_aliases"] = _write_csv(csv_dir / "employer_aliases.csv", alias_rows)
+
+    unmatched_h1b = 0
+
+    def h1b_rows() -> Iterable[dict[str, object | None]]:
+        nonlocal unmatched_h1b
+        for record in _iter_jsonl(lca_path):
+            row = _build_h1b_row(
+                record,
+                employer_id_by_normalized_name,
+                location_id_lookup,
+            )
+            if row is None:
+                unmatched_h1b += 1
+                continue
+            yield row
+
+    table_counts["h1b_lca_records"] = _write_csv(csv_dir / "h1b_lca_records.csv", h1b_rows())
+
+    unmatched_perm = 0
+
+    def perm_rows() -> Iterable[dict[str, object | None]]:
+        nonlocal unmatched_perm
+        for record in _iter_jsonl(perm_path):
+            row = _build_perm_row(
+                record,
+                employer_id_by_normalized_name,
+                location_id_lookup,
+            )
+            if row is None:
+                unmatched_perm += 1
+                continue
+            yield row
+
+    table_counts["perm_records"] = _write_csv(csv_dir / "perm_records.csv", perm_rows())
+    table_counts["pwd_records"] = _write_csv(
+        csv_dir / "pwd_records.csv",
+        (_build_pwd_row(record, location_id_lookup) for record in _iter_jsonl(pwd_path)),
+    )
+
+    unmatched_uscis = 0
+
+    def uscis_rows() -> Iterable[dict[str, object | None]]:
+        nonlocal unmatched_uscis
+        for record in _iter_jsonl(uscis_path):
+            row = _build_uscis_row(record, employer_id_by_normalized_name)
+            if row is None:
+                unmatched_uscis += 1
+                continue
+            yield row
+
+    table_counts["uscis_h1b_employer_records"] = _write_csv(
+        csv_dir / "uscis_h1b_employer_records.csv",
+        uscis_rows(),
+    )
+    table_counts["visa_bulletin_months"] = _write_csv(
+        csv_dir / "visa_bulletin_months.csv",
+        visa_months,
+    )
+    table_counts["visa_bulletin_dates"] = _write_csv(
+        csv_dir / "visa_bulletin_dates.csv",
+        visa_dates,
+    )
+    table_counts["company_page_metrics"] = _write_csv(
+        csv_dir / "company_page_metrics.csv",
+        metrics_rows,
+    )
 
     load_order_sql = output_path / "load_order.sql"
     load_order_sql.write_text(
@@ -187,16 +229,39 @@ def prepare_postgres_import_package(
     )
 
 
+def _normalized_input_path(normalized_path: Path, file_name: str) -> Path:
+    compressed_path = normalized_path / f"{file_name}.gz"
+    if compressed_path.exists():
+        return compressed_path
+    return normalized_path / file_name
+
+
 def _read_jsonl(path: Path) -> list[dict[str, object]]:
     if not path.exists():
         raise FileNotFoundError(f"missing normalized JSONL input: {path}")
 
-    rows: list[dict[str, object]] = []
-    with path.open("r", encoding="utf-8") as handle:
+    return list(_iter_jsonl(path))
+
+
+def _iter_jsonl(path: Path) -> Iterable[dict[str, object]]:
+    if not path.exists():
+        raise FileNotFoundError(f"missing normalized JSONL input: {path}")
+
+    with _open_jsonl_text(path, "rt") as handle:
         for line in handle:
             if line.strip():
-                rows.append(json.loads(line))
-    return rows
+                yield json.loads(line)
+
+
+def _iter_records_from_paths(*paths: Path) -> Iterable[dict[str, object]]:
+    for path in paths:
+        yield from _iter_jsonl(path)
+
+
+def _open_jsonl_text(path: Path, mode: str):
+    if path.suffix == ".gz":
+        return gzip.open(path, mode, encoding="utf-8")
+    return path.open(mode.replace("t", ""), encoding="utf-8")
 
 
 def _employer_id_by_normalized_name(
@@ -255,6 +320,42 @@ def _build_locations(
     return sorted(rows_by_id.values(), key=lambda row: str(row["id"]))
 
 
+def _build_locations_from_paths(
+    lca_path: Path,
+    perm_path: Path,
+    pwd_path: Path,
+    uscis_path: Path,
+) -> list[dict[str, object | None]]:
+    rows_by_id: dict[str, dict[str, object | None]] = {}
+
+    for path in (lca_path, perm_path):
+        for record in _iter_jsonl(path):
+            _add_location(
+                rows_by_id,
+                city=_as_str(record.get("worksite_city")),
+                state=_as_str(record.get("worksite_state")),
+                postal_code=_as_str(record.get("worksite_postal_code")),
+            )
+
+    for record in _iter_jsonl(pwd_path):
+        _add_location(
+            rows_by_id,
+            city=_as_str(record.get("city")),
+            state=_as_str(record.get("state")),
+            postal_code=None,
+        )
+
+    for record in _iter_jsonl(uscis_path):
+        _add_location(
+            rows_by_id,
+            city=_as_str(record.get("city")),
+            state=_as_str(record.get("state")),
+            postal_code=_as_str(record.get("postal_code")),
+        )
+
+    return sorted(rows_by_id.values(), key=lambda row: str(row["id"]))
+
+
 def _add_location(
     rows_by_id: dict[str, dict[str, object | None]],
     *,
@@ -277,7 +378,7 @@ def _add_location(
 
 
 def _first_location_by_employer(
-    records: Sequence[dict[str, object]],
+    records: Iterable[dict[str, object]],
     employer_id_by_normalized_name: dict[str, str],
     location_id_lookup: dict[str, str],
 ) -> dict[str, str]:
@@ -323,46 +424,67 @@ def _build_h1b_rows(
     unmatched = 0
 
     for record in records:
-        employer_id = _employer_id_for_record(record, employer_id_by_normalized_name)
-        if not employer_id:
+        row = _build_h1b_row(
+            record,
+            employer_id_by_normalized_name,
+            location_id_lookup,
+        )
+        if row is None:
             unmatched += 1
             continue
-
-        source_record_id = _as_str(record.get("source_record_id")) or _as_str(record.get("source_record_fingerprint"))
-        rows.append(
-            {
-                "id": f"h1b-{_stable_id(source_record_id)}",
-                "source_file_id": record.get("source_file_id"),
-                "employer_id": employer_id,
-                "location_id": _location_id_for_record(record, location_id_lookup),
-                "source_record_id": source_record_id,
-                "source_record_fingerprint": record.get("source_record_fingerprint"),
-                "case_number": record.get("case_number"),
-                "case_status": _normalize_lca_status(record.get("case_status")),
-                "raw_employer_name": record.get("raw_employer_name"),
-                "fiscal_year": record.get("fiscal_year"),
-                "soc_code": record.get("soc_code"),
-                "soc_title": record.get("soc_title"),
-                "job_title": record.get("job_title"),
-                "worksite_city": record.get("worksite_city"),
-                "worksite_state": record.get("worksite_state"),
-                "worksite_postal_code": record.get("worksite_postal_code"),
-                "wage_rate_of_pay_from": record.get("wage_rate_of_pay_from"),
-                "wage_rate_of_pay_to": record.get("wage_rate_of_pay_to"),
-                "wage_unit": record.get("wage_unit"),
-                "annualized_wage_from": record.get("annualized_wage_from"),
-                "annualized_wage_to": record.get("annualized_wage_to"),
-                "prevailing_wage": record.get("prevailing_wage"),
-                "prevailing_wage_unit": record.get("prevailing_wage_unit"),
-                "wage_level": record.get("wage_level"),
-                "full_time": record.get("full_time"),
-                "received_date": record.get("received_date"),
-                "decision_date": record.get("decision_date"),
-                "raw_record_json": _json_cell(record.get("raw_record_json")),
-            }
-        )
+        rows.append(row)
 
     return rows, unmatched
+
+
+def _build_h1b_row(
+    record: dict[str, object],
+    employer_id_by_normalized_name: dict[str, str],
+    location_id_lookup: dict[str, str],
+) -> dict[str, object | None] | None:
+    employer_id = _employer_id_for_record(record, employer_id_by_normalized_name)
+    if not employer_id:
+        return None
+
+    source_record_id = _as_str(record.get("source_record_id")) or _as_str(
+        record.get("source_record_fingerprint")
+    )
+    source_scoped_id = ":".join(
+        [
+            _as_str(record.get("source_file_id")) or "",
+            source_record_id or "",
+        ]
+    )
+    return {
+        "id": f"h1b-{_stable_id(source_scoped_id)}",
+        "source_file_id": record.get("source_file_id"),
+        "employer_id": employer_id,
+        "location_id": _location_id_for_record(record, location_id_lookup),
+        "source_record_id": source_record_id,
+        "source_record_fingerprint": record.get("source_record_fingerprint"),
+        "case_number": record.get("case_number"),
+        "case_status": _normalize_lca_status(record.get("case_status")),
+        "raw_employer_name": record.get("raw_employer_name"),
+        "fiscal_year": record.get("fiscal_year"),
+        "soc_code": record.get("soc_code"),
+        "soc_title": record.get("soc_title"),
+        "job_title": record.get("job_title"),
+        "worksite_city": record.get("worksite_city"),
+        "worksite_state": record.get("worksite_state"),
+        "worksite_postal_code": record.get("worksite_postal_code"),
+        "wage_rate_of_pay_from": record.get("wage_rate_of_pay_from"),
+        "wage_rate_of_pay_to": record.get("wage_rate_of_pay_to"),
+        "wage_unit": record.get("wage_unit"),
+        "annualized_wage_from": record.get("annualized_wage_from"),
+        "annualized_wage_to": record.get("annualized_wage_to"),
+        "prevailing_wage": record.get("prevailing_wage"),
+        "prevailing_wage_unit": record.get("prevailing_wage_unit"),
+        "wage_level": record.get("wage_level"),
+        "full_time": record.get("full_time"),
+        "received_date": record.get("received_date"),
+        "decision_date": record.get("decision_date"),
+        "raw_record_json": _json_cell(record.get("raw_record_json")),
+    }
 
 
 def _build_perm_rows(
@@ -374,40 +496,61 @@ def _build_perm_rows(
     unmatched = 0
 
     for record in records:
-        employer_id = _employer_id_for_record(record, employer_id_by_normalized_name)
-        if not employer_id:
+        row = _build_perm_row(
+            record,
+            employer_id_by_normalized_name,
+            location_id_lookup,
+        )
+        if row is None:
             unmatched += 1
             continue
-
-        source_record_id = _as_str(record.get("source_record_id")) or _as_str(record.get("source_record_fingerprint"))
-        rows.append(
-            {
-                "id": f"perm-{_stable_id(source_record_id)}",
-                "source_file_id": record.get("source_file_id"),
-                "employer_id": employer_id,
-                "location_id": _location_id_for_record(record, location_id_lookup),
-                "source_record_id": source_record_id,
-                "source_record_fingerprint": record.get("source_record_fingerprint"),
-                "case_number": record.get("case_number"),
-                "case_status": record.get("case_status"),
-                "raw_employer_name": record.get("raw_employer_name"),
-                "fiscal_year": record.get("fiscal_year"),
-                "job_title": record.get("job_title"),
-                "soc_code": record.get("soc_code"),
-                "soc_title": record.get("soc_title"),
-                "worksite_city": record.get("worksite_city"),
-                "worksite_state": record.get("worksite_state"),
-                "wage_offer_from": record.get("wage_offer_from"),
-                "wage_offer_to": record.get("wage_offer_to"),
-                "wage_unit": record.get("wage_unit"),
-                "priority_date": record.get("priority_date"),
-                "received_date": record.get("received_date"),
-                "decision_date": record.get("decision_date"),
-                "raw_record_json": _json_cell(record.get("raw_record_json")),
-            }
-        )
+        rows.append(row)
 
     return rows, unmatched
+
+
+def _build_perm_row(
+    record: dict[str, object],
+    employer_id_by_normalized_name: dict[str, str],
+    location_id_lookup: dict[str, str],
+) -> dict[str, object | None] | None:
+    employer_id = _employer_id_for_record(record, employer_id_by_normalized_name)
+    if not employer_id:
+        return None
+
+    source_record_id = _as_str(record.get("source_record_id")) or _as_str(
+        record.get("source_record_fingerprint")
+    )
+    source_scoped_id = ":".join(
+        [
+            _as_str(record.get("source_file_id")) or "",
+            source_record_id or "",
+        ]
+    )
+    return {
+        "id": f"perm-{_stable_id(source_scoped_id)}",
+        "source_file_id": record.get("source_file_id"),
+        "employer_id": employer_id,
+        "location_id": _location_id_for_record(record, location_id_lookup),
+        "source_record_id": source_record_id,
+        "source_record_fingerprint": record.get("source_record_fingerprint"),
+        "case_number": record.get("case_number"),
+        "case_status": record.get("case_status"),
+        "raw_employer_name": record.get("raw_employer_name"),
+        "fiscal_year": record.get("fiscal_year"),
+        "job_title": record.get("job_title"),
+        "soc_code": record.get("soc_code"),
+        "soc_title": record.get("soc_title"),
+        "worksite_city": record.get("worksite_city"),
+        "worksite_state": record.get("worksite_state"),
+        "wage_offer_from": record.get("wage_offer_from"),
+        "wage_offer_to": record.get("wage_offer_to"),
+        "wage_unit": record.get("wage_unit"),
+        "priority_date": record.get("priority_date"),
+        "received_date": record.get("received_date"),
+        "decision_date": record.get("decision_date"),
+        "raw_record_json": _json_cell(record.get("raw_record_json")),
+    }
 
 
 def _build_pwd_row(
@@ -415,9 +558,15 @@ def _build_pwd_row(
     location_id_lookup: dict[str, str],
 ) -> dict[str, object | None]:
     source_record_id = _as_str(record.get("source_record_id")) or _as_str(record.get("source_record_fingerprint"))
+    source_scoped_id = ":".join(
+        [
+            _as_str(record.get("source_file_id")) or "",
+            source_record_id or "",
+        ]
+    )
 
     return {
-        "id": f"pwd-{_stable_id(source_record_id)}",
+        "id": f"pwd-{_stable_id(source_scoped_id)}",
         "source_file_id": record.get("source_file_id"),
         "location_id": _location_id_for_record(record, location_id_lookup),
         "source_record_id": source_record_id,
@@ -446,34 +595,50 @@ def _build_uscis_rows(
     unmatched = 0
 
     for record in records:
-        employer_id = _employer_id_for_record(record, employer_id_by_normalized_name)
-        if not employer_id:
+        row = _build_uscis_row(record, employer_id_by_normalized_name)
+        if row is None:
             unmatched += 1
             continue
-
-        source_record_id = _as_str(record.get("source_record_id")) or _as_str(record.get("source_record_fingerprint"))
-        rows.append(
-            {
-                "id": f"uscis-h1b-{_stable_id(source_record_id)}",
-                "source_file_id": record.get("source_file_id"),
-                "employer_id": employer_id,
-                "source_record_id": source_record_id,
-                "source_record_fingerprint": record.get("source_record_fingerprint"),
-                "fiscal_year": record.get("fiscal_year"),
-                "raw_employer_name": record.get("raw_employer_name"),
-                "city": record.get("city"),
-                "state": record.get("state"),
-                "postal_code": record.get("postal_code"),
-                "naics_code": record.get("naics_code"),
-                "initial_approvals": record.get("initial_approvals"),
-                "initial_denials": record.get("initial_denials"),
-                "continuing_approvals": record.get("continuing_approvals"),
-                "continuing_denials": record.get("continuing_denials"),
-                "raw_record_json": _json_cell(record.get("raw_record_json")),
-            }
-        )
+        rows.append(row)
 
     return rows, unmatched
+
+
+def _build_uscis_row(
+    record: dict[str, object],
+    employer_id_by_normalized_name: dict[str, str],
+) -> dict[str, object | None] | None:
+    employer_id = _employer_id_for_record(record, employer_id_by_normalized_name)
+    if not employer_id:
+        return None
+
+    source_record_id = _as_str(record.get("source_record_id")) or _as_str(
+        record.get("source_record_fingerprint")
+    )
+    source_scoped_id = ":".join(
+        [
+            _as_str(record.get("source_file_id")) or "",
+            source_record_id or "",
+        ]
+    )
+    return {
+        "id": f"uscis-h1b-{_stable_id(source_scoped_id)}",
+        "source_file_id": record.get("source_file_id"),
+        "employer_id": employer_id,
+        "source_record_id": source_record_id,
+        "source_record_fingerprint": record.get("source_record_fingerprint"),
+        "fiscal_year": record.get("fiscal_year"),
+        "raw_employer_name": record.get("raw_employer_name"),
+        "city": record.get("city"),
+        "state": record.get("state"),
+        "postal_code": record.get("postal_code"),
+        "naics_code": record.get("naics_code"),
+        "initial_approvals": record.get("initial_approvals"),
+        "initial_denials": record.get("initial_denials"),
+        "continuing_approvals": record.get("continuing_approvals"),
+        "continuing_denials": record.get("continuing_denials"),
+        "raw_record_json": _json_cell(record.get("raw_record_json")),
+    }
 
 
 def _build_visa_tables(
@@ -636,18 +801,20 @@ def _render_report(
     return "\n".join(lines) + "\n"
 
 
-def _write_csv(path: Path, rows: Sequence[dict[str, object | None]]) -> int:
+def _write_csv(path: Path, rows: Iterable[dict[str, object | None]]) -> int:
     path.parent.mkdir(parents=True, exist_ok=True)
     table_name = path.stem
     columns = POSTGRES_COLUMNS[table_name]
+    count = 0
 
     with path.open("w", encoding="utf-8", newline="") as handle:
         writer = csv.DictWriter(handle, fieldnames=columns, extrasaction="ignore")
         writer.writeheader()
         for row in rows:
             writer.writerow({column: _csv_cell(row.get(column)) for column in columns})
+            count += 1
 
-    return len(rows)
+    return count
 
 
 def _csv_cell(value: object | None) -> object | None:

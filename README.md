@@ -21,6 +21,12 @@ pnpm build
 pnpm deploy:validate
 pnpm data:update:dry-run
 pnpm db:runtime:smoke
+pnpm production:data:download
+pnpm production:data:parse:lca
+pnpm production:data:parse:perm
+pnpm production:data:parse:pwd
+pnpm production:data:parse:uscis
+pnpm production:data:companies
 pnpm production:data:prepare
 ```
 

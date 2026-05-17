@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import gzip
 import json
 from dataclasses import asdict
 from pathlib import Path
@@ -60,6 +61,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     parse_lca_manifest_parser.add_argument("--repo-root", default=".")
     parse_lca_manifest_parser.add_argument("--output", required=True)
     parse_lca_manifest_parser.add_argument("--fixtures-only", action="store_true")
+    parse_lca_manifest_parser.add_argument("--omit-raw-record-json", action="store_true")
 
     parse_perm_parser = subparsers.add_parser("parse-perm")
     parse_perm_parser.add_argument("--input", required=True)
@@ -72,6 +74,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     parse_perm_manifest_parser.add_argument("--repo-root", default=".")
     parse_perm_manifest_parser.add_argument("--output", required=True)
     parse_perm_manifest_parser.add_argument("--fixtures-only", action="store_true")
+    parse_perm_manifest_parser.add_argument("--omit-raw-record-json", action="store_true")
 
     parse_pwd_parser = subparsers.add_parser("parse-pwd")
     parse_pwd_parser.add_argument("--input", required=True)
@@ -85,6 +88,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     parse_pwd_manifest_parser.add_argument("--repo-root", default=".")
     parse_pwd_manifest_parser.add_argument("--output", required=True)
     parse_pwd_manifest_parser.add_argument("--fixtures-only", action="store_true")
+    parse_pwd_manifest_parser.add_argument("--omit-raw-record-json", action="store_true")
 
     parse_uscis_h1b_parser = subparsers.add_parser("parse-uscis-h1b")
     parse_uscis_h1b_parser.add_argument("--input", required=True)
@@ -99,6 +103,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     parse_uscis_h1b_manifest_parser.add_argument("--repo-root", default=".")
     parse_uscis_h1b_manifest_parser.add_argument("--output", required=True)
     parse_uscis_h1b_manifest_parser.add_argument("--fixtures-only", action="store_true")
+    parse_uscis_h1b_manifest_parser.add_argument("--omit-raw-record-json", action="store_true")
 
     parse_visa_bulletin_parser = subparsers.add_parser("parse-visa-bulletin")
     parse_visa_bulletin_parser.add_argument("--input", required=True)
@@ -253,7 +258,9 @@ def main(argv: Sequence[str] | None = None) -> int:
                 if source.parser_name == "oflc_lca_disclosure"
             ]
             parse_results = []
-            all_records = []
+            output_path = Path(args.output)
+            _reset_jsonl_output(output_path)
+            written = 0
             for source in lca_sources:
                 input_path = _source_input_path(source, repo_root, args.fixtures_only)
                 result = parse_lca_file(
@@ -262,9 +269,12 @@ def main(argv: Sequence[str] | None = None) -> int:
                     fiscal_year=source.fiscal_year,
                 )
                 parse_results.append(result)
-                all_records.extend(result.records)
+                written += _append_dataclass_jsonl(
+                    output_path,
+                    result.records,
+                    omit_raw_record_json=args.omit_raw_record_json,
+                )
 
-            written = write_lca_jsonl(args.output, all_records)
             print(
                 json.dumps(
                     {
@@ -329,7 +339,9 @@ def main(argv: Sequence[str] | None = None) -> int:
                 if source.parser_name == "oflc_perm_disclosure"
             ]
             parse_results = []
-            all_records = []
+            output_path = Path(args.output)
+            _reset_jsonl_output(output_path)
+            written = 0
             for source in perm_sources:
                 input_path = _source_input_path(source, repo_root, args.fixtures_only)
                 result = parse_perm_file(
@@ -338,9 +350,12 @@ def main(argv: Sequence[str] | None = None) -> int:
                     fiscal_year=source.fiscal_year,
                 )
                 parse_results.append(result)
-                all_records.extend(result.records)
+                written += _append_dataclass_jsonl(
+                    output_path,
+                    result.records,
+                    omit_raw_record_json=args.omit_raw_record_json,
+                )
 
-            written = write_perm_jsonl(args.output, all_records)
             print(
                 json.dumps(
                     {
@@ -406,7 +421,9 @@ def main(argv: Sequence[str] | None = None) -> int:
                 if source.parser_name == "oflc_pwd_disclosure"
             ]
             parse_results = []
-            all_records = []
+            output_path = Path(args.output)
+            _reset_jsonl_output(output_path)
+            written = 0
             for source in pwd_sources:
                 input_path = _source_input_path(source, repo_root, args.fixtures_only)
                 result = parse_pwd_file(
@@ -416,9 +433,12 @@ def main(argv: Sequence[str] | None = None) -> int:
                     data_series=source.source_name,
                 )
                 parse_results.append(result)
-                all_records.extend(result.records)
+                written += _append_dataclass_jsonl(
+                    output_path,
+                    result.records,
+                    omit_raw_record_json=args.omit_raw_record_json,
+                )
 
-            written = write_pwd_jsonl(args.output, all_records)
             print(
                 json.dumps(
                     {
@@ -484,7 +504,9 @@ def main(argv: Sequence[str] | None = None) -> int:
                 if source.parser_name == "uscis_h1b_employer_data_hub"
             ]
             parse_results = []
-            all_records = []
+            output_path = Path(args.output)
+            _reset_jsonl_output(output_path)
+            written = 0
             for source in uscis_sources:
                 input_path = _source_input_path(source, repo_root, args.fixtures_only)
                 result = parse_uscis_h1b_employer_file(
@@ -493,9 +515,12 @@ def main(argv: Sequence[str] | None = None) -> int:
                     fiscal_year=source.fiscal_year,
                 )
                 parse_results.append(result)
-                all_records.extend(result.records)
+                written += _append_dataclass_jsonl(
+                    output_path,
+                    result.records,
+                    omit_raw_record_json=args.omit_raw_record_json,
+                )
 
-            written = write_uscis_h1b_employer_jsonl(args.output, all_records)
             print(
                 json.dumps(
                     {
@@ -771,6 +796,38 @@ def _source_input_path(source: SourceEntry, repo_root: Path, fixtures_only: bool
     if fixture_path and fixture_path.exists():
         return fixture_path
     return downloaded_path
+
+
+def _reset_jsonl_output(path: Path) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with _open_jsonl_text(path, "wt"):
+        pass
+
+
+def _append_dataclass_jsonl(
+    path: Path,
+    records: Sequence[object],
+    *,
+    omit_raw_record_json: bool = False,
+) -> int:
+    count = 0
+
+    with _open_jsonl_text(path, "at") as handle:
+        for record in records:
+            payload = asdict(record)
+            if omit_raw_record_json and "raw_record_json" in payload:
+                payload["raw_record_json"] = None
+            handle.write(json.dumps(payload, ensure_ascii=False, sort_keys=True))
+            handle.write("\n")
+            count += 1
+
+    return count
+
+
+def _open_jsonl_text(path: Path, mode: str):
+    if path.suffix == ".gz":
+        return gzip.open(path, mode, encoding="utf-8")
+    return path.open(mode.replace("t", ""), encoding="utf-8")
 
 
 if __name__ == "__main__":

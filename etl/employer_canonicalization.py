@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import gzip
 import re
 import unicodedata
 from collections import Counter, defaultdict
@@ -151,7 +152,7 @@ def load_source_records_from_jsonl(
     if not input_path.exists():
         raise FileNotFoundError(f"missing normalized input: {input_path}")
 
-    with input_path.open("r", encoding="utf-8") as handle:
+    with _open_jsonl_text(input_path, "rt") as handle:
         for line in handle:
             if not line.strip():
                 continue
@@ -179,6 +180,12 @@ def load_source_records_from_jsonl(
             )
 
     return tuple(records)
+
+
+def _open_jsonl_text(path: Path, mode: str):
+    if path.suffix == ".gz":
+        return gzip.open(path, mode, encoding="utf-8")
+    return path.open(mode.replace("t", ""), encoding="utf-8")
 
 
 def build_company_canonicalization(

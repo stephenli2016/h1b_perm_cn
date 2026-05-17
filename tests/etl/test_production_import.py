@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import csv
+import gzip
 import json
 import tempfile
 import unittest
@@ -91,7 +92,7 @@ def _write_minimal_normalized_inputs(normalized_dir: Path) -> None:
         ],
     )
     _write_jsonl(
-        normalized_dir / "h1b_lca_records.jsonl",
+        normalized_dir / "h1b_lca_records.jsonl.gz",
         [
             {
                 "source_file_id": "oflc_lca_fy2026_q2",
@@ -125,7 +126,7 @@ def _write_minimal_normalized_inputs(normalized_dir: Path) -> None:
         ],
     )
     _write_jsonl(
-        normalized_dir / "perm_records.jsonl",
+        normalized_dir / "perm_records.jsonl.gz",
         [
             {
                 "source_file_id": "oflc_perm_fy2026_q2",
@@ -152,7 +153,7 @@ def _write_minimal_normalized_inputs(normalized_dir: Path) -> None:
         ],
     )
     _write_jsonl(
-        normalized_dir / "pwd_records.jsonl",
+        normalized_dir / "pwd_records.jsonl.gz",
         [
             {
                 "source_file_id": "flag_oews_wage_2025_2026",
@@ -175,7 +176,7 @@ def _write_minimal_normalized_inputs(normalized_dir: Path) -> None:
         ],
     )
     _write_jsonl(
-        normalized_dir / "uscis_h1b_employer_records.jsonl",
+        normalized_dir / "uscis_h1b_employer_records.jsonl.gz",
         [
             {
                 "source_file_id": "uscis_h1b_employer_data_fy2023",
@@ -236,10 +237,13 @@ def _write_minimal_normalized_inputs(normalized_dir: Path) -> None:
 
 def _write_jsonl(path: Path, rows: list[dict[str, object]]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(
-        "".join(json.dumps(row, sort_keys=True) + "\n" for row in rows),
-        encoding="utf-8",
-    )
+    payload = "".join(json.dumps(row, sort_keys=True) + "\n" for row in rows)
+    if path.suffix == ".gz":
+        with gzip.open(path, "wt", encoding="utf-8") as handle:
+            handle.write(payload)
+        return
+
+    path.write_text(payload, encoding="utf-8")
 
 
 if __name__ == "__main__":

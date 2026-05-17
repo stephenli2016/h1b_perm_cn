@@ -33,7 +33,7 @@ does not currently have a free Supabase project slot for a dedicated production
 database. Until that changes, prepare data locally and keep Vercel in
 `LOCAL_DATA_MODE=fixture` with `PRELAUNCH_NOINDEX=true`.
 
-As of the latest local run, all 15 manifest sources have been downloaded from
+As of the latest local run, all 42 manifest sources have been downloaded from
 official `.gov` URLs into `data/raw/`. These raw files are intentionally
 gitignored.
 
@@ -48,10 +48,7 @@ pnpm etl:validate
 Download official raw files when network is available:
 
 ```bash
-python3 -m etl.cli download \
-  --manifest data/source_manifest.json \
-  --log data/etl_runs/official_download.jsonl \
-  --timeout-seconds 120
+pnpm production:data:download
 ```
 
 Raw official downloads go under `data/raw/`, which is gitignored.
@@ -68,17 +65,21 @@ pnpm etl:uscis:filing-chart:fixtures
 pnpm etl:companies:fixtures
 ```
 
-For production data, call the underlying ETL commands without `--fixtures-only`:
+For production data, use the compressed production parse scripts:
 
 ```bash
-python3 -m etl.cli parse-lca-manifest --manifest data/source_manifest.json --output data/normalized/h1b_lca_records.jsonl
-python3 -m etl.cli parse-perm-manifest --manifest data/source_manifest.json --output data/normalized/perm_records.jsonl
-python3 -m etl.cli parse-pwd-manifest --manifest data/source_manifest.json --output data/normalized/pwd_records.jsonl
-python3 -m etl.cli parse-uscis-h1b-manifest --manifest data/source_manifest.json --output data/normalized/uscis_h1b_employer_records.jsonl
+pnpm production:data:parse:lca
+pnpm production:data:parse:perm
+pnpm production:data:parse:pwd
+pnpm production:data:parse:uscis
 python3 -m etl.cli parse-visa-bulletin-manifest --manifest data/source_manifest.json --output data/normalized/visa_bulletin_dates.jsonl
 python3 -m etl.cli parse-uscis-filing-chart-manifest --manifest data/source_manifest.json --output data/normalized/uscis_filing_charts.jsonl
-python3 -m etl.cli build-company-candidates --lca data/normalized/h1b_lca_records.jsonl --perm data/normalized/perm_records.jsonl --uscis-h1b data/normalized/uscis_h1b_employer_records.jsonl --manual-aliases data/manual/employer_alias_seeds.json --employers-output data/normalized/employers.jsonl --aliases-output data/normalized/employer_aliases.jsonl --output data/normalized/company_page_candidates.jsonl --recent-years 5 --limit 2000
+pnpm production:data:companies
 ```
+
+The production parse scripts write `.jsonl.gz` files for large source tables and
+omit `raw_record_json` to keep local disk and database imports manageable. The
+raw official files and SHA-256 ETL logs remain the audit trail.
 
 Prepare a Postgres import package from normalized JSONL:
 
@@ -118,19 +119,19 @@ The generated CSV package covers:
 
 Latest generated row counts:
 
-| Table                        |    Rows |
-| ---------------------------- | ------: |
-| `locations`                  |  21,601 |
-| `source_files`               |      15 |
-| `employers`                  |  68,663 |
-| `employer_aliases`           |  97,719 |
-| `h1b_lca_records`            | 328,886 |
-| `perm_records`               |  82,288 |
-| `pwd_records`                | 770,620 |
-| `uscis_h1b_employer_records` |  33,156 |
-| `visa_bulletin_months`       |       3 |
-| `visa_bulletin_dates`        |      18 |
-| `company_page_metrics`       |   2,000 |
+| Table                        |      Rows |
+| ---------------------------- | --------: |
+| `locations`                  |    65,644 |
+| `source_files`               |        42 |
+| `employers`                  |   236,666 |
+| `employer_aliases`           |   415,179 |
+| `h1b_lca_records`            | 3,464,585 |
+| `perm_records`               |   650,761 |
+| `pwd_records`                |   770,620 |
+| `uscis_h1b_employer_records` |   205,053 |
+| `visa_bulletin_months`       |         3 |
+| `visa_bulletin_dates`        |        18 |
+| `company_page_metrics`       |     2,000 |
 
 The package intentionally does not auto-run against production. Review the
 report, then run `load_order.sql` only after a dedicated Supabase/Postgres
@@ -158,10 +159,12 @@ fingerprinted as an official source file, but it is not loaded into
 ## Known Manual Step
 
 No manual export is required for the current local package. The manifest uses
-the official USCIS FY2023 H-1B Employer Data Hub CSV URL. If USCIS changes the
-archive structure later and a stable direct CSV URL is unavailable, use the
-official USCIS export flow, store the result under `data/raw/`, fingerprint it,
-and document the export date in the production import report.
+official USCIS H-1B Employer Data Hub CSV URLs for FY2020-FY2023. The official
+USCIS archive page available on 2026-05-17 lists CSV files through FY2023; FY2024
+and FY2025 direct CSV URLs returned 404 during verification. When USCIS publishes
+new official annual CSV files, add them to `data/source_manifest.json`, download
+them into `data/raw/`, fingerprint them through the ETL log, and rerun the
+production parse/import flow.
 
 ## Remaining Launch Blocker
 

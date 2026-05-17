@@ -14,15 +14,15 @@ describe("M25 data freshness CLI report", () => {
 
     expect(report).toMatchObject({
       status: "pass",
-      manifestUpdatedAt: "2026-05-16",
-      manifestAgeDays: 1,
-      sourceCount: 15,
-      requiredSourceCount: 13,
+      manifestUpdatedAt: "2026-05-17",
+      manifestAgeDays: 0,
+      sourceCount: 42,
+      requiredSourceCount: 40,
       latestFiscalYear: 2026,
       latestVisaBulletinMonth: "2026-06",
       missingRequiredFixtures: [],
     });
     expect(rendered).toContain("Data freshness report");
-    expect(rendered).toContain("Required fixtures present: 13/13");
+    expect(rendered).toContain("Required fixtures present: 40/40");
   });
 });

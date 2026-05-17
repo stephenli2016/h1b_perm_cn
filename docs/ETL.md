@@ -60,6 +60,12 @@ pnpm etl:visa:bulletin:fixtures
 pnpm etl:uscis:filing-chart:fixtures
 pnpm etl:companies:fixtures
 pnpm etl:test
+pnpm production:data:download
+pnpm production:data:parse:lca
+pnpm production:data:parse:perm
+pnpm production:data:parse:pwd
+pnpm production:data:parse:uscis
+pnpm production:data:companies
 pnpm production:data:prepare
 ```
 
@@ -132,13 +138,21 @@ Production official-data preparation lives in
 Run:
 
 ```bash
+pnpm production:data:download
+pnpm production:data:parse:lca
+pnpm production:data:parse:perm
+pnpm production:data:parse:pwd
+pnpm production:data:parse:uscis
+pnpm production:data:companies
 pnpm production:data:prepare
 ```
 
-The command converts normalized ETL JSONL outputs into a local Postgres import
-package under `data/production/postgres_import/`, including table CSV files,
-`load_order.sql`, and a review report. The generated package is gitignored and
-must be reviewed before any Supabase/Postgres import.
+The large production parsers write compressed normalized `.jsonl.gz` files and
+omit full raw row JSON to keep local disk usage bounded. `production:data:prepare`
+converts normalized ETL outputs into a local Postgres import package under
+`data/production/postgres_import/`, including table CSV files, `load_order.sql`,
+and a review report. The generated package is gitignored and must be reviewed
+before any Supabase/Postgres import.
 
 ## M29 Scheduled Data Update Dry Run
 
