@@ -31,6 +31,7 @@
     "etl:test": "python3 -m unittest discover -s tests/etl -p 'test_*.py'",
     "seo:audit": "node --no-warnings --experimental-strip-types scripts/seo-audit.ts",
     "data:freshness": "node --no-warnings --experimental-strip-types scripts/data-freshness.ts",
+    "data:update:dry-run": "node --no-warnings --experimental-strip-types scripts/scheduled-data-update.ts --dry-run",
     "format": "prettier --check .",
     "format:write": "prettier --write ."
   },

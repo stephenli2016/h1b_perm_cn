@@ -1,0 +1,58 @@
+name: Data update dry run
+
+on:
+  workflow_dispatch:
+  schedule:
+    # Weekly Tuesday dry run. This reports freshness and anomalies only.
+    - cron: "17 14 * * 2"
+
+permissions:
+  contents: read
+
+jobs:
+  dry-run:
+    name: Official data freshness dry run
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+
+      - name: Enable pnpm
+        run: |
+          corepack enable
+          corepack prepare pnpm@11.1.2 --activate
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Validate source manifest
+        run: pnpm etl:validate
+
+      - name: Run dry-run scheduled data update
+        run: |
+          mkdir -p artifacts
+          pnpm data:update:dry-run -- --network --github-summary --output artifacts/data-update-dry-run.md
+
+      - name: Run ETL parser tests
+        run: pnpm etl:test
+
+      - name: Run local data freshness report
+        run: pnpm data:freshness
+
+      - name: Upload dry-run freshness report
+        uses: actions/upload-artifact@v4
+        with:
+          name: data-update-dry-run-report
+          path: artifacts/data-update-dry-run.md
+
+      - name: Failure notification placeholder
+        if: failure()
+        run: |
+          echo "::notice title=Notification placeholder::Configure a future Slack/email webhook secret to notify the owner when scheduled data dry runs fail."

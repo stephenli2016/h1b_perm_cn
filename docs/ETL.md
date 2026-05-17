@@ -122,3 +122,25 @@ recommended order is:
    errors.
 
 No Supabase key is required for local fixture mode.
+
+## M29 Scheduled Data Update Dry Run
+
+Run:
+
+```bash
+pnpm data:update:dry-run
+```
+
+The M29 dry-run checks official-source freshness without importing production
+data, committing generated files, or changing public indexing. It flags:
+
+- DOL OFLC disclosure release coverage.
+- Visa Bulletin monthly fixture coverage.
+- USCIS filing chart monthly fixture coverage.
+- missing production download files.
+- disallowed source hosts.
+- optional official URL probe warnings when `--network` is enabled.
+
+The GitHub Actions workflow `.github/workflows/data-update-dry-run.yml` runs the
+dry-run weekly and uploads a Markdown freshness report artifact. Details live in
+`docs/SCHEDULED_DATA_UPDATE_M29.md`.
