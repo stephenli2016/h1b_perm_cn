@@ -153,6 +153,10 @@ export const explicitToolContentPaths = new Set([
   "/tools/h1b-transfer-risk-checklist",
   "/tools/perm-restart-timeline-estimator",
   "/tools/company-immigration-score",
+  "/tools/opt-to-h1b-timeline",
+  "/tools/stem-opt-employer-checklist",
+  "/tools/wage-negotiation-with-h1b-data",
+  "/tools/visa-bulletin-alert",
 ]);
 
 export const contentPages = [

@@ -17,12 +17,9 @@ describe("M28 production launch gate", () => {
     expect(report.publicLaunchReady).toBe(false);
     expect(failed).toEqual([]);
     expect(blocked.map((check) => check.id)).toEqual(
-      expect.arrayContaining([
-        "production-data",
-        "legal-approval",
-        "deployment-approval",
-      ]),
+      expect.arrayContaining(["production-data", "deployment-approval"]),
     );
+    expect(blocked.map((check) => check.id)).not.toContain("legal-approval");
   });
 
   it("keeps sitemap output limited to approved indexable routes", () => {

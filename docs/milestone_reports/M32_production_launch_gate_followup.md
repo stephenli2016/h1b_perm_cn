@@ -1,9 +1,11 @@
 # Milestone M32 Report — Protected Production Launch Gate Follow-up
 
 ## Status
+
 Completed for protected production. Public launch is intentionally pending owner approval.
 
 ## Built
+
 - Redeployed Vercel production and verified the production alias `https://h1b-perm-cn.vercel.app`.
 - Fixed production canonical/OG URL output so checked pages point to `https://h1b-perm-cn.vercel.app`, not an old preview URL.
 - Added direct Supabase/Postgres query paths for company directories, H-1B/PERM record directories, company profile pages, and Visa Bulletin pages to avoid loading the full fixture-shaped repository at request time.
@@ -11,6 +13,7 @@ Completed for protected production. Public launch is intentionally pending owner
 - Left Basic Auth, `noindex,nofollow`, and `robots.txt` `Disallow: /` enabled pending explicit owner approval for public launch.
 
 ## Files changed
+
 - `.gitignore`
 - `app/companies/page.tsx`
 - `app/h1b/page.tsx`
@@ -31,6 +34,7 @@ Completed for protected production. Public launch is intentionally pending owner
 - `lib/db/public-query-repository.ts`
 
 ## Validation
+
 - Command: `pnpm typecheck`
 - Result: pass
 
@@ -76,23 +80,28 @@ Completed for protected production. Public launch is intentionally pending owner
   - Internal `fixture` / `生产发布前` copy leakage: pass, none found in checked page bodies.
 
 ## Screenshots / local URLs
+
 - Production URL checked: `https://h1b-perm-cn.vercel.app`
 - No screenshots were captured; validation was HTTP/HTML/SEO based.
 
 ## Decisions made without owner input
+
 - Kept canonical URL on the current production Vercel domain because no custom domain has been connected yet.
 - Optimized the production query path instead of changing data shape or UI layout.
 - Preserved all launch protections because public launch is an owner-approval action under `AGENTS.md`.
 
 ## Known limitations
+
 - The site is not public yet: Basic Auth remains enabled.
 - Search indexing is intentionally blocked: `PRELAUNCH_NOINDEX=true`, meta robots are `noindex,nofollow`, and `robots.txt` disallows all crawlers.
 - A custom domain is not connected yet; canonical URLs currently use the Vercel production domain.
 - Some dynamic pages can still show a multi-second cold response, but the launch-gate sample stayed under 4 seconds after the production query optimizations.
 
 ## Owner action needed
+
 - Approve whether to remove protection and publicly launch.
 - If approved, the public launch change should set `PREVIEW_PROTECTION_ENABLED=false` and `PRELAUNCH_NOINDEX=false` in Vercel production, then redeploy and re-run the gate to confirm `robots.txt` allows crawling and page-level robots tags are indexable where intended.
 
 ## Recommended next milestone
+
 Public launch toggle after owner approval, then M33 — Search Console and post-launch indexing/monitoring.

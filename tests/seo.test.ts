@@ -123,6 +123,11 @@ describe("M15 SEO indexability and sitemaps", () => {
     );
     expect(listSitemapEntries("visa-bulletin")).toEqual([
       {
+        url: "http://localhost:3000/visa-bulletin",
+        changeFrequency: "monthly",
+        priority: 0.6,
+      },
+      {
         url: "http://localhost:3000/visa-bulletin/2026/06",
         lastModified: "2026-05-04",
         changeFrequency: "monthly",
@@ -194,6 +199,9 @@ describe("M15 SEO indexability and sitemaps", () => {
     );
     expect(renderUrlSet(listSitemapEntries("guides"))).toContain(
       "http://localhost:3000/guides/visa-bulletin-explained-chinese",
+    );
+    expect(renderUrlSet(listSitemapEntries("visa-bulletin"))).toContain(
+      "http://localhost:3000/visa-bulletin",
     );
     expect(renderUrlSet(listSitemapEntries("visa-bulletin"))).toContain(
       "http://localhost:3000/visa-bulletin/2026/06",

@@ -36,10 +36,11 @@ export async function generateMetadata({
   const filterCount = activeFilterCount(parsed.values);
 
   return buildSeoMetadata({
-    title: filterCount > 0 ? "公司目录搜索结果" : "公司目录",
-    description: "合并查看官方 H-1B LCA 与 PERM 公开数据中的公司移民信号。",
+    title: filterCount > 0 ? "公司目录搜索结果" : "H-1B / PERM 公司目录",
+    description:
+      "搜索公司 H-1B、PERM、职位、地点和公开数据覆盖情况，用中文理解雇主 sponsor 历史信号。",
     path: "/companies",
-    index: false,
+    index: filterCount === 0,
     pageType: "data",
   });
 }
@@ -117,6 +118,7 @@ export default async function CompaniesPage({
   await waitForRuntimeDataRequestBoundary();
 
   const parsed = parseDirectorySearchParams(await searchParams);
+  const filterCount = activeFilterCount(parsed.values);
   const result =
     getRuntimeDataMode() === "postgres"
       ? await searchPostgresCompanyDirectory(parsed.input)
@@ -131,18 +133,40 @@ export default async function CompaniesPage({
     <PageShell
       breadcrumbs={[{ href: "/", label: "首页" }, { label: "公司目录" }]}
       canonicalPath="/companies"
-      description="把 H-1B LCA 与 PERM 官方公开数据中的雇主记录合并成公司目录，方便从一个入口查看公开数据活动信号。筛选 URL 默认 noindex。"
+      description="搜索公司 H-1B、PERM、职位、地点和公开数据覆盖情况。适合投递前、面试前或 offer 沟通前做背景研究。"
       eyebrow={siteConfig.tagline}
       structuredData={buildWebPageJsonLd({
-        title: "公司目录",
-        description:
-          "合并查看 H-1B LCA、PERM 和 USCIS Employer Data Hub 的雇主公开数据信号。",
+        title: "H-1B / PERM 公司目录",
+        description: "搜索公司 H-1B、PERM、职位、地点和公开数据覆盖情况。",
         path: "/companies",
         pageType: "CollectionPage",
       })}
-      title="公司目录"
+      title="H-1B / PERM 公司目录"
     >
       <div className="space-y-6">
+        <section className="grid gap-4 md:grid-cols-3">
+          <article className="rounded-lg border border-[var(--line)] bg-white p-5 shadow-sm">
+            <h2 className="text-base font-semibold">适合什么时候用</h2>
+            <p className="mt-3 text-sm leading-6 text-[var(--muted)]">
+              拿到面试或 offer 前，先确认公司是否在官方公开数据里有 H-1B 或 PERM
+              历史记录。
+            </p>
+          </article>
+          <article className="rounded-lg border border-[var(--line)] bg-white p-5 shadow-sm">
+            <h2 className="text-base font-semibold">不要只看总数</h2>
+            <p className="mt-3 text-sm leading-6 text-[var(--muted)]">
+              同一家公司不同实体、地点和职位差异很大。请继续打开公司页看别名、年份、职位和地点。
+            </p>
+          </article>
+          <article className="rounded-lg border border-[var(--line)] bg-white p-5 shadow-sm">
+            <h2 className="text-base font-semibold">没有记录怎么理解</h2>
+            <p className="mt-3 text-sm leading-6 text-[var(--muted)]">
+              没有公开记录不等于一定不能
+              sponsor，只说明当前数据覆盖下没有找到可展示样本。
+            </p>
+          </article>
+        </section>
+
         <DirectoryFilterForm
           action="/companies"
           caseStatusLabels={combinedStatusLabels}
@@ -162,14 +186,18 @@ export default async function CompaniesPage({
                 value={result.data.pagination.totalResults}
               />
               <MetricCard
-                description="目录与筛选参数组合在正式数据质量达标前不开放索引。"
-                label="索引策略"
-                value="noindex"
+                description={
+                  filterCount > 0
+                    ? "筛选结果页不收录，避免把参数组合提交给搜索引擎。"
+                    : "公司目录入口页已开放索引；具体公司页按质量阈值判断。"
+                }
+                label="页面收录"
+                value={filterCount > 0 ? "筛选页 noindex" : "入口页 index"}
               />
               <MetricCard
                 description="来自官方公开数据导入；展示当前数据库覆盖的最新日期。"
                 label="最新数据日期"
-                value={result.data.latestDataDate ?? "待接入"}
+                value={result.data.latestDataDate ?? "暂无来源日期"}
               />
             </section>
 
@@ -205,9 +233,9 @@ export default async function CompaniesPage({
         )}
 
         <SourceNote
-              latestDataLabel={
+          latestDataLabel={
             result.ok
-              ? `当前官方公开数据最新日期：${result.data.latestDataDate ?? "待接入真实数据"}。筛选 URL 默认 noindex。`
+              ? `当前官方公开数据最新日期：${result.data.latestDataDate ?? "暂无来源日期"}。筛选结果页默认 noindex，入口页和合格公司页可被收录。`
               : undefined
           }
           names={[

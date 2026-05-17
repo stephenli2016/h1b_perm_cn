@@ -13,9 +13,15 @@ import type { PublicVisaBulletinDatesPayload } from "@/lib/db/public-query-repos
 import { waitForRuntimeDataRequestBoundary } from "@/lib/db/runtime-rendering";
 import { getRuntimePublicQueryRepository } from "@/lib/db/runtime-public-query-repository";
 import { buildDatasetJsonLd } from "@/lib/seo/json-ld";
-import { buildRouteSeoMetadata } from "@/lib/seo/metadata";
+import { buildSeoMetadata } from "@/lib/seo/metadata";
 
-export const metadata: Metadata = buildRouteSeoMetadata("/visa-bulletin");
+export const metadata: Metadata = buildSeoMetadata({
+  title: "中国职业移民排期",
+  description:
+    "查看中国大陆出生 EB-1、EB-2、EB-3 Visa Bulletin、Final Action Date、Dates for Filing 和 USCIS filing chart 说明。",
+  path: "/visa-bulletin",
+  pageType: "data",
+});
 
 type VisaBulletinRow = PublicVisaBulletinDatesPayload["rows"][number];
 
@@ -73,7 +79,7 @@ export default async function VisaBulletinPage() {
     <PageShell
       breadcrumbs={[{ href: "/", label: "首页" }, { label: "排期" }]}
       canonicalPath="/visa-bulletin"
-      description="中国大陆出生 EB-1、EB-2、EB-3 的 Department of State Visa Bulletin 官方来源数据快照，以及 USCIS 当月 filing chart 选择。"
+      description="查看中国大陆出生 EB-1、EB-2、EB-3 Visa Bulletin、Final Action Date、Dates for Filing 和 USCIS filing chart 说明。"
       eyebrow="Visa Bulletin"
       structuredData={buildDatasetJsonLd({
         name: "中国职业移民排期",
@@ -90,6 +96,30 @@ export default async function VisaBulletinPage() {
     >
       {latestMonth ? (
         <section className="space-y-4">
+          <section className="grid gap-4 md:grid-cols-3">
+            <article className="rounded-lg border border-[var(--line)] bg-white p-5 shadow-sm">
+              <h2 className="text-base font-semibold">先看出生地和类别</h2>
+              <p className="mt-3 text-sm leading-6 text-[var(--muted)]">
+                中国大陆出生申请人通常需要看 China-mainland born 行，再按
+                EB-1、EB-2、EB-3 区分类别。
+              </p>
+            </article>
+            <article className="rounded-lg border border-[var(--line)] bg-white p-5 shadow-sm">
+              <h2 className="text-base font-semibold">两张表用途不同</h2>
+              <p className="mt-3 text-sm leading-6 text-[var(--muted)]">
+                Final Action Date 和 Dates for Filing
+                不能混用；在美国境内调整身份还要看 USCIS 当月选择。
+              </p>
+            </article>
+            <article className="rounded-lg border border-[var(--line)] bg-white p-5 shadow-sm">
+              <h2 className="text-base font-semibold">不预测未来排期</h2>
+              <p className="mt-3 text-sm leading-6 text-[var(--muted)]">
+                本页只解释公开表格和当前数据快照，不预测某个 priority date
+                未来何时到达。
+              </p>
+            </article>
+          </section>
+
           <div className="grid gap-4 md:grid-cols-3">
             <MetricCard label="月份" value={latestMonth.monthKey} />
             <MetricCard
@@ -159,6 +189,17 @@ export default async function VisaBulletinPage() {
             当月是否允许使用。
           </p>
         </div>
+      </section>
+
+      <section className="mt-8 rounded-lg border border-[var(--line)] bg-white p-5 shadow-sm">
+        <h2 className="text-lg font-semibold">每月更新时建议核对</h2>
+        <ol className="mt-4 list-decimal space-y-3 pl-5 text-sm leading-6 text-[var(--muted)]">
+          <li>确认 Visa Bulletin 月份是否已经更新。</li>
+          <li>确认自己的 employment-based category 和 chargeability area。</li>
+          <li>分别查看 Final Action Date 和 Dates for Filing。</li>
+          <li>打开 USCIS filing chart 页面，确认本月 AOS 使用哪张表。</li>
+          <li>把页面结论当作公开数据对照，不当作个案法律建议。</li>
+        </ol>
       </section>
 
       <div className="mt-6">

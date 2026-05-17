@@ -1,7 +1,6 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 
-import { LegalDraftNotice } from "@/components/compliance/legal-draft-notice";
 import { PageShell } from "@/components/page-shell";
 import { buildNoIndexSeoMetadata } from "@/lib/seo/metadata";
 
@@ -11,7 +10,7 @@ type CorrectionsReceivedPageProps = {
 
 export const metadata: Metadata = buildNoIndexSeoMetadata({
   title: "纠错请求已接收",
-  description: "本地纠错请求 stub 的确认页面，不进入 sitemap。",
+  description: "纠错请求确认页面，不进入 sitemap，也不回显提交内容。",
   path: "/corrections/received",
 });
 
@@ -22,6 +21,7 @@ export default async function CorrectionsReceivedPage({
   const status = firstValue(params?.status);
   const requestId = firstValue(params?.id);
   const isReceived = status === "received" && requestId;
+  const isUnavailable = status === "unavailable";
 
   return (
     <PageShell
@@ -31,23 +31,35 @@ export default async function CorrectionsReceivedPage({
         { label: "请求确认" },
       ]}
       canonicalPath="/corrections/received"
-      description="这个确认页只显示本地 stub 编号，不展示你提交的说明内容。"
+      description="这个确认页只显示请求编号，不展示你提交的说明内容。"
       eyebrow="纠错"
-      title={isReceived ? "纠错请求已接收" : "纠错请求未完成"}
+      title={
+        isReceived
+          ? "纠错请求已接收"
+          : isUnavailable
+            ? "纠错表单暂时不可用"
+            : "纠错请求未完成"
+      }
     >
       <div className="space-y-6">
-        <LegalDraftNotice />
-
         <section className="rounded-lg border border-[var(--line)] bg-white p-6 shadow-sm">
           <h2 className="text-lg font-semibold">
-            {isReceived ? "本地 stub 编号" : "需要重新提交"}
+            {isReceived
+              ? "请求编号"
+              : isUnavailable
+                ? "请使用邮件备用路径"
+                : "需要重新提交"}
           </h2>
           {isReceived ? (
             <p className="mt-3 text-sm leading-7 text-[var(--muted)]">
               请求编号：{" "}
               <span className="font-semibold text-slate-950">{requestId}</span>
-              。当前 MVP
-              没有邮件或数据库连接，因此这只是本地确认页面；生产接入后会把请求写入安全的后台队列。
+              。我们会按官方来源、字段映射、雇主名称归并和隐私风险顺序复核。这个页面不会展示你提交的说明、邮箱或来源
+              URL。
+            </p>
+          ) : isUnavailable ? (
+            <p className="mt-3 text-sm leading-7 text-[var(--muted)]">
+              当前表单暂时无法接收请求。请返回纠错页使用邮件备用路径，并继续避免发送证件号码、完整住址或个人案情材料。
             </p>
           ) : (
             <p className="mt-3 text-sm leading-7 text-[var(--muted)]">

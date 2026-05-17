@@ -13,11 +13,11 @@ export default function PrivacyPage() {
     <PageShell
       breadcrumbs={[{ href: "/", label: "首页" }, { label: "隐私政策" }]}
       canonicalPath="/privacy"
-      description="MVP 阶段优先使用公开数据和本地占位能力，不建立用户账号，也不主动收集敏感移民细节。"
+      description="说明本站如何最小化收集信息、处理纠错请求，并避免展示不必要个人识别信息。"
       eyebrow="合规"
       structuredData={buildWebPageJsonLd({
         title: "隐私政策",
-        description: "MVP 阶段的隐私原则、最小化收集和敏感信息保护说明。",
+        description: "隐私原则、最小化收集和敏感信息保护说明。",
         path: "/privacy",
       })}
       title="隐私政策"
@@ -28,7 +28,7 @@ export default function PrivacyPage() {
         <section className="grid gap-4 md:grid-cols-2">
           <PrivacySection
             title="最小化收集"
-            text="当前阶段不需要用户账号。后续如启用纠错、提醒、邮件或 analytics 功能，也只应收集完成该功能所需的最少信息，并在页面上说明用途。"
+            text="使用公司页、工具页和指南页不需要创建账号。纠错请求只收集处理问题所需的页面 URL、问题说明和可选联系邮箱。"
           />
           <PrivacySection
             title="敏感信息"
@@ -36,7 +36,7 @@ export default function PrivacyPage() {
           />
           <PrivacySection
             title="纠错表单"
-            text="MVP 阶段纠错表单只生成本地 stub 编号，不发送邮件、不写数据库、不回显问题说明。生产接入前需要确认保留期限、访问控制和处理流程。"
+            text="纠错表单会生成公开请求编号。页面不会回显你提交的说明、邮箱或来源 URL；后台处理只用于复核数据展示、名称归并和隐私问题。"
           />
           <PrivacySection
             title="公开数据隐私"
@@ -48,8 +48,8 @@ export default function PrivacyPage() {
           <h2 className="text-lg font-semibold">联系</h2>
           <p className="mt-3 text-sm leading-7 text-[var(--muted)]">
             隐私或纠错请求可先发送至 {siteConfig.contactEmail}
-            。正式上线前，隐私文案、数据保留策略和后台访问权限仍需 owner
-            和法律专业人士审阅。
+            。请不要通过邮件或表单发送证件号码、receipt
+            number、完整住址、雇佣合同或个人案情细节。
           </p>
         </section>
 

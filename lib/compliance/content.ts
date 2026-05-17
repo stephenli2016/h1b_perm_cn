@@ -32,8 +32,8 @@ export type CorrectionRequestType =
   (typeof correctionRequestTypes)[number]["value"];
 
 export const legalDraftNotice = {
-  title: "法律与合规文案草案",
-  body: "本页为 MVP 阶段的产品合规草案，便于开发和内部测试。生产上线前需要 owner 和合格法律专业人士审阅批准。",
+  title: "重要提示",
+  body: "本站只整理和解释官方公开数据，不提供法律、移民、税务、职业或财务建议。涉及个人身份、案件策略或雇主政策时，请咨询持牌律师或合格专业人士。",
 } as const;
 
 export const officialSources = [
@@ -278,7 +278,7 @@ export const methodologyPages = [
     ],
     privacyAndQuality: [
       "不收集用户 offer letter、雇佣合同或个人身份文件。",
-      "用户输入只用于本地页面计算；MVP stub 不保存个人工资查询。",
+      "用户输入只用于当前页面计算；本站不保存个人工资查询。",
       "低样本工资分布以提示形式展示，不把少量记录包装成市场结论。",
     ],
     relatedLinks: [

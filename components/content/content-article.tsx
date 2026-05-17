@@ -46,7 +46,11 @@ export function ContentArticle({ page }: ContentArticleProps) {
             value={page.kind === "tool" ? "工具" : "指南"}
           />
           <MetricCard
-            description="M22 内容页统一使用官方来源、示例、误区和免责声明。"
+            description={
+              page.priority === 1
+                ? "优先补齐、优先维护的核心页面。"
+                : "用于补充公司页、工具页和求职场景的解释页面。"
+            }
             label="内容优先级"
             trend={
               page.priority === 1 ? "Priority 1" : `Priority ${page.priority}`
@@ -58,6 +62,16 @@ export function ContentArticle({ page }: ContentArticleProps) {
             label="官方来源"
             value={`${sources.length} 个`}
           />
+        </section>
+
+        <section className="rounded-lg border border-[var(--line)] bg-white p-5 shadow-sm">
+          <h2 className="text-lg font-semibold">你可以用它做什么</h2>
+          <p className="mt-3 text-sm leading-7 text-[var(--muted)]">
+            把这页当作面试、offer
+            沟通或公司背景调查前的准备材料：先弄清楚官方数据能说明什么，再整理要问
+            HR、recruiter、immigration team
+            或律师的问题。页面不会要求你输入敏感身份信息，也不会给出个案法律结论。
+          </p>
         </section>
 
         <section className="rounded-lg border border-[var(--line)] bg-white p-5 shadow-sm">
@@ -116,7 +130,7 @@ export function ContentArticle({ page }: ContentArticleProps) {
         </section>
 
         <SourceNote
-          latestDataLabel={`本页为 M22 中文内容页，最后复核日期 ${page.lastReviewed}。页面只解释官方公开来源和通用场景，不收集个人身份信息。`}
+          latestDataLabel={`最后复核日期 ${page.lastReviewed}。页面只解释官方公开来源和通用场景，不收集个人身份信息。`}
           names={sources.map((source) => source.title)}
         />
 

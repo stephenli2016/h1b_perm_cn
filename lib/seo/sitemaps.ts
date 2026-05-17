@@ -67,7 +67,7 @@ export function listSitemapEntries(
 
   switch (kind) {
     case "core":
-      return listStaticRouteEntries(["core", "compliance"]);
+      return listStaticRouteEntries(["core", "compliance", "data-directory"]);
     case "tools":
       return listContentRouteEntries("tool", "/tools");
     case "guides":
@@ -232,18 +232,35 @@ function listCompanyPageEntries(
 }
 
 function listVisaBulletinEntries(data: FixtureData): SitemapEntry[] {
-  return [...data.visaBulletinMonths]
-    .sort((left, right) => right.monthKey.localeCompare(left.monthKey))
-    .map((month) => ({
-      url: getCanonicalUrl(
-        `/visa-bulletin/${month.bulletinYear}/${String(
-          month.bulletinMonth,
-        ).padStart(2, "0")}`,
-      ),
-      lastModified: month.publishedAt,
-      changeFrequency: "monthly" as const,
-      priority: 0.55,
-    }));
+  const hubRoute = publicRoutes.find(
+    (route) =>
+      route.path === "/visa-bulletin" && route.indexing === "indexable",
+  );
+  const hubEntry = hubRoute
+    ? [
+        {
+          url: getCanonicalUrl(hubRoute.path),
+          changeFrequency: "monthly" as const,
+          priority: 0.6,
+        },
+      ]
+    : [];
+
+  return [
+    ...hubEntry,
+    ...Array.from(data.visaBulletinMonths)
+      .sort((left, right) => right.monthKey.localeCompare(left.monthKey))
+      .map((month) => ({
+        url: getCanonicalUrl(
+          `/visa-bulletin/${month.bulletinYear}/${String(
+            month.bulletinMonth,
+          ).padStart(2, "0")}`,
+        ),
+        lastModified: month.publishedAt,
+        changeFrequency: "monthly" as const,
+        priority: 0.55,
+      })),
+  ];
 }
 
 function renderUrlEntry(entry: SitemapEntry) {

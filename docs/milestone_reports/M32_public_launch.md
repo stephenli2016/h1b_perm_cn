@@ -1,9 +1,11 @@
 # Milestone M32 Report — Public Production Launch
 
 ## Status
+
 Completed.
 
 ## Built
+
 - Removed production Basic Auth by setting `PREVIEW_PROTECTION_ENABLED=false` in Vercel Production.
 - Removed production prelaunch noindex by setting `PRELAUNCH_NOINDEX=false` in Vercel Production.
 - Redeployed production so the new environment variables took effect.
@@ -11,10 +13,12 @@ Completed.
 - Verified public, unauthenticated access to the production site.
 
 ## Files changed
+
 - `.env.local` local-only, gitignored: `PREVIEW_PROTECTION_ENABLED=false`, `PRELAUNCH_NOINDEX=false`
 - `docs/milestone_reports/M32_public_launch.md`
 
 ## Validation
+
 - Command: `pnpm dlx vercel env ls production --scope yuchenli2015-6323s-projects`
 - Result: production launch toggles exist as Production-scoped variables; Vercel CLI masks values as encrypted.
 
@@ -52,22 +56,27 @@ Completed.
   - No public-facing `fixture` or `生产发布前` copy found.
 
 ## Screenshots / local URLs
+
 - Production URL: `https://h1b-perm-cn.vercel.app`
 - No screenshots were captured; validation was HTTP/HTML/SEO based.
 
 ## Decisions made without owner input
+
 - Kept Preview environment protected while opening Production.
 - Kept directory and top-level aggregate data entry pages `noindex, follow` because current code intentionally reserves indexing for company pages, tools, guides, compliance pages, and monthly Visa Bulletin pages.
 - Kept canonical URLs on the Vercel production domain because no custom domain has been connected.
 
 ## Known limitations
+
 - Production is public on the Vercel domain, not a custom domain.
 - Vercel CLI masks even non-secret launch toggles as encrypted in `env ls`, so behavior was verified by public HTTP checks instead of reading values back.
 - Some directory hub pages are still `noindex, follow`; this is conservative SEO behavior and can be relaxed in a follow-up once we choose which hub pages should be indexable.
 
 ## Owner action needed
+
 - Optional: connect a custom domain before stronger SEO promotion.
 - Optional: decide whether `/companies`, `/h1b`, `/perm`, and `/visa-bulletin` should become indexable hub pages.
 
 ## Recommended next milestone
+
 M33 — Search Console submission, sitemap monitoring, and post-launch indexing/SEO cleanup.

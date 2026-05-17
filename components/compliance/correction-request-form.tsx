@@ -10,9 +10,8 @@ export function CorrectionRequestForm() {
       <div>
         <h2 className="text-lg font-semibold">提交纠错请求</h2>
         <p className="mt-2 text-sm leading-6 text-[var(--muted)]">
-          MVP 阶段表单只走本地
-          stub：提交后生成公开请求编号，不发送邮件、不写入数据库、不暴露
-          secrets。
+          提交后会生成公开请求编号。确认页不会回显你的说明、邮箱或来源
+          URL；后台只用于复核数据展示、名称归并、来源解释和隐私风险。
         </p>
       </div>
 
@@ -101,7 +100,7 @@ export function CorrectionRequestForm() {
         className="mt-6 inline-flex rounded-md bg-[var(--accent)] px-5 py-3 text-sm font-semibold text-white hover:bg-[var(--accent-strong)]"
         type="submit"
       >
-        提交本地 stub 请求
+        提交纠错请求
       </button>
     </form>
   );

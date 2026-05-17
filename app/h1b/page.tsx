@@ -40,9 +40,9 @@ export async function generateMetadata({
   return buildSeoMetadata({
     title: filterCount > 0 ? "H-1B 公司搜索结果" : "H-1B 公司数据库",
     description:
-      "按雇主、年份、州/城市、职位/SOC 和 case status 查询官方 H-1B LCA 公开记录样本。",
+      "查询公司 H-1B LCA、USCIS Employer Data Hub、职位、地点和工资公开数据，理解雇主 H-1B 历史信号。",
     path: "/h1b",
-    index: false,
+    index: filterCount === 0,
     pageType: "data",
   });
 }
@@ -109,6 +109,7 @@ export default async function H1BPage({ searchParams }: H1BPageProps) {
   await waitForRuntimeDataRequestBoundary();
 
   const parsed = parseDirectorySearchParams(await searchParams);
+  const filterCount = activeFilterCount(parsed.values);
   const result =
     getRuntimeDataMode() === "postgres"
       ? await searchPostgresH1BRecords(parsed.input)
@@ -123,7 +124,7 @@ export default async function H1BPage({ searchParams }: H1BPageProps) {
     <PageShell
       breadcrumbs={[{ href: "/", label: "首页" }, { label: "H-1B" }]}
       canonicalPath="/h1b"
-      description="按雇主、年份、地区、职位/SOC 和 case status 查看官方 H-1B LCA 公开记录样本。本目录和筛选 URL 在公开上线前保持 noindex。"
+      description="查询公司 H-1B LCA、USCIS Employer Data Hub、职位、地点和工资公开数据。适合投递前判断公司是否有类似岗位的公开 H-1B 活动。"
       eyebrow={siteConfig.tagline}
       structuredData={buildWebPageJsonLd({
         title: "H-1B 公司数据库",
@@ -134,6 +135,30 @@ export default async function H1BPage({ searchParams }: H1BPageProps) {
       title="H-1B 公司数据库"
     >
       <div className="space-y-6">
+        <section className="grid gap-4 md:grid-cols-3">
+          <article className="rounded-lg border border-[var(--line)] bg-white p-5 shadow-sm">
+            <h2 className="text-base font-semibold">LCA 不是批准结果</h2>
+            <p className="mt-3 text-sm leading-6 text-[var(--muted)]">
+              Certified LCA 只说明劳工条件申请记录，不等于 H-1B petition
+              approved，也不代表雇主实际录用。
+            </p>
+          </article>
+          <article className="rounded-lg border border-[var(--line)] bg-white p-5 shadow-sm">
+            <h2 className="text-base font-semibold">重点看相似岗位</h2>
+            <p className="mt-3 text-sm leading-6 text-[var(--muted)]">
+              同一个雇主的不同职位和 worksite 差别很大。请结合 SOC、地点、工资和
+              fiscal year。
+            </p>
+          </article>
+          <article className="rounded-lg border border-[var(--line)] bg-white p-5 shadow-sm">
+            <h2 className="text-base font-semibold">用于准备问题</h2>
+            <p className="mt-3 text-sm leading-6 text-[var(--muted)]">
+              页面最适合帮你准备要问 recruiter、HR 或 immigration team
+              的具体问题。
+            </p>
+          </article>
+        </section>
+
         <DirectoryFilterForm
           action="/h1b"
           caseStatusLabels={h1bStatusLabels}
@@ -153,14 +178,18 @@ export default async function H1BPage({ searchParams }: H1BPageProps) {
                 value={result.data.pagination.totalResults}
               />
               <MetricCard
-                description="筛选 URL 默认 noindex，避免参数组合造成 SEO 垃圾页。"
-                label="索引策略"
-                value="noindex"
+                description={
+                  filterCount > 0
+                    ? "筛选结果页不收录，避免参数组合造成低价值页面。"
+                    : "H-1B 入口页已开放索引；公司页按数据质量阈值判断。"
+                }
+                label="页面收录"
+                value={filterCount > 0 ? "筛选页 noindex" : "入口页 index"}
               />
               <MetricCard
                 description="来自官方公开数据导入；展示当前数据库覆盖的最新日期。"
                 label="最新数据日期"
-                value={result.data.latestDataDate ?? "待接入"}
+                value={result.data.latestDataDate ?? "暂无来源日期"}
               />
             </section>
 
@@ -197,9 +226,9 @@ export default async function H1BPage({ searchParams }: H1BPageProps) {
         )}
 
         <SourceNote
-              latestDataLabel={
+          latestDataLabel={
             result.ok
-              ? `当前官方公开数据最新日期：${result.data.latestDataDate ?? "待接入真实数据"}。筛选 URL 默认 noindex。`
+              ? `当前官方公开数据最新日期：${result.data.latestDataDate ?? "暂无来源日期"}。筛选结果页默认 noindex，入口页和合格公司页可被收录。`
               : undefined
           }
           names={[

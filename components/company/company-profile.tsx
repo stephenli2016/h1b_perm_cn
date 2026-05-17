@@ -447,7 +447,7 @@ export function CompanyProfile({ mode, profile }: CompanyProfileProps) {
       <FaqSection items={faqItems} />
 
       <SourceNote
-        latestDataLabel={`当前页面最新数据日期：${profile.latestDataDate ?? "待接入真实数据"}。当前路由索引状态：${pageSeo.indexable ? "index" : "noindex"}。`}
+        latestDataLabel={`当前页面最新数据日期：${profile.latestDataDate ?? "暂无来源日期"}。当前路由索引状态：${pageSeo.indexable ? "index" : "noindex"}。`}
         names={profile.sourceNames}
       />
 

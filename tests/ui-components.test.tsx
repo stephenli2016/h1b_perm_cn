@@ -199,7 +199,7 @@ describe("M12 UI components", () => {
     expect(html).toContain("近期 LCA 活动");
     expect(html).toContain("低样本规则");
     expect(html).toContain("不是 H-1B 或绿卡获批概率");
-    expect(html).toContain("Brightline Health");
+    expect(html).toContain("示例信号");
   });
 
   it("renders the H-1B transfer checklist without sensitive data fields", async () => {

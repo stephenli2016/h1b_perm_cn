@@ -149,6 +149,7 @@ describe("M22 content pages", () => {
     const html = renderToStaticMarkup(<ContentArticle page={page} />);
 
     expect(html).toContain("先读懂这件事");
+    expect(html).toContain("你可以用它做什么");
     expect(html).toContain("官方来源怎么用");
     expect(html).toContain("常见误区");
     expect(html).toContain("相关工具 / 指南 / 数据入口");

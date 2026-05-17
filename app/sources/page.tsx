@@ -17,7 +17,7 @@ export default function SourcesPage() {
     <PageShell
       breadcrumbs={[{ href: "/", label: "首页" }, { label: "数据来源" }]}
       canonicalPath="/sources"
-      description="列出本站 MVP 使用或计划使用的官方数据来源、用途、覆盖边界和谨慎解释方式。"
+      description="列出本站使用的官方数据来源、用途、覆盖边界和谨慎解释方式。"
       eyebrow="来源"
       structuredData={buildWebPageJsonLd({
         title: "数据来源",

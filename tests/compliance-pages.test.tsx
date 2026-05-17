@@ -15,15 +15,15 @@ import {
 } from "@/lib/compliance/content";
 
 describe("M24 legal, source, and correction workflow pages", () => {
-  it("renders legal pages as owner/legal-review drafts with no-advice language", () => {
+  it("renders legal pages as public compliance pages with no-advice language", () => {
     const html = [
       renderToStaticMarkup(<DisclaimerPage />),
       renderToStaticMarkup(<PrivacyPage />),
       renderToStaticMarkup(<TermsPage />),
     ].join("\n");
 
-    expect(html).toContain("法律与合规文案草案");
-    expect(html).toContain("owner 和合格法律专业人士审阅批准");
+    expect(html).toContain("重要提示");
+    expect(html).toContain("不替代专业判断");
     expect(html).toContain("不构成法律、移民、税务、职业或财务建议");
     expect(html).toContain("不是律师事务所");
   });
@@ -60,7 +60,7 @@ describe("M24 legal, source, and correction workflow pages", () => {
     }
   });
 
-  it("renders a no-secret local correction stub form", () => {
+  it("renders a no-secret correction request form", () => {
     const html = renderToStaticMarkup(<CorrectionsPage />);
     const fieldNames = [...html.matchAll(/\sname="([^"]+)"/g)].map(
       (match) => match[1],
@@ -68,8 +68,8 @@ describe("M24 legal, source, and correction workflow pages", () => {
 
     expect(html).toContain('action="/corrections/request"');
     expect(html).toContain('method="post"');
-    expect(html).toContain("不发送邮件、不写入数据库、不暴露 secrets");
-    expect(html).toContain("提交本地 stub 请求");
+    expect(html).toContain("不要提交证件号码、完整住址");
+    expect(html).toContain("提交纠错请求");
     expect(fieldNames).toEqual(
       expect.arrayContaining([
         "requestType",
@@ -93,44 +93,65 @@ describe("M24 legal, source, and correction workflow pages", () => {
   });
 
   it("redirects correction submissions without echoing submitted description", async () => {
-    const formData = new FormData();
-    formData.set("requestType", correctionRequestTypes[0].value);
-    formData.set("description", "please fix this private detail");
-    formData.set("acknowledgement", "understood");
-    formData.set("pageUrl", "http://localhost:3000/h1b/company/example");
+    const originalMode = process.env.LOCAL_DATA_MODE;
+    process.env.LOCAL_DATA_MODE = "fixture";
+    try {
+      const formData = new FormData();
+      formData.set("requestType", correctionRequestTypes[0].value);
+      formData.set("description", "please fix this private detail");
+      formData.set("acknowledgement", "understood");
+      formData.set("pageUrl", "http://localhost:3000/h1b/company/example");
 
-    const response = await submitCorrectionRequest(
-      new Request("http://localhost:3000/corrections/request", {
-        body: formData,
-        method: "POST",
-      }),
-    );
-    const location = response.headers.get("location") ?? "";
+      const response = await submitCorrectionRequest(
+        new Request("http://localhost:3000/corrections/request", {
+          body: formData,
+          method: "POST",
+        }),
+      );
+      const location = response.headers.get("location") ?? "";
 
-    expect(response.status).toBe(303);
-    expect(location).toContain("/corrections/received");
-    expect(location).toContain("status=received");
-    expect(location).toContain("type=data-error");
-    expect(location).not.toContain("private");
-    expect(location).not.toContain("example");
+      expect(response.status).toBe(303);
+      expect(location).toContain("/corrections/received");
+      expect(location).toContain("status=received");
+      expect(location).toContain("type=data-error");
+      expect(location).not.toContain("private");
+      expect(location).not.toContain("example");
+    } finally {
+      restoreEnvValue("LOCAL_DATA_MODE", originalMode);
+    }
   });
 
   it("rejects malformed correction submissions into a generic confirmation URL", async () => {
-    const formData = new FormData();
-    formData.set("requestType", "not-a-real-type");
-    formData.set("description", "bad request");
-    formData.set("acknowledgement", "understood");
+    const originalMode = process.env.LOCAL_DATA_MODE;
+    process.env.LOCAL_DATA_MODE = "fixture";
+    try {
+      const formData = new FormData();
+      formData.set("requestType", "not-a-real-type");
+      formData.set("description", "bad request");
+      formData.set("acknowledgement", "understood");
 
-    const response = await submitCorrectionRequest(
-      new Request("http://localhost:3000/corrections/request", {
-        body: formData,
-        method: "POST",
-      }),
-    );
+      const response = await submitCorrectionRequest(
+        new Request("http://localhost:3000/corrections/request", {
+          body: formData,
+          method: "POST",
+        }),
+      );
 
-    expect(response.status).toBe(303);
-    expect(response.headers.get("location")).toBe(
-      "http://localhost:3000/corrections/received?status=invalid",
-    );
+      expect(response.status).toBe(303);
+      expect(response.headers.get("location")).toBe(
+        "http://localhost:3000/corrections/received?status=invalid",
+      );
+    } finally {
+      restoreEnvValue("LOCAL_DATA_MODE", originalMode);
+    }
   });
 });
+
+function restoreEnvValue(key: string, value: string | undefined) {
+  if (value === undefined) {
+    delete process.env[key];
+    return;
+  }
+
+  process.env[key] = value;
+}

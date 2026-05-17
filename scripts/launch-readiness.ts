@@ -265,7 +265,7 @@ function checkDisclaimers(
   const requiredText = [
     "不构成法律、移民、税务、职业或财务建议",
     "公开数据仅供参考，不代表个案结果",
-    "法律与合规文案草案",
+    "本站只整理和解释官方公开数据",
   ];
   const missing = requiredText.filter(
     (text) => !siteConfig.includes(text) && !complianceContent.includes(text),
@@ -277,7 +277,7 @@ function checkDisclaimers(
     status: missing.length === 0 ? "pass" : "fail",
     detail:
       missing.length === 0
-        ? "Sitewide short/full disclaimers and legal draft warning are present."
+        ? "Sitewide short/full disclaimers and public compliance notice are present."
         : `Missing disclaimer text: ${missing.join(" | ")}`,
   };
 }

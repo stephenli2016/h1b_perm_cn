@@ -14,7 +14,7 @@ export default function CorrectionsPage() {
     <PageShell
       breadcrumbs={[{ href: "/", label: "首页" }, { label: "纠错" }]}
       canonicalPath="/corrections"
-      description="如果页面展示、雇主名称归并、数据解释或隐私处理存在问题，可以通过这里提交纠错线索。MVP 阶段先提供静态路径。"
+      description="如果页面展示、雇主名称归并、数据解释或隐私处理存在问题，可以通过这里提交纠错线索。"
       eyebrow="纠错"
       structuredData={buildWebPageJsonLd({
         title: "数据纠错与移除请求",
@@ -44,9 +44,7 @@ export default function CorrectionsPage() {
               <li>优先复核官方来源、字段映射和雇主名称归并规则。</li>
               <li>隐私或低样本风险优先处理，可聚合、隐藏或补充说明。</li>
               <li>不会通过纠错表单提供个人移民法律判断。</li>
-              <li>
-                生产接入前，后台处理流程和保留期限需要 owner/legal review。
-              </li>
+              <li>提交后会生成公开请求编号，页面不会回显你的说明内容。</li>
             </ul>
           </article>
         </section>
@@ -56,8 +54,9 @@ export default function CorrectionsPage() {
         <section className="rounded-lg border border-[var(--line)] bg-white p-5 shadow-sm">
           <h2 className="text-lg font-semibold">邮件备用路径</h2>
           <p className="mt-3 text-sm leading-7 text-[var(--muted)]">
-            本地 stub 不能持久保存请求。上线前或需要人工跟进时，可发送邮件至{" "}
-            {siteConfig.contactEmail}，并保留同样的最小化信息原则。
+            如果表单无法提交，或你希望补充可核验材料，可发送邮件至{" "}
+            {siteConfig.contactEmail}
+            。请继续遵守最小化信息原则，不要发送证件号码、完整住址或个人案情材料。
           </p>
           <a
             className="mt-5 inline-flex rounded-md border border-[var(--line)] px-5 py-3 text-sm font-semibold text-[var(--accent-strong)] hover:bg-slate-50 hover:text-[var(--accent-strong)]"

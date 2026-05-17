@@ -27,6 +27,12 @@ const requiredM21Routes = [
   "/tools/h1b-transfer-risk-checklist",
   "/tools/perm-restart-timeline-estimator",
 ] as const;
+const requiredP0ToolRoutes = [
+  "/tools/opt-to-h1b-timeline",
+  "/tools/stem-opt-employer-checklist",
+  "/tools/wage-negotiation-with-h1b-data",
+  "/tools/visa-bulletin-alert",
+] as const;
 const requiredM24Routes = [
   "/terms",
   "/sources",
@@ -113,6 +119,22 @@ describe("public route map", () => {
     }
   });
 
+  it("adds the P0 user-facing planning tools as indexable routes", () => {
+    const routePaths = publicRoutes.map((route) => route.path);
+
+    expect(routePaths).toEqual(
+      expect.arrayContaining([...requiredP0ToolRoutes]),
+    );
+    for (const path of requiredP0ToolRoutes) {
+      expect(publicRoutes.find((route) => route.path === path)).toMatchObject({
+        dataPage: true,
+        indexing: "indexable",
+        nav: false,
+        sitemapGroup: "tools",
+      });
+    }
+  });
+
   it("adds the M24 legal, source, and methodology routes", () => {
     const routePaths = publicRoutes.map((route) => route.path);
 
@@ -133,7 +155,7 @@ describe("public route map", () => {
 
     expect(companiesRoute).toMatchObject({
       dataPage: true,
-      indexing: "noindex-until-data",
+      indexing: "indexable",
       nav: false,
       sitemapGroup: "data-directory",
     });
@@ -194,6 +216,10 @@ describe("public route map", () => {
         "/tools/company-immigration-score",
         "/tools/h1b-transfer-risk-checklist",
         "/tools/perm-restart-timeline-estimator",
+        "/tools/opt-to-h1b-timeline",
+        "/tools/stem-opt-employer-checklist",
+        "/tools/wage-negotiation-with-h1b-data",
+        "/tools/visa-bulletin-alert",
         "/visa-bulletin",
         "/visa-bulletin/[year]/[month]",
       ]),

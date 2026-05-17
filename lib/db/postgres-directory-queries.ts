@@ -274,7 +274,9 @@ export async function searchPostgresCompanyDirectory(
 
   const rowBuilder = cloneSqlBuilder(countBuilder);
   const limitParam = rowBuilder.add(pagination.pageSize);
-  const offsetParam = rowBuilder.add((pagination.page - 1) * pagination.pageSize);
+  const offsetParam = rowBuilder.add(
+    (pagination.page - 1) * pagination.pageSize,
+  );
   const [rows, availableFilters, sourceInfo] = await Promise.all([
     queryPostgresRows<CompanyDirectoryRow>(
       `
@@ -468,9 +470,7 @@ export async function getPostgresCompanyProfileBySlug(
       continuingApprovals: sum(
         yearly.map((row) => row.uscisContinuingApprovals),
       ),
-      continuingDenials: sum(
-        yearly.map((row) => row.uscisContinuingDenials),
-      ),
+      continuingDenials: sum(yearly.map((row) => row.uscisContinuingDenials)),
     },
     fiscalYears: yearly
       .slice(0, COMPANY_PAGE_VISIBLE_LIMITS.fiscalYearRows)
@@ -642,7 +642,9 @@ async function searchPostgresDisclosureRecords(
   );
   const rowBuilder = cloneSqlBuilder(countBuilder);
   const limitParam = rowBuilder.add(pagination.pageSize);
-  const offsetParam = rowBuilder.add((pagination.page - 1) * pagination.pageSize);
+  const offsetParam = rowBuilder.add(
+    (pagination.page - 1) * pagination.pageSize,
+  );
   const [rows, availableFilters, sourceInfo] = await Promise.all([
     queryPostgresRows<DisclosureRow>(
       `
@@ -682,7 +684,9 @@ async function searchPostgresDisclosureRecords(
     dataset,
     filters: normalized.data.filters,
     pagination,
-    records: rows.map((row) => toDisclosureRecordRow(row, dataset, companyBasePath)),
+    records: rows.map((row) =>
+      toDisclosureRecordRow(row, dataset, companyBasePath),
+    ),
     availableFilters,
     sourceNames: sourceInfo.sourceNames,
     latestDataDate: sourceInfo.latestDataDate,
@@ -921,9 +925,7 @@ async function getCompanyWageDistribution(
     max: toNumber(row.max_wage),
     fiscalYears: parseNumberArray(row.fiscal_years_json),
     sampleWarningZh:
-      count < 3
-        ? "样本少于 3 条，只能作为非常粗略的公开数据参考。"
-        : undefined,
+      count < 3 ? "样本少于 3 条，只能作为非常粗略的公开数据参考。" : undefined,
   };
 }
 
@@ -1016,7 +1018,9 @@ function addDisclosureFilters(
   }
 
   if (filters.fiscalYear) {
-    builder.conditions.push(`s.fiscal_year = ${builder.add(filters.fiscalYear)}`);
+    builder.conditions.push(
+      `s.fiscal_year = ${builder.add(filters.fiscalYear)}`,
+    );
   }
 
   if (filters.state) {
@@ -1114,7 +1118,9 @@ function addCompanyDirectoryFilters(
     const locationConditions = ["b.employer_id = e.id", "b.kind = 'location'"];
 
     if (filters.state) {
-      locationConditions.push(`upper(coalesce(b.state, '')) = ${builder.add(filters.state)}`);
+      locationConditions.push(
+        `upper(coalesce(b.state, '')) = ${builder.add(filters.state)}`,
+      );
     }
 
     if (filters.city) {
@@ -1472,9 +1478,7 @@ function signalBand(score: number, lowSample: boolean) {
   return "limited_public_record";
 }
 
-function signalBandLabelZh(
-  band: CompanyImmigrationSignal["band"],
-): string {
+function signalBandLabelZh(band: CompanyImmigrationSignal["band"]): string {
   switch (band) {
     case "rich_public_record":
       return "公开记录丰富";
@@ -1533,7 +1537,9 @@ function toVisaBulletinDate(row: VisaBulletinDateRow): VisaBulletinDate {
     id: row.id,
     bulletinMonthId: row.bulletin_month_id,
     category:
-      row.category === "EB-1" || row.category === "EB-2" ? row.category : "EB-3",
+      row.category === "EB-1" || row.category === "EB-2"
+        ? row.category
+        : "EB-3",
     chargeabilityArea: "china-mainland",
     chartType:
       row.chart_type === "final_action" ? "final_action" : "dates_for_filing",
@@ -1606,11 +1612,11 @@ function normalizeDirectoryInput(
     caseStatus: caseStatus.data,
     hasActiveFilters: Boolean(
       employer.data ||
-        fiscalYear.data ||
-        state.data ||
-        city.data ||
-        jobOrSoc.data ||
-        caseStatus.data,
+      fiscalYear.data ||
+      state.data ||
+      city.data ||
+      jobOrSoc.data ||
+      caseStatus.data,
     ),
   };
 
@@ -1796,7 +1802,9 @@ function toSourceInfo(row: SourceInfoRow | undefined) {
   };
 }
 
-function parseTopCounts(value: unknown): readonly { value: string; count: number }[] {
+function parseTopCounts(
+  value: unknown,
+): readonly { value: string; count: number }[] {
   const parsed = typeof value === "string" ? JSON.parse(value) : value;
 
   if (!Array.isArray(parsed)) {

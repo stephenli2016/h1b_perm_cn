@@ -137,10 +137,9 @@ export default async function CompanyImmigrationScorePage() {
         {exampleSignal ? (
           <section className="space-y-4">
             <div>
-              <h2 className="text-xl font-semibold">Fixture 示例</h2>
+              <h2 className="text-xl font-semibold">示例信号</h2>
               <p className="mt-2 text-sm leading-6 text-[var(--muted)]">
-                以下示例来自本地数据快照公司 Brightline
-                Health，用来展示维度如何展开。示例不是排名，也不是推荐。
+                以下示例用于展示维度如何展开。示例不是排名，也不是推荐；正式阅读时应回到具体公司页和来源日期。
               </p>
             </div>
             <section className="grid gap-4 md:grid-cols-3">
@@ -173,7 +172,7 @@ export default async function CompanyImmigrationScorePage() {
               className="inline-flex text-sm font-semibold text-[var(--accent-strong)] underline-offset-4 hover:underline"
               href="/perm/company/brightline-health"
             >
-              查看 Brightline Health 公司页
+              查看示例页面
             </Link>
           </section>
         ) : null}
@@ -196,7 +195,7 @@ export default async function CompanyImmigrationScorePage() {
         </section>
 
         <SourceNote
-          latestDataLabel="方法页使用当前本地官方来源数据快照和公开查询层示例；生产数据接入后仍使用相同的谨慎解释边界。"
+          latestDataLabel="方法页使用官方来源数据快照和公开查询层示例；后续数据更新仍使用相同的谨慎解释边界。"
           names={[
             "DOL OFLC LCA / H-1B disclosure data",
             "DOL OFLC PERM disclosure data",

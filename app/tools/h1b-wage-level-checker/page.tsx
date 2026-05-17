@@ -176,7 +176,7 @@ export default async function H1BWageLevelCheckerPage({
         <SourceNote
           latestDataLabel={
             result.ok
-              ? `当前相关来源最新日期：${result.data.latestDataDate ?? "待接入真实数据"}。本页使用官方来源或本地官方来源数据快照，不使用竞争网站数据。`
+              ? `当前相关来源最新日期：${result.data.latestDataDate ?? "暂无来源日期"}。本页使用官方来源或本地官方来源数据快照，不使用竞争网站数据。`
               : "本页使用 DOL/FLAG prevailing wage 与 DOL OFLC LCA 官方来源；当前查询未能匹配到可展示记录。"
           }
           names={

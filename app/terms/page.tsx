@@ -14,11 +14,11 @@ export default function TermsPage() {
     <PageShell
       breadcrumbs={[{ href: "/", label: "首页" }, { label: "使用条款" }]}
       canonicalPath="/terms"
-      description="MVP 阶段使用条款草案，说明本站的公开数据定位、可接受使用、纠错路径和责任边界。"
+      description="说明本站的公开数据定位、可接受使用、纠错路径和责任边界。"
       eyebrow="合规"
       structuredData={buildWebPageJsonLd({
         title: "使用条款",
-        description: "MVP 阶段使用条款草案，说明本站公开数据定位和责任边界。",
+        description: "说明本站公开数据定位和责任边界。",
         path: "/terms",
       })}
       title="使用条款"
@@ -56,7 +56,7 @@ export default function TermsPage() {
             items={[
               "纠错请求应尽量提供页面 URL、字段、官方来源或简短原因。",
               "请勿提交证件号码、完整住址、移民 receipt number、雇佣合同或个人案情细节。",
-              "生产上线前，纠错后台和隐私流程需要 owner/legal review 后再启用。",
+              "本站会优先复核可核验的官方来源和隐私风险，但不会通过纠错渠道提供个案建议。",
             ]}
           />
         </section>

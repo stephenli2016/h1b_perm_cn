@@ -35,7 +35,7 @@ export default function AboutPage() {
           title="谨慎读数"
         />
         <RouteCard
-          description="MVP 不做论坛、评论、账号系统，也不收集敏感移民细节。"
+          description="不做论坛、评论或账号系统；纠错表单也会提醒用户不要提交敏感个人材料。"
           meta="隐私"
           title="最小化产品面"
         />

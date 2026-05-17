@@ -41,9 +41,9 @@ export async function generateMetadata({
     title:
       filterCount > 0 ? "PERM / 绿卡公司搜索结果" : "PERM / 绿卡公司数据库",
     description:
-      "按雇主、年份、州/城市、职位/SOC 和 case status 查询官方 PERM 公开记录样本。",
+      "查询公司 PERM 劳工认证公开记录，按雇主、职位、地点和状态理解绿卡 sponsor 历史信号。",
     path: "/perm",
-    index: false,
+    index: filterCount === 0,
     pageType: "data",
   });
 }
@@ -110,6 +110,7 @@ export default async function PermPage({ searchParams }: PermPageProps) {
   await waitForRuntimeDataRequestBoundary();
 
   const parsed = parseDirectorySearchParams(await searchParams);
+  const filterCount = activeFilterCount(parsed.values);
   const result =
     getRuntimeDataMode() === "postgres"
       ? await searchPostgresPermRecords(parsed.input)
@@ -124,7 +125,7 @@ export default async function PermPage({ searchParams }: PermPageProps) {
     <PageShell
       breadcrumbs={[{ href: "/", label: "首页" }, { label: "PERM" }]}
       canonicalPath="/perm"
-      description="按雇主、年份、地区、职位/SOC 和 case status 查看官方 PERM 公开记录样本。PERM 公开记录是职业移民信号，不等于 I-140、I-485 或绿卡结果。"
+      description="查询公司 PERM 劳工认证公开记录，按雇主、职位、地点和状态理解绿卡 sponsor 历史信号。PERM 记录不等于 I-140、I-485 或绿卡结果。"
       eyebrow={siteConfig.tagline}
       structuredData={buildWebPageJsonLd({
         title: "PERM / 绿卡公司数据库",
@@ -135,6 +136,30 @@ export default async function PermPage({ searchParams }: PermPageProps) {
       title="PERM / 绿卡公司数据库"
     >
       <div className="space-y-6">
+        <section className="grid gap-4 md:grid-cols-3">
+          <article className="rounded-lg border border-[var(--line)] bg-white p-5 shadow-sm">
+            <h2 className="text-base font-semibold">PERM 是劳工认证节点</h2>
+            <p className="mt-3 text-sm leading-6 text-[var(--muted)]">
+              PERM certified 不等于 I-140 approved，也不等于 I-485
+              可提交或绿卡获批。
+            </p>
+          </article>
+          <article className="rounded-lg border border-[var(--line)] bg-white p-5 shadow-sm">
+            <h2 className="text-base font-semibold">看职位和地点</h2>
+            <p className="mt-3 text-sm leading-6 text-[var(--muted)]">
+              PERM 围绕具体 permanent job
+              opportunity。公司总数之外，更要看职位、地点和年份。
+            </p>
+          </article>
+          <article className="rounded-lg border border-[var(--line)] bg-white p-5 shadow-sm">
+            <h2 className="text-base font-semibold">用来问政策</h2>
+            <p className="mt-3 text-sm leading-6 text-[var(--muted)]">
+              把公开记录当作向 HR
+              询问绿卡启动时间、岗位要求和律师流程的准备材料。
+            </p>
+          </article>
+        </section>
+
         <DirectoryFilterForm
           action="/perm"
           caseStatusLabels={permStatusLabels}
@@ -154,14 +179,18 @@ export default async function PermPage({ searchParams }: PermPageProps) {
                 value={result.data.pagination.totalResults}
               />
               <MetricCard
-                description="筛选 URL 默认 noindex，避免参数组合造成 SEO 垃圾页。"
-                label="索引策略"
-                value="noindex"
+                description={
+                  filterCount > 0
+                    ? "筛选结果页不收录，避免参数组合造成低价值页面。"
+                    : "PERM 入口页已开放索引；公司页按数据质量阈值判断。"
+                }
+                label="页面收录"
+                value={filterCount > 0 ? "筛选页 noindex" : "入口页 index"}
               />
               <MetricCard
                 description="来自官方公开数据导入；展示当前数据库覆盖的最新日期。"
                 label="最新数据日期"
-                value={result.data.latestDataDate ?? "待接入"}
+                value={result.data.latestDataDate ?? "暂无来源日期"}
               />
             </section>
 
@@ -196,9 +225,9 @@ export default async function PermPage({ searchParams }: PermPageProps) {
         )}
 
         <SourceNote
-              latestDataLabel={
+          latestDataLabel={
             result.ok
-              ? `当前官方公开数据最新日期：${result.data.latestDataDate ?? "待接入真实数据"}。筛选 URL 默认 noindex。`
+              ? `当前官方公开数据最新日期：${result.data.latestDataDate ?? "暂无来源日期"}。筛选结果页默认 noindex，入口页和合格公司页可被收录。`
               : undefined
           }
           names={["DOL OFLC PERM disclosure data"]}
