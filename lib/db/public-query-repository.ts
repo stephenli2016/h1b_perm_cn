@@ -1285,7 +1285,7 @@ export function createPublicQueryRepository(
       if (chargeabilityArea !== "china-mainland") {
         return failure(
           "invalid_input",
-          "当前 fixture 查询层只支持中国大陆出生 chargeability area。",
+          "当前查询层只支持中国大陆出生 chargeability area。",
           "chargeabilityArea",
         );
       }
@@ -3074,7 +3074,7 @@ function noindexDirectorySeo(filters: PublicDirectoryFilters) {
     noindex: true as const,
     noindexReasonZh: filters.hasActiveFilters
       ? "筛选组合 URL 默认 noindex，避免把低价值参数组合提交给搜索引擎。"
-      : "当前目录仍使用 fixture / 本地数据，生产数据质量达标前保持 noindex。",
+      : "当前目录仍使用本地数据快照，生产数据质量达标前保持 noindex。",
   };
 }
 

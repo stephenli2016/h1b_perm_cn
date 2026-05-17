@@ -113,7 +113,7 @@ export default async function CompanyImmigrationScorePage() {
             value="< 3 条记录"
           />
           <MetricCard
-            description="所有维度都来自官方公开数据或本地官方来源 fixture。"
+            description="所有维度都来自官方公开数据或本地官方来源数据快照。"
             label="最高分"
             value="100"
           />
@@ -139,7 +139,7 @@ export default async function CompanyImmigrationScorePage() {
             <div>
               <h2 className="text-xl font-semibold">Fixture 示例</h2>
               <p className="mt-2 text-sm leading-6 text-[var(--muted)]">
-                以下示例来自本地 fixture 公司 Brightline
+                以下示例来自本地数据快照公司 Brightline
                 Health，用来展示维度如何展开。示例不是排名，也不是推荐。
               </p>
             </div>
@@ -164,7 +164,7 @@ export default async function CompanyImmigrationScorePage() {
               />
             </section>
             <DataTable
-              caption="公开数据友好度信号 fixture 示例"
+              caption="公开数据友好度信号示例"
               columns={exampleColumns}
               getRowKey={(row) => row.key}
               rows={exampleSignal.dimensions}
@@ -196,7 +196,7 @@ export default async function CompanyImmigrationScorePage() {
         </section>
 
         <SourceNote
-          latestDataLabel="方法页使用当前本地官方来源 fixture 和公开查询层示例；生产数据接入后仍使用相同的谨慎解释边界。"
+          latestDataLabel="方法页使用当前本地官方来源数据快照和公开查询层示例；生产数据接入后仍使用相同的谨慎解释边界。"
           names={[
             "DOL OFLC LCA / H-1B disclosure data",
             "DOL OFLC PERM disclosure data",

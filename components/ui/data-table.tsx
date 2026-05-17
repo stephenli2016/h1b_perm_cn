@@ -24,7 +24,7 @@ export function DataTable<Row>({
   rows,
   getRowKey,
   emptyTitle = "暂无数据",
-  emptyDescription = "当前 fixture 中没有符合条件的记录。",
+  emptyDescription = "当前数据中没有符合条件的记录。",
 }: DataTableProps<Row>) {
   if (rows.length === 0) {
     return (

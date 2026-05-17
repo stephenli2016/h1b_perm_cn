@@ -239,7 +239,7 @@ export const contentPages = [
     checklist: [
       "先确认 SOC code 或英文职位关键词。",
       "使用实际 worksite，而不是只看公司总部。",
-      "选择对应 wage year，并留意 fixture 与生产数据日期。",
+      "选择对应 wage year，并留意页面展示的数据日期。",
       "把结果当作沟通材料，不当作法律合规结论。",
     ],
     exampleTitle: "示例读法",

@@ -160,7 +160,7 @@ export default async function PriorityDateCalculatorPage({
         <SourceNote
           latestDataLabel={
             result.ok
-              ? `当前结果使用 ${result.data.month.monthKey} Visa Bulletin fixture，来源发布日期 ${result.data.month.publishedAt}。生产发布前需要按官方页面刷新当月数据。`
+              ? `当前结果使用 ${result.data.month.monthKey} Visa Bulletin 与 USCIS filing chart 官方来源数据快照，来源发布日期 ${result.data.month.publishedAt}。`
               : "本页使用 Department of State Visa Bulletin 与 USCIS Adjustment of Status filing chart 官方来源；当前输入未能匹配到可展示记录。"
           }
           names={
@@ -200,7 +200,7 @@ export default async function PriorityDateCalculatorPage({
             {
               title: "中国职业移民排期",
               href: "/visa-bulletin",
-              description: "查看最新 fixture 月份的 EB-1、EB-2、EB-3 两张表。",
+              description: "查看最新月份的 EB-1、EB-2、EB-3 两张表。",
               meta: "排期入口",
             },
             {
@@ -413,7 +413,7 @@ function PriorityDateResult({
         <DataTable
           caption={`${payload.month.monthKey} China EB visa bulletin rows`}
           columns={bulletinColumns}
-          emptyDescription="当前月份 fixture 没有可展示的排期行。"
+          emptyDescription="当前月份没有可展示的排期行。"
           emptyTitle="暂无排期数据"
           getRowKey={(row) => row.category}
           rows={payload.rows}

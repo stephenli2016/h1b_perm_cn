@@ -283,8 +283,8 @@ export function CompanyProfile({ mode, profile }: CompanyProfileProps) {
       <section>
         <h2 className="text-xl font-semibold">雇主摘要</h2>
         <p className="mt-3 max-w-3xl text-sm leading-7 text-[var(--muted)]">
-          {profile.employer.displayName} 当前页面汇总本地 fixture 中的公开 H-1B
-          LCA、PERM 和 USCIS Employer Data Hub
+          {profile.employer.displayName} 当前页面汇总官方来源数据快照中的公开
+          H-1B LCA、PERM 和 USCIS Employer Data Hub
           信号。记录数量、职位、地点和工资分布只能说明历史公开数据形态，不代表雇主当前政策或个案结果。
         </p>
         {profile.aliases.length > 0 ? (
@@ -349,7 +349,7 @@ export function CompanyProfile({ mode, profile }: CompanyProfileProps) {
         <DataTable
           caption={`${profile.employer.displayName} 年度公开记录摘要`}
           columns={fiscalYearColumns}
-          emptyDescription="当前公司没有可汇总的 H-1B 或 PERM fixture 记录。"
+          emptyDescription="当前公司没有可汇总的 H-1B 或 PERM 公开记录。"
           emptyTitle="暂无年度摘要"
           getRowKey={(row) => String(row.fiscalYear)}
           rows={profile.fiscalYears}
@@ -363,7 +363,7 @@ export function CompanyProfile({ mode, profile }: CompanyProfileProps) {
         <DataTable
           caption={`${profile.employer.displayName} H-1B LCA 最近记录`}
           columns={h1bRecentColumns}
-          emptyDescription="当前 fixture 中没有该公司的 H-1B LCA 记录；这不代表雇主一定没有或未来不会有相关记录。"
+          emptyDescription="当前数据快照中没有该公司的 H-1B LCA 记录；这不代表雇主一定没有或未来不会有相关记录。"
           emptyTitle="暂无 H-1B LCA 记录"
           getRowKey={(row) => row.id}
           rows={profile.h1bRecentRecords}
@@ -434,7 +434,7 @@ export function CompanyProfile({ mode, profile }: CompanyProfileProps) {
         <DataTable
           caption={`${profile.employer.displayName} PERM timeline 与状态`}
           columns={permTimelineColumns}
-          emptyDescription="当前 fixture 中没有该公司的 PERM 记录；这不代表雇主一定没有或未来不会有相关记录。"
+          emptyDescription="当前数据快照中没有该公司的 PERM 记录；这不代表雇主一定没有或未来不会有相关记录。"
           emptyTitle="暂无 PERM 记录"
           getRowKey={(row) => row.id}
           rows={profile.permTimeline}

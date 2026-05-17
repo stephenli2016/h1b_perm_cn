@@ -112,7 +112,7 @@ export const COMPANY_IMMIGRATION_SIGNAL_DIMENSIONS: readonly DimensionDefinition
       labelZh: "工资上下文",
       maxScore: 16,
       descriptionZh:
-        "是否存在 H-1B 工资样本，以及能否与本地 prevailing wage fixture 建立公开数据背景对照。",
+        "是否存在 H-1B 工资样本，以及能否与 prevailing wage 官方来源数据建立公开背景对照。",
     },
   ];
 
@@ -344,7 +344,7 @@ function buildWageContextDimension(
     score,
     evidenceZh: [
       `H-1B 工资样本：${wageRecords.length} 条`,
-      `可对照 PWD fixture 背景：${matchedPwdContextCount} 条`,
+      `可对照 PWD 官方来源背景：${matchedPwdContextCount} 条`,
     ],
     explanationZh:
       "工资上下文只说明公开工资字段是否足够做背景对照，不判断工资、职位或 petition 是否合规。",
