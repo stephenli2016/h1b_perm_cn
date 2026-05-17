@@ -9,7 +9,7 @@ import { ErrorState } from "@/components/ui/feedback-state";
 import { MetricCard } from "@/components/ui/metric-card";
 import { RelatedLinks } from "@/components/ui/related-links";
 import type { PublicVisaBulletinPriorityDatePayload } from "@/lib/db/public-query-repository";
-import { publicQueryRepository } from "@/lib/db/public-query-repository";
+import { getRuntimePublicQueryRepository } from "@/lib/db/runtime-public-query-repository";
 import type { RawSearchParams } from "@/lib/directory-search";
 import {
   chargeabilityAreaLabelZh,
@@ -71,7 +71,8 @@ const bulletinColumns: DataTableColumn<VisaBulletinRow>[] = [
 export default async function PriorityDateCalculatorPage({
   searchParams,
 }: PriorityDateCalculatorPageProps) {
-  const months = publicQueryRepository.listVisaBulletinMonths();
+  const repo = await getRuntimePublicQueryRepository();
+  const months = repo.listVisaBulletinMonths();
   const latestMonthKey = months[0]?.monthKey;
   const parsed = parsePriorityDateSearchParams(await searchParams);
   const formValues = priorityDateValuesWithDefaults(
@@ -84,8 +85,7 @@ export default async function PriorityDateCalculatorPage({
         ...defaultPriorityDateExample,
         monthKey: latestMonthKey,
       };
-  const result =
-    publicQueryRepository.checkVisaBulletinPriorityDate(lookupInput);
+  const result = repo.checkVisaBulletinPriorityDate(lookupInput);
   const resultLabel = parsed.hasSubmittedValues ? "查询结果" : "示例结果";
 
   return (
@@ -241,7 +241,7 @@ function PriorityDateForm({
   months,
   values,
 }: {
-  months: ReturnType<typeof publicQueryRepository.listVisaBulletinMonths>;
+  months: PublicVisaBulletinPriorityDatePayload["month"][];
   values: Required<ReturnType<typeof priorityDateValuesWithDefaults>>;
 }) {
   return (

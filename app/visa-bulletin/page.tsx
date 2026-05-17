@@ -7,19 +7,23 @@ import { DataTable, type DataTableColumn } from "@/components/ui/data-table";
 import { DisclaimerBox } from "@/components/ui/disclaimer-box";
 import { EmptyState } from "@/components/ui/empty-state";
 import { MetricCard } from "@/components/ui/metric-card";
-import {
-  getLatestVisaBulletinMonth,
-  listVisaBulletinRows,
-} from "@/lib/db/local-repository";
+import type { PublicVisaBulletinDatesPayload } from "@/lib/db/public-query-repository";
+import { getRuntimePublicQueryRepository } from "@/lib/db/runtime-public-query-repository";
 import { buildDatasetJsonLd } from "@/lib/seo/json-ld";
 import { buildRouteSeoMetadata } from "@/lib/seo/metadata";
 
 export const metadata: Metadata = buildRouteSeoMetadata("/visa-bulletin");
 
-export default function VisaBulletinPage() {
-  const latestMonth = getLatestVisaBulletinMonth();
-  const rows = latestMonth ? listVisaBulletinRows(latestMonth.monthKey) : [];
-  const tableColumns: DataTableColumn<(typeof rows)[number]>[] = [
+type VisaBulletinRow = PublicVisaBulletinDatesPayload["rows"][number];
+
+export default async function VisaBulletinPage() {
+  const repo = await getRuntimePublicQueryRepository();
+  const latestMonth = repo.listVisaBulletinMonths()[0];
+  const result = latestMonth
+    ? repo.getVisaBulletinDates({ monthKey: latestMonth.monthKey })
+    : undefined;
+  const rows = result?.ok ? result.data.rows : [];
+  const tableColumns: DataTableColumn<VisaBulletinRow>[] = [
     {
       key: "category",
       header: "类别",

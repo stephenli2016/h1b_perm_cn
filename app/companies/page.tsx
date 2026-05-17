@@ -11,7 +11,7 @@ import { DisclaimerBox } from "@/components/ui/disclaimer-box";
 import { ErrorState } from "@/components/ui/feedback-state";
 import { MetricCard } from "@/components/ui/metric-card";
 import type { PublicCompanyDirectoryResult } from "@/lib/db/public-query-repository";
-import { publicQueryRepository } from "@/lib/db/public-query-repository";
+import { getRuntimePublicQueryRepository } from "@/lib/db/runtime-public-query-repository";
 import {
   activeFilterCount,
   combinedStatusLabels,
@@ -111,9 +111,10 @@ const companyColumns: DataTableColumn<PublicCompanyDirectoryResult>[] = [
 export default async function CompaniesPage({
   searchParams,
 }: CompaniesPageProps) {
+  const repo = await getRuntimePublicQueryRepository();
   const parsed = parseDirectorySearchParams(await searchParams);
-  const result = publicQueryRepository.searchCompanyDirectory(parsed.input);
-  const filterOptions = publicQueryRepository.searchCompanyDirectory({
+  const result = repo.searchCompanyDirectory(parsed.input);
+  const filterOptions = repo.searchCompanyDirectory({
     pageSize: 1,
   });
   const availableFilters = filterOptions.ok

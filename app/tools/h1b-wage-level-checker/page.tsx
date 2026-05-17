@@ -12,7 +12,7 @@ import type {
   PublicH1BWageLevelCheckPayload,
   PublicWageLevelRow,
 } from "@/lib/db/public-query-repository";
-import { publicQueryRepository } from "@/lib/db/public-query-repository";
+import { getRuntimePublicQueryRepository } from "@/lib/db/runtime-public-query-repository";
 import type { RawSearchParams } from "@/lib/directory-search";
 import {
   defaultWageLevelExample,
@@ -94,12 +94,13 @@ const relatedCompanyColumns: DataTableColumn<RelatedCompanyRow>[] = [
 export default async function H1BWageLevelCheckerPage({
   searchParams,
 }: H1BWageLevelCheckerPageProps) {
+  const repo = await getRuntimePublicQueryRepository();
   const parsed = parseWageLevelSearchParams(await searchParams);
   const formValues = wageLevelValuesWithDefaults(parsed.values);
   const lookupInput = parsed.hasSubmittedValues
     ? parsed.input
     : defaultWageLevelExample;
-  const result = publicQueryRepository.checkH1BWageLevel(lookupInput);
+  const result = repo.checkH1BWageLevel(lookupInput);
   const resultLabel = parsed.hasSubmittedValues ? "查询结果" : "示例结果";
 
   return (

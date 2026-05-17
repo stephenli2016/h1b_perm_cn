@@ -20,6 +20,9 @@ Required placeholders are already in `.env.example`:
 ```bash
 LOCAL_DATA_MODE=fixture
 DATABASE_URL=postgresql://postgres:postgres@localhost:5432/visaradar_cn
+DATABASE_POOL_MAX=3
+DATABASE_SSL=
+DATABASE_FIXTURE_CACHE_TTL_MS=300000
 SUPABASE_URL=https://example.supabase.co
 SUPABASE_ANON_KEY=replace-with-supabase-anon-key
 SUPABASE_SERVICE_ROLE_KEY=replace-with-service-role-key-server-only
@@ -27,8 +30,10 @@ SUPABASE_SERVICE_ROLE_KEY=replace-with-service-role-key-server-only
 
 Rules:
 
-- Keep `LOCAL_DATA_MODE=fixture` for local work until a production repository
-  layer is introduced.
+- Keep `LOCAL_DATA_MODE=fixture` for local work and preview deploys that should
+  use checked-in data.
+- Set `LOCAL_DATA_MODE=postgres` only after the Supabase schema exists and
+  `DATABASE_URL` is configured server-side.
 - Store real production values only in the deployment platform or local
   uncommitted `.env.local`.
 - Never add `NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY`.
@@ -103,9 +108,12 @@ M26 intentionally keeps the direct browser Data API closed:
   exists.
 
 Production pages should query the database from server-side code using
-`DATABASE_URL` or a server-only Supabase service role key. If a later milestone
-introduces browser-side Supabase reads, add narrow grants and table-specific RLS
-policies in the same migration.
+`DATABASE_URL`. The runtime repository supports `LOCAL_DATA_MODE=postgres`,
+`LOCAL_DATA_MODE=supabase`, or `LOCAL_DATA_MODE=database`; all three load from
+the server-only Postgres connection and keep browser code away from
+`DATABASE_URL` and service-role credentials. If a later milestone introduces
+browser-side Supabase reads, add narrow grants and table-specific RLS policies
+in the same migration.
 
 If views are added later, use `security_invoker = true` on Postgres 15+ or keep
 views in an unexposed schema/revoke public access. Avoid `security definer`
@@ -167,12 +175,16 @@ Run:
 ```bash
 pnpm db:validate
 pnpm db:production:validate
+pnpm db:runtime:smoke
 pnpm test
 ```
 
 `pnpm db:validate` verifies local SQLite fixture migrations. `pnpm
 db:production:validate` checks the production SQL file for required tables,
 indexes, RLS coverage, placeholder env vars, and obvious public-access mistakes.
+`pnpm db:runtime:smoke` skips in fixture mode, and validates schema connectivity
+plus public-data row counts when `LOCAL_DATA_MODE=postgres` and `DATABASE_URL`
+are set.
 
 ## Owner Action Needed Later
 

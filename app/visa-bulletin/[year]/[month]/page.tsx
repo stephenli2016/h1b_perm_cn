@@ -8,7 +8,7 @@ import { DataTable, type DataTableColumn } from "@/components/ui/data-table";
 import { DisclaimerBox } from "@/components/ui/disclaimer-box";
 import { MetricCard } from "@/components/ui/metric-card";
 import type { PublicVisaBulletinDatesPayload } from "@/lib/db/public-query-repository";
-import { publicQueryRepository } from "@/lib/db/public-query-repository";
+import { getRuntimePublicQueryRepository } from "@/lib/db/runtime-public-query-repository";
 import { chartTypeLabelZh, formatVisaCutoff } from "@/lib/priority-date-tool";
 import { buildDatasetJsonLd } from "@/lib/seo/json-ld";
 import { buildNoIndexSeoMetadata, buildSeoMetadata } from "@/lib/seo/metadata";
@@ -24,8 +24,10 @@ type VisaBulletinMonthRow = PublicVisaBulletinDatesPayload["rows"][number];
 
 export const dynamicParams = true;
 
-export function generateStaticParams() {
-  return publicQueryRepository.listVisaBulletinMonths().map((month) => ({
+export async function generateStaticParams() {
+  const repo = await getRuntimePublicQueryRepository();
+
+  return repo.listVisaBulletinMonths().map((month) => ({
     year: String(month.bulletinYear),
     month: String(month.bulletinMonth).padStart(2, "0"),
   }));
@@ -34,11 +36,10 @@ export function generateStaticParams() {
 export async function generateMetadata({
   params,
 }: VisaBulletinMonthPageProps): Promise<Metadata> {
+  const repo = await getRuntimePublicQueryRepository();
   const { year, month } = await params;
   const monthKey = toMonthKey(year, month);
-  const result = monthKey
-    ? publicQueryRepository.getVisaBulletinDates({ monthKey })
-    : undefined;
+  const result = monthKey ? repo.getVisaBulletinDates({ monthKey }) : undefined;
 
   if (!result?.ok) {
     return buildNoIndexSeoMetadata({
@@ -59,6 +60,7 @@ export async function generateMetadata({
 export default async function VisaBulletinMonthPage({
   params,
 }: VisaBulletinMonthPageProps) {
+  const repo = await getRuntimePublicQueryRepository();
   const { year, month } = await params;
   const monthKey = toMonthKey(year, month);
 
@@ -66,7 +68,7 @@ export default async function VisaBulletinMonthPage({
     notFound();
   }
 
-  const result = publicQueryRepository.getVisaBulletinDates({ monthKey });
+  const result = repo.getVisaBulletinDates({ monthKey });
 
   if (!result.ok) {
     notFound();

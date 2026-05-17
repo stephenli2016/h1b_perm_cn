@@ -51,6 +51,13 @@ Required for all environments:
 Required later when production database reads are enabled:
 
 - `DATABASE_URL`
+- `DATABASE_POOL_MAX` optional; default `3`
+- `DATABASE_SSL` optional; leave blank for SSL auto-detection, set `disable` only for local non-SSL Postgres
+- `DATABASE_FIXTURE_CACHE_TTL_MS` optional; default `300000`
+
+Supabase project metadata placeholders, needed only for later Supabase API/admin
+workflows:
+
 - `SUPABASE_URL`
 - `SUPABASE_ANON_KEY`
 - `SUPABASE_SERVICE_ROLE_KEY`
@@ -68,12 +75,17 @@ Optional analytics, webmaster, and monitoring variables:
 
 Suggested environment values before public launch:
 
-| Variable                    | Preview                           | Production private test   | Production public launch      |
-| --------------------------- | --------------------------------- | ------------------------- | ----------------------------- |
-| `NEXT_PUBLIC_SITE_URL`      | Vercel preview URL or staging URL | Production URL            | Production URL                |
-| `LOCAL_DATA_MODE`           | `fixture`                         | `fixture` until DB import | `fixture` until DB import     |
-| `PRELAUNCH_NOINDEX`         | `true`                            | `true`                    | `false` after launch approval |
-| `SUPABASE_SERVICE_ROLE_KEY` | unset unless needed               | server-side secret only   | server-side secret only       |
+| Variable                    | Preview                           | Production private test    | Production public launch      |
+| --------------------------- | --------------------------------- | -------------------------- | ----------------------------- |
+| `NEXT_PUBLIC_SITE_URL`      | Vercel preview URL or staging URL | Production URL             | Production URL                |
+| `LOCAL_DATA_MODE`           | `fixture`                         | `postgres` after DB import | `postgres` after DB import    |
+| `PRELAUNCH_NOINDEX`         | `true`                            | `true`                     | `false` after launch approval |
+| `SUPABASE_SERVICE_ROLE_KEY` | unset unless needed               | server-side secret only    | server-side secret only       |
+
+For Supabase on Vercel, prefer the Supabase pooled Postgres connection string
+for `DATABASE_URL`, stored only as a server-side Vercel environment variable.
+The app's public pages read through server-side Postgres queries, not the
+browser Data API.
 
 Never expose `SUPABASE_SERVICE_ROLE_KEY` through a `NEXT_PUBLIC_` variable.
 

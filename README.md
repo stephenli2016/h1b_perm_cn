@@ -20,6 +20,7 @@ pnpm test
 pnpm build
 pnpm deploy:validate
 pnpm data:update:dry-run
+pnpm db:runtime:smoke
 ```
 
 ## Environment
@@ -37,3 +38,10 @@ production DNS without owner approval.
 M29 scheduled update automation lives in `docs/SCHEDULED_DATA_UPDATE_M29.md`.
 The GitHub Actions workflow runs in dry-run mode only: it reports official-source
 freshness and anomalies, then uploads a report artifact without publishing data.
+
+## Production Database Runtime
+
+Set `LOCAL_DATA_MODE=postgres` or `LOCAL_DATA_MODE=supabase` plus a server-only
+`DATABASE_URL` to load public pages from Supabase/Postgres. Keep
+`LOCAL_DATA_MODE=fixture` for local development and private preview deploys that
+should not depend on production data.

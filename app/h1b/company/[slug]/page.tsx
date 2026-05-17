@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 
 import { CompanyProfile } from "@/components/company/company-profile";
 import { PageShell } from "@/components/page-shell";
-import { publicQueryRepository } from "@/lib/db/public-query-repository";
+import { getRuntimePublicQueryRepository } from "@/lib/db/runtime-public-query-repository";
 import { getCompanyPageSeo } from "@/lib/seo/company-quality";
 import { buildWebPageJsonLd } from "@/lib/seo/json-ld";
 import { buildNoIndexSeoMetadata, buildSeoMetadata } from "@/lib/seo/metadata";
@@ -16,17 +16,18 @@ type CompanyPageProps = {
 
 export const dynamicParams = true;
 
-export function generateStaticParams() {
-  return publicQueryRepository
-    .listCompanyStaticSlugs("h1b")
-    .map((slug) => ({ slug }));
+export async function generateStaticParams() {
+  const repo = await getRuntimePublicQueryRepository();
+
+  return repo.listCompanyStaticSlugs("h1b").map((slug) => ({ slug }));
 }
 
 export async function generateMetadata({
   params,
 }: CompanyPageProps): Promise<Metadata> {
+  const repo = await getRuntimePublicQueryRepository();
   const { slug } = await params;
-  const result = publicQueryRepository.getCompanyProfileBySlug({ slug });
+  const result = repo.getCompanyProfileBySlug({ slug });
 
   if (!result.ok) {
     return buildNoIndexSeoMetadata({
@@ -47,8 +48,9 @@ export async function generateMetadata({
 }
 
 export default async function H1BCompanyPage({ params }: CompanyPageProps) {
+  const repo = await getRuntimePublicQueryRepository();
   const { slug } = await params;
-  const result = publicQueryRepository.getCompanyProfileBySlug({ slug });
+  const result = repo.getCompanyProfileBySlug({ slug });
 
   if (!result.ok) {
     notFound();

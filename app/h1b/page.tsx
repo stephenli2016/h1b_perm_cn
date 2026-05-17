@@ -11,7 +11,7 @@ import { DisclaimerBox } from "@/components/ui/disclaimer-box";
 import { ErrorState } from "@/components/ui/feedback-state";
 import { MetricCard } from "@/components/ui/metric-card";
 import type { PublicDisclosureRecordRow } from "@/lib/db/public-query-repository";
-import { publicQueryRepository } from "@/lib/db/public-query-repository";
+import { getRuntimePublicQueryRepository } from "@/lib/db/runtime-public-query-repository";
 import {
   activeFilterCount,
   formatCurrency,
@@ -103,9 +103,10 @@ const h1bColumns: DataTableColumn<PublicDisclosureRecordRow>[] = [
 ];
 
 export default async function H1BPage({ searchParams }: H1BPageProps) {
+  const repo = await getRuntimePublicQueryRepository();
   const parsed = parseDirectorySearchParams(await searchParams);
-  const result = publicQueryRepository.searchH1BRecords(parsed.input);
-  const filterOptions = publicQueryRepository.searchH1BRecords({
+  const result = repo.searchH1BRecords(parsed.input);
+  const filterOptions = repo.searchH1BRecords({
     pageSize: 1,
   });
   const availableFilters = filterOptions.ok
