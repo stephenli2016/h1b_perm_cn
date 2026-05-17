@@ -114,6 +114,7 @@ class UscisH1BEmployerParseResult:
     records_seen: int
     records_inserted: int
     duplicate_records: int
+    invalid_records: int
     records: tuple[NormalizedUscisH1BEmployerRecord, ...]
 
 
@@ -141,17 +142,23 @@ def parse_uscis_h1b_employer_file(
     fiscal_year: int | None = None,
 ) -> UscisH1BEmployerParseResult:
     input_path = Path(path)
-    raw_rows = list(read_uscis_h1b_employer_rows(input_path))
     seen_fingerprints: set[str] = set()
     normalized_records: list[NormalizedUscisH1BEmployerRecord] = []
     duplicates = 0
+    invalid_records = 0
+    records_seen = 0
 
-    for raw_row in raw_rows:
-        record = normalize_uscis_h1b_employer_row(
-            raw_row,
-            source_file_id=source_file_id,
-            fallback_fiscal_year=fiscal_year,
-        )
+    for raw_row in read_uscis_h1b_employer_rows(input_path):
+        records_seen += 1
+        try:
+            record = normalize_uscis_h1b_employer_row(
+                raw_row,
+                source_file_id=source_file_id,
+                fallback_fiscal_year=fiscal_year,
+            )
+        except ValueError:
+            invalid_records += 1
+            continue
         if record.source_record_fingerprint in seen_fingerprints:
             duplicates += 1
             continue
@@ -162,9 +169,10 @@ def parse_uscis_h1b_employer_file(
     return UscisH1BEmployerParseResult(
         source_file_id=source_file_id,
         input_path=str(input_path),
-        records_seen=len(raw_rows),
+        records_seen=records_seen,
         records_inserted=len(normalized_records),
         duplicate_records=duplicates,
+        invalid_records=invalid_records,
         records=tuple(normalized_records),
     )
 

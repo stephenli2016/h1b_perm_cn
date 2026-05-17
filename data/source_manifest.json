@@ -6,7 +6,7 @@
     {
       "id": "oflc_lca_fy2026_q2",
       "source_name": "DOL OFLC LCA Disclosure Data",
-      "official_url": "https://www.dol.gov/sites/dolgov/files/ETA/oflc/pdfs/LCA_Dislclosure_Data_FY2026_Q2.xlsx",
+      "official_url": "https://www.dol.gov/media/LCA_Dislclosure_Data_FY2026_Q2.xlsx",
       "fiscal_year": 2026,
       "quarter": "Q2",
       "expected_file_type": "xlsx",
@@ -45,7 +45,7 @@
     {
       "id": "oflc_perm_fy2024_new_form",
       "source_name": "DOL OFLC PERM Disclosure Data — Revised ETA-9089 New Form",
-      "official_url": "https://www.dol.gov/sites/dolgov/files/ETA/oflc/pdfs/PERM_Disclosure_Data_New_Form_FY2024.xlsx",
+      "official_url": "https://www.dol.gov/sites/dolgov/files/ETA/oflc/pdfs/PERM_Disclosure_Data_New_Form_FY2024_Q4.xlsx",
       "fiscal_year": 2024,
       "quarter": null,
       "expected_file_type": "xlsx",
@@ -58,14 +58,14 @@
     {
       "id": "oflc_pwd_fy2026_q2",
       "source_name": "DOL OFLC Prevailing Wage Disclosure Data",
-      "official_url": "https://www.dol.gov/sites/dolgov/files/ETA/oflc/pdfs/PW_Disclosure_Data_FY2026_Q2.xlsx",
+      "official_url": "https://www.dol.gov/media/PW_Disclosure_Data_FY2026_Q2.xlsx",
       "fiscal_year": 2026,
       "quarter": "Q2",
       "expected_file_type": "xlsx",
       "checksum_sha256": null,
       "downloaded_path": "data/raw/oflc_pwd_fy2026_q2.xlsx",
       "fixture_path": "data/fixtures/raw/oflc_pwd_fy2026_q2.csv",
-      "parser_name": "oflc_pwd_disclosure",
+      "parser_name": "oflc_pwd_case_disclosure",
       "required": true
     },
     {
@@ -110,7 +110,7 @@
     {
       "id": "uscis_h1b_employer_data_fy2023",
       "source_name": "USCIS H-1B Employer Data Hub Files",
-      "official_url": "https://www.uscis.gov/archive/h-1b-employer-data-hub-files",
+      "official_url": "https://www.uscis.gov/sites/default/files/document/data/h1b_datahubexport-2023.csv",
       "fiscal_year": 2023,
       "quarter": null,
       "expected_file_type": "csv",
@@ -162,7 +162,7 @@
     {
       "id": "uscis_filing_chart_2026_04",
       "source_name": "USCIS Adjustment of Status Filing Charts from the Visa Bulletin",
-      "official_url": "https://www.uscis.gov/green-card/green-card-processes-and-procedures/visa-availability-priority-dates/adjustment-of-status-filing-charts-from-the-visa-bulletin",
+      "official_url": "https://www.uscis.gov/green-card/green-card-processes-and-procedures/visa-availability-priority-dates/when-to-file-your-adjustment-of-status-application-for-family-sponsored-or-employment-based-123",
       "fiscal_year": 2026,
       "quarter": null,
       "expected_file_type": "html",
@@ -175,7 +175,7 @@
     {
       "id": "uscis_filing_chart_2026_05",
       "source_name": "USCIS Adjustment of Status Filing Charts from the Visa Bulletin",
-      "official_url": "https://www.uscis.gov/green-card/green-card-processes-and-procedures/visa-availability-priority-dates/adjustment-of-status-filing-charts-from-the-visa-bulletin",
+      "official_url": "https://www.uscis.gov/green-card/green-card-processes-and-procedures/visa-availability-priority-dates/when-to-file-your-adjustment-of-status-application-for-family-sponsored-or-employment-based-124",
       "fiscal_year": 2026,
       "quarter": null,
       "expected_file_type": "html",
@@ -188,7 +188,7 @@
     {
       "id": "uscis_filing_chart_2026_06",
       "source_name": "USCIS Adjustment of Status Filing Charts from the Visa Bulletin",
-      "official_url": "https://www.uscis.gov/green-card/green-card-processes-and-procedures/visa-availability-priority-dates/adjustment-of-status-filing-charts-from-the-visa-bulletin",
+      "official_url": "https://www.uscis.gov/green-card/green-card-processes-and-procedures/visa-availability-priority-dates/when-to-file-your-adjustment-of-status-application-for-family-sponsored-or-employment-based-125",
       "fiscal_year": 2026,
       "quarter": null,
       "expected_file_type": "html",

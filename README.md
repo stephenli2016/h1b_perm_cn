@@ -21,6 +21,7 @@ pnpm build
 pnpm deploy:validate
 pnpm data:update:dry-run
 pnpm db:runtime:smoke
+pnpm production:data:prepare
 ```
 
 ## Environment
@@ -45,3 +46,7 @@ Set `LOCAL_DATA_MODE=postgres` or `LOCAL_DATA_MODE=supabase` plus a server-only
 `DATABASE_URL` to load public pages from Supabase/Postgres. Keep
 `LOCAL_DATA_MODE=fixture` for local development and private preview deploys that
 should not depend on production data.
+
+Official-data import preparation lives in `docs/OFFICIAL_DATA_IMPORT_PREP.md`.
+Generated raw downloads and Postgres import CSVs stay local and are not
+committed.

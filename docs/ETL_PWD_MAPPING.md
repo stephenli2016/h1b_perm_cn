@@ -16,8 +16,14 @@ Only official DOL/FLAG data is allowed as an input. Competitor databases, forums
 The M07 parser supports:
 
 - OFLC PWD disclosure fixtures/downloads in CSV or XLSX-compatible tabular layouts.
-- FLAG OFLC wage ZIP downloads when the archive contains at least one CSV member.
+- FLAG OFLC wage ZIP downloads, including the official layout with
+  `Geography.csv`, `oes_soc_occs.csv`, `ALC_Export.csv`, and `EDC_Export.csv`.
 - Local fixture fallback through `data/source_manifest.json` when network access is unavailable.
+
+For production import, `pwd_records` is treated as a wage lookup table. The DOL
+PWD case disclosure Excel remains in the source manifest and is downloaded for
+audit coverage, but the production `pwd_records` CSV is generated from the FLAG
+wage ZIP.
 
 Commands:
 

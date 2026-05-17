@@ -96,6 +96,25 @@ class VisaBulletinParserTests(unittest.TestCase):
         self.assertEqual(result.selection.month_key, "2026-07")
         self.assertEqual(result.selection.employment_based_chart, "dates_for_filing")
 
+    def test_uscis_filing_chart_reads_realistic_table_caption(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            path = Path(tmp_dir) / "caption.html"
+            path.write_text(
+                "<h1>When to File: May 2026</h1>"
+                "<table><caption>Final Action Dates for Employment-Based Adjustment of Status Applications</caption>"
+                "<tr><th>Employment- Based</th><th>CHINA-mainland born</th></tr>"
+                "<tr><th>1st</th><td>01APR23</td></tr></table>",
+                encoding="utf-8",
+            )
+
+            result = parse_uscis_filing_chart_file(
+                path,
+                source_file_id="caption",
+            )
+
+        self.assertEqual(result.selection.month_key, "2026-05")
+        self.assertEqual(result.selection.employment_based_chart, "final_action")
+
     def test_writes_jsonl_outputs(self) -> None:
         visa_result = parse_visa_bulletin_file(
             "data/fixtures/raw/dos_visa_bulletin_2026_06.html",

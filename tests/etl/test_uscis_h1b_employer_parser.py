@@ -26,6 +26,7 @@ class UscisH1BEmployerParserTests(unittest.TestCase):
         self.assertEqual(result.records_seen, 3)
         self.assertEqual(result.records_inserted, 3)
         self.assertEqual(result.duplicate_records, 0)
+        self.assertEqual(result.invalid_records, 0)
 
         first = result.records[0]
         self.assertEqual(first.fiscal_year, 2023)
@@ -99,6 +100,27 @@ class UscisH1BEmployerParserTests(unittest.TestCase):
         self.assertEqual(result.records_seen, 2)
         self.assertEqual(result.records_inserted, 1)
         self.assertEqual(result.duplicate_records, 1)
+        self.assertEqual(result.invalid_records, 0)
+
+    def test_skips_official_rows_without_employer_name(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            csv_path = Path(tmp_dir) / "missing-employer.csv"
+            csv_path.write_text(
+                "Fiscal Year,Employer,City,State,Initial Approval\n"
+                "2023,,WILMINGTON,DE,1\n"
+                "2023,ACME ANALYTICS LLC,SEATTLE,WA,4\n",
+                encoding="utf-8",
+            )
+
+            result = parse_uscis_h1b_employer_file(
+                csv_path,
+                source_file_id="official_source",
+            )
+
+        self.assertEqual(result.records_seen, 2)
+        self.assertEqual(result.records_inserted, 1)
+        self.assertEqual(result.invalid_records, 1)
+        self.assertEqual(result.records[0].raw_employer_name, "ACME ANALYTICS LLC")
 
     def test_summarizes_by_employer_and_fiscal_year_without_rate_claims(self) -> None:
         records = parse_uscis_h1b_employer_file(

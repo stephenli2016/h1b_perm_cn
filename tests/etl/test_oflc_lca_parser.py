@@ -85,6 +85,8 @@ class OflcLcaParserTests(unittest.TestCase):
                 "EMPLOYER_FEIN": "12-3456789",
                 "ATTORNEY_EMAIL": "lawyer@example.com",
                 "EMPLOYER_ADDRESS1": "1 Private Street",
+                "EMPLOYER_POC_FIRST_NAME": "Jane",
+                "PREPARER_LAST_NAME": "Smith",
                 "WORKSITE_CITY": "Seattle",
                 "DECISION_DATE": "2025-10-20",
             },
@@ -96,6 +98,8 @@ class OflcLcaParserTests(unittest.TestCase):
         self.assertNotIn("EMPLOYER_FEIN", record.raw_record_json)
         self.assertNotIn("ATTORNEY_EMAIL", record.raw_record_json)
         self.assertNotIn("EMPLOYER_ADDRESS1", record.raw_record_json)
+        self.assertNotIn("EMPLOYER_POC_FIRST_NAME", record.raw_record_json)
+        self.assertNotIn("PREPARER_LAST_NAME", record.raw_record_json)
         self.assertEqual(record.raw_record_json["WORKSITE_CITY"], "Seattle")
 
     def test_reads_minimal_xlsx_layout(self) -> None:
@@ -106,6 +110,7 @@ class OflcLcaParserTests(unittest.TestCase):
                 [
                     ["CASE_NUMBER", "EMPLOYER_NAME", "WAGE_RATE_OF_PAY_FROM", "WAGE_UNIT_OF_PAY", "DECISION_DATE"],
                     ["I-200-26001-000001", "ACME ANALYTICS LLC", "100000", "Year", "2025-10-20"],
+                    [None, None, None, None, None],
                 ],
             )
 
@@ -113,6 +118,7 @@ class OflcLcaParserTests(unittest.TestCase):
             result = parse_lca_file(xlsx_path, source_file_id="xlsx_source", fiscal_year=2026)
 
         self.assertEqual(rows[0]["CASE_NUMBER"], "I-200-26001-000001")
+        self.assertEqual(len(rows), 1)
         self.assertEqual(result.records_inserted, 1)
         self.assertEqual(result.records[0].annualized_wage_from, 100000)
 
@@ -136,7 +142,7 @@ class OflcLcaParserTests(unittest.TestCase):
         self.assertEqual(payloads[1]["wage_unit"], "Month")
 
 
-def _write_minimal_xlsx(path: Path, rows: list[list[str]]) -> None:
+def _write_minimal_xlsx(path: Path, rows: list[list[str | None]]) -> None:
     shared_strings: list[str] = []
     shared_index: dict[str, int] = {}
 
@@ -151,7 +157,10 @@ def _write_minimal_xlsx(path: Path, rows: list[list[str]]) -> None:
         cells = []
         for column_number, value in enumerate(row, start=1):
             ref = f"{_column_name(column_number)}{row_number}"
-            cells.append(f'<c r="{ref}" t="s"><v>{string_index(value)}</v></c>')
+            if value is None:
+                cells.append(f'<c r="{ref}"/>')
+            else:
+                cells.append(f'<c r="{ref}" t="s"><v>{string_index(value)}</v></c>')
         row_xml.append(f'<row r="{row_number}">{"".join(cells)}</row>')
 
     shared_xml = "".join(f"<si><t>{value}</t></si>" for value in shared_strings)

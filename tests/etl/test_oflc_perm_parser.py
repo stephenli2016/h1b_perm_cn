@@ -76,6 +76,10 @@ class OflcPermParserTests(unittest.TestCase):
                 "BENEFICIARY_EMAIL": "private@example.com",
                 "EMPLOYER_FEIN": "12-3456789",
                 "EMPLOYER_ADDRESS1": "1 Private Street",
+                "EMP_ADDR1": "2 Private Street",
+                "EMP_POC_FIRST_NAME": "Jane",
+                "ATTY_AG_LAST_NAME": "Smith",
+                "DECL_PREP_FIRST_NAME": "Alex",
                 "WORKSITE_CITY": "Seattle",
                 "DECISION_DATE": "2026-02-15",
             },
@@ -89,9 +93,43 @@ class OflcPermParserTests(unittest.TestCase):
         self.assertNotIn("BENEFICIARY_EMAIL", record.raw_record_json)
         self.assertNotIn("EMPLOYER_FEIN", record.raw_record_json)
         self.assertNotIn("EMPLOYER_ADDRESS1", record.raw_record_json)
+        self.assertNotIn("EMP_ADDR1", record.raw_record_json)
+        self.assertNotIn("EMP_POC_FIRST_NAME", record.raw_record_json)
+        self.assertNotIn("ATTY_AG_LAST_NAME", record.raw_record_json)
+        self.assertNotIn("DECL_PREP_FIRST_NAME", record.raw_record_json)
         self.assertNotIn("FOREIGN_WORKER_INFO_BIRTH_COUNTRY", record.raw_record_json)
         self.assertEqual(record.raw_record_json["COUNTRY_OF_CITIZENSHIP"], "China")
         self.assertEqual(record.raw_record_json["WORKSITE_CITY"], "Seattle")
+
+    def test_parses_current_eta_9089_official_field_names(self) -> None:
+        record = normalize_perm_row(
+            {
+                "CASE_NUMBER": "G-100-24330-498863",
+                "CASE_STATUS": "Certified",
+                "EMP_BUSINESS_NAME": "Cargill, Incorporated",
+                "PWD_SOC_CODE": "11-1021.00",
+                "PWD_SOC_TITLE": "General and Operations Managers",
+                "JOB_TITLE": "Operations Supervisor",
+                "PRIMARY_WORKSITE_CITY": "Gainesville",
+                "PRIMARY_WORKSITE_STATE": "GA",
+                "JOB_OPP_WAGE_FROM": "72578",
+                "JOB_OPP_WAGE_TO": "90954",
+                "JOB_OPP_WAGE_PER": "Year",
+                "RECEIVED_DATE": "45621",
+                "DECISION_DATE": "46112",
+            },
+            source_file_id="real_new_form",
+            fallback_fiscal_year=2026,
+        )
+
+        self.assertEqual(record.raw_employer_name, "Cargill, Incorporated")
+        self.assertEqual(record.normalized_employer_name, "cargill")
+        self.assertEqual(record.soc_code, "11-1021.00")
+        self.assertEqual(record.soc_title, "General and Operations Managers")
+        self.assertEqual(record.worksite_city, "Gainesville")
+        self.assertEqual(record.worksite_state, "GA")
+        self.assertEqual(record.wage_offer_from, 72578)
+        self.assertEqual(record.annualized_wage_offer_to, 90954)
 
     def test_deduplicates_by_source_record_fingerprint(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:

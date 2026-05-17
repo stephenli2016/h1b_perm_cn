@@ -109,12 +109,16 @@ def parse_visa_bulletin_file(
     published_at = _parse_published_at(snapshot.text)
 
     records: list[NormalizedVisaBulletinDate] = []
+    employment_table_count = 0
     for table in snapshot.tables:
+        headers = table.rows[0] if table.rows else []
         chart_type = _chart_type_from_heading(table.heading)
+        if chart_type is None and _is_employment_table(headers):
+            employment_table_count += 1
+            chart_type = "final_action" if employment_table_count == 1 else "dates_for_filing"
         if chart_type is None:
             continue
 
-        headers = table.rows[0] if table.rows else []
         china_index = _china_column_index(headers)
         if china_index is None:
             continue
@@ -164,9 +168,14 @@ def parse_uscis_filing_chart_file(
     fallback_employment_based_chart: ChartType | None = None,
 ) -> UscisFilingChartParseResult:
     input_path = Path(path)
-    raw_text = _clean_html_text(input_path.read_text(encoding="utf-8"))
+    snapshot = _parse_html_snapshot(input_path)
+    raw_text = snapshot.text
     resolved_month = month_key or _resolve_month_key(raw_text)
-    chart = _parse_employment_based_chart(raw_text) or fallback_employment_based_chart
+    chart = (
+        _parse_employment_based_chart(raw_text)
+        or _parse_employment_based_chart_from_tables(snapshot.tables)
+        or fallback_employment_based_chart
+    )
     if chart is None:
         raise ValueError("USCIS employment-based filing chart could not be inferred")
 
@@ -296,6 +305,8 @@ class _VisaBulletinHtmlParser(HTMLParser):
         self._current_row: list[str] = []
         self._current_cell: list[str] = []
         self._current_table_heading = ""
+        self._in_caption = False
+        self._current_caption: list[str] = []
 
     def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
         if tag in {"h1", "h2", "h3", "h4"}:
@@ -305,6 +316,10 @@ class _VisaBulletinHtmlParser(HTMLParser):
             self._in_table = True
             self._current_rows = []
             self._current_table_heading = self._last_heading
+            self._current_caption = []
+        elif self._in_table and tag == "caption":
+            self._in_caption = True
+            self._current_caption = []
         elif self._in_table and tag == "tr":
             self._in_row = True
             self._current_row = []
@@ -320,6 +335,11 @@ class _VisaBulletinHtmlParser(HTMLParser):
                 self.text_chunks.append(heading)
             self._heading_tag = None
             self._heading_chunks = []
+        elif self._in_caption and tag == "caption":
+            caption = _clean_text("".join(self._current_caption))
+            if caption:
+                self.text_chunks.append(caption)
+            self._in_caption = False
         elif self._in_cell and tag in {"td", "th"}:
             self._current_row.append(_clean_text("".join(self._current_cell)))
             self._in_cell = False
@@ -328,9 +348,11 @@ class _VisaBulletinHtmlParser(HTMLParser):
                 self._current_rows.append(tuple(self._current_row))
             self._in_row = False
         elif self._in_table and tag == "table":
+            caption = _clean_text("".join(self._current_caption))
+            heading = _clean_text(f"{self._current_table_heading} {caption}")
             self.tables.append(
                 _HtmlTable(
-                    heading=self._current_table_heading,
+                    heading=heading,
                     rows=tuple(self._current_rows),
                 )
             )
@@ -339,6 +361,8 @@ class _VisaBulletinHtmlParser(HTMLParser):
     def handle_data(self, data: str) -> None:
         if self._heading_tag:
             self._heading_chunks.append(data)
+        if self._in_caption:
+            self._current_caption.append(data)
         if self._in_cell:
             self._current_cell.append(data)
         if data.strip():
@@ -373,6 +397,13 @@ def _china_column_index(headers: tuple[str, ...]) -> int | None:
     return None
 
 
+def _is_employment_table(headers: tuple[str, ...]) -> bool:
+    if not headers:
+        return False
+    normalized = headers[0].upper().replace(" ", "")
+    return "EMPLOYMENT" in normalized
+
+
 def _normalize_employment_category(value: str) -> EmploymentCategory | None:
     normalized = value.strip().upper()
     mapping: dict[str, EmploymentCategory] = {
@@ -391,17 +422,31 @@ def _normalize_employment_category(value: str) -> EmploymentCategory | None:
 
 def _parse_employment_based_chart(raw_text: str) -> ChartType | None:
     normalized = raw_text.upper()
-    employment_index = normalized.find("EMPLOYMENT-BASED")
+    employment_index = normalized.find("EMPLOYMENT-BASED PREFERENCE FILINGS")
+    if employment_index == -1:
+        employment_index = normalized.find("EMPLOYMENT-BASED")
     if employment_index == -1:
         employment_index = normalized.find("EMPLOYMENT BASED")
     if employment_index == -1:
         return None
 
-    segment = normalized[employment_index : employment_index + 500]
+    segment = normalized[employment_index : employment_index + 800]
     if "DATES FOR FILING" in segment:
         return "dates_for_filing"
-    if "FINAL ACTION DATES" in segment:
+    if "FINAL ACTION DATES" in segment or "FINAL ACTION" in segment:
         return "final_action"
+    return None
+
+
+def _parse_employment_based_chart_from_tables(
+    tables: Iterable[_HtmlTable],
+) -> ChartType | None:
+    for table in tables:
+        if not table.rows or not _is_employment_table(table.rows[0]):
+            continue
+        chart_type = _chart_type_from_heading(table.heading)
+        if chart_type is not None:
+            return chart_type
     return None
 
 

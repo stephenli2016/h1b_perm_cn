@@ -60,6 +60,7 @@ pnpm etl:visa:bulletin:fixtures
 pnpm etl:uscis:filing-chart:fixtures
 pnpm etl:companies:fixtures
 pnpm etl:test
+pnpm production:data:prepare
 ```
 
 Use `python3 -m etl.cli download --manifest data/source_manifest.json --log data/etl_runs/download.jsonl` to attempt official downloads with fixture fallback.
@@ -68,7 +69,7 @@ M05 adds `parse-lca` and `parse-lca-manifest` for OFLC LCA/H-1B disclosure files
 
 M06 adds `parse-perm` and `parse-perm-manifest` for OFLC PERM disclosure files. The fixture command writes normalized JSONL to `data/normalized/perm_records.jsonl`, which is ignored as generated local output.
 
-M07 adds `parse-pwd` and `parse-pwd-manifest` for OFLC Prevailing Wage disclosure files and FLAG OFLC wage downloads. The fixture command writes normalized JSONL to `data/normalized/pwd_records.jsonl`, which is ignored as generated local output.
+M07 adds `parse-pwd` and `parse-pwd-manifest` for OFLC Prevailing Wage fixtures and FLAG OFLC wage downloads. Production `pwd_records` are wage lookup rows from the FLAG wage ZIP; DOL PWD case disclosure files remain source-file audit inputs until a separate case-disclosure table is added. The fixture command writes normalized JSONL to `data/normalized/pwd_records.jsonl`, which is ignored as generated local output.
 
 M08 adds `parse-uscis-h1b` and `parse-uscis-h1b-manifest` for USCIS H-1B Employer Data Hub CSV files and local HTML table fixtures. The fixture command writes normalized JSONL to `data/normalized/uscis_h1b_employer_records.jsonl`, which is ignored as generated local output.
 
@@ -122,6 +123,22 @@ recommended order is:
    errors.
 
 No Supabase key is required for local fixture mode.
+
+## Official Data Import Preparation
+
+Production official-data preparation lives in
+`docs/OFFICIAL_DATA_IMPORT_PREP.md`.
+
+Run:
+
+```bash
+pnpm production:data:prepare
+```
+
+The command converts normalized ETL JSONL outputs into a local Postgres import
+package under `data/production/postgres_import/`, including table CSV files,
+`load_order.sql`, and a review report. The generated package is gitignored and
+must be reviewed before any Supabase/Postgres import.
 
 ## M29 Scheduled Data Update Dry Run
 

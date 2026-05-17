@@ -147,6 +147,42 @@ class OflcPwdParserTests(unittest.TestCase):
         self.assertEqual(result.records[0].effective_year, 2026)
         self.assertEqual(result.records[0].wage_level_2, 108900)
 
+    def test_reads_official_flag_wage_zip_layout(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            zip_path = Path(tmp_dir) / "flag-wages.zip"
+            with zipfile.ZipFile(zip_path, "w") as archive:
+                archive.writestr(
+                    "OFLC_Wages_2025-26/Geography.csv",
+                    "Area,AreaName,StateAb,State,CountyTownName\n"
+                    "42660,Seattle-Tacoma-Bellevue WA,WA,Washington,King County\n",
+                )
+                archive.writestr(
+                    "OFLC_Wages_2025-26/oes_soc_occs.csv",
+                    "soccode,Title,Description\n"
+                    "15-1252,Software Developers,Build software\n",
+                )
+                archive.writestr(
+                    "OFLC_Wages_2025-26/ALC_Export.csv",
+                    "Area,SocCode,GeoLvl,Level1,Level2,Level3,Level4,Average,Label\n"
+                    "42660,15-1252,1,41.54,52.36,63.17,73.99,63.02,\n",
+                )
+
+            rows = list(read_pwd_rows(zip_path))
+            result = parse_pwd_file(
+                zip_path,
+                source_file_id="flag_zip_source",
+                effective_year=2026,
+                data_series="DOL FLAG OFLC Wage Data Downloads",
+            )
+
+        self.assertEqual(rows[0]["SOC_CODE"], "15-1252")
+        self.assertEqual(rows[0]["SOC_TITLE"], "Software Developers")
+        self.assertEqual(rows[0]["AREA_NAME"], "Seattle-Tacoma-Bellevue WA")
+        self.assertEqual(rows[0]["STATE"], "WA")
+        self.assertEqual(result.records_inserted, 1)
+        self.assertEqual(result.records[0].wage_unit, "Hour")
+        self.assertEqual(result.records[0].wage_level_4, 73.99)
+
     def test_writes_jsonl_output(self) -> None:
         result = parse_pwd_file(
             "data/fixtures/raw/flag_oews_wage_2025_2026.csv",

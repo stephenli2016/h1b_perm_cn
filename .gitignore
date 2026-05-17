@@ -14,6 +14,8 @@ __pycache__/
 *.pyc
 data/raw/*
 !data/raw/.gitkeep
+data/production/*
+!data/production/.gitkeep
 data/etl_runs/*.jsonl
 !data/etl_runs/.gitkeep
 data/normalized/*

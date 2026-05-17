@@ -36,6 +36,8 @@ FIELD_ALIASES = {
         "EMPLOYER NAME",
         "EMPLOYER_BUSINESS_NAME",
         "EMPLOYER BUSINESS NAME",
+        "EMP_BUSINESS_NAME",
+        "EMP BUSINESS NAME",
     ],
     "fiscal_year": ["FISCAL_YEAR", "FISCAL YEAR"],
     "job_title": [
@@ -51,6 +53,8 @@ FIELD_ALIASES = {
         "SOC",
         "SOC_OCCUPATION_CODE",
         "SOC OCCUPATION CODE",
+        "PWD_SOC_CODE",
+        "PWD SOC CODE",
     ],
     "soc_title": [
         "SOC_TITLE",
@@ -58,6 +62,8 @@ FIELD_ALIASES = {
         "SOC_NAME",
         "SOC_OCCUPATION_TITLE",
         "SOC OCCUPATION TITLE",
+        "PWD_SOC_TITLE",
+        "PWD SOC TITLE",
     ],
     "worksite_city": [
         "WORKSITE_CITY",
@@ -65,6 +71,8 @@ FIELD_ALIASES = {
         "PLACE_OF_EMPLOYMENT_CITY",
         "PLACE OF EMPLOYMENT CITY",
         "JOB_INFO_WORK_CITY",
+        "PRIMARY_WORKSITE_CITY",
+        "PRIMARY WORKSITE CITY",
     ],
     "worksite_state": [
         "WORKSITE_STATE",
@@ -72,6 +80,8 @@ FIELD_ALIASES = {
         "PLACE_OF_EMPLOYMENT_STATE",
         "PLACE OF EMPLOYMENT STATE",
         "JOB_INFO_WORK_STATE",
+        "PRIMARY_WORKSITE_STATE",
+        "PRIMARY WORKSITE STATE",
     ],
     "wage_offer_from": [
         "WAGE_OFFER_FROM",
@@ -79,6 +89,8 @@ FIELD_ALIASES = {
         "WAGE_OFFER_FROM_9089",
         "OFFERED_WAGE_FROM",
         "OFFERED WAGE FROM",
+        "JOB_OPP_WAGE_FROM",
+        "JOB OPP WAGE FROM",
     ],
     "wage_offer_to": [
         "WAGE_OFFER_TO",
@@ -86,6 +98,8 @@ FIELD_ALIASES = {
         "WAGE_OFFER_TO_9089",
         "OFFERED_WAGE_TO",
         "OFFERED WAGE TO",
+        "JOB_OPP_WAGE_TO",
+        "JOB OPP WAGE TO",
     ],
     "wage_unit": [
         "WAGE_UNIT",
@@ -94,6 +108,8 @@ FIELD_ALIASES = {
         "WAGE_OFFER_UNIT_OF_PAY_9089",
         "OFFERED_WAGE_UNIT",
         "OFFERED WAGE UNIT",
+        "JOB_OPP_WAGE_PER",
+        "JOB OPP WAGE PER",
     ],
     "priority_date": ["PRIORITY_DATE", "PRIORITY DATE"],
     "received_date": [
@@ -176,12 +192,13 @@ def parse_perm_file(
     fiscal_year: int | None = None,
 ) -> PermParseResult:
     input_path = Path(path)
-    raw_rows = list(read_tabular_rows(input_path))
     seen_fingerprints: set[str] = set()
     normalized_records: list[NormalizedPermRecord] = []
     duplicates = 0
+    records_seen = 0
 
-    for raw_row in raw_rows:
+    for raw_row in read_tabular_rows(input_path):
+        records_seen += 1
         record = normalize_perm_row(
             raw_row,
             source_file_id=source_file_id,
@@ -197,7 +214,7 @@ def parse_perm_file(
     return PermParseResult(
         source_file_id=source_file_id,
         input_path=str(input_path),
-        records_seen=len(raw_rows),
+        records_seen=records_seen,
         records_inserted=len(normalized_records),
         duplicate_records=duplicates,
         records=tuple(normalized_records),

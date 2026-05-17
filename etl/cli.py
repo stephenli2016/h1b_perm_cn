@@ -28,6 +28,7 @@ from etl.parsers.visa_bulletin import (
     write_uscis_filing_chart_jsonl,
     write_visa_bulletin_jsonl,
 )
+from etl.production_import import prepare_postgres_import_package
 from etl.run_log import append_run_log, create_run_id, record_from_download_result
 
 
@@ -152,6 +153,24 @@ def main(argv: Sequence[str] | None = None) -> int:
     build_company_candidates_parser.add_argument("--output", required=True)
     build_company_candidates_parser.add_argument("--recent-years", type=int, default=5)
     build_company_candidates_parser.add_argument("--limit", type=int, default=2000)
+
+    prepare_postgres_import_parser = subparsers.add_parser(
+        "prepare-postgres-import"
+    )
+    prepare_postgres_import_parser.add_argument(
+        "--manifest",
+        default="data/source_manifest.json",
+    )
+    prepare_postgres_import_parser.add_argument(
+        "--normalized-dir",
+        default="data/normalized",
+    )
+    prepare_postgres_import_parser.add_argument("--repo-root", default=".")
+    prepare_postgres_import_parser.add_argument("--output-dir", required=True)
+    prepare_postgres_import_parser.add_argument(
+        "--fail-on-anomaly",
+        action="store_true",
+    )
 
     args = parser.parse_args(argv)
 
@@ -447,6 +466,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                         "records_seen": result.records_seen,
                         "records_inserted": result.records_inserted,
                         "duplicate_records": result.duplicate_records,
+                        "invalid_records": result.invalid_records,
                         "records_written": written,
                     },
                     ensure_ascii=False,
@@ -489,6 +509,9 @@ def main(argv: Sequence[str] | None = None) -> int:
                         "duplicate_records": sum(
                             result.duplicate_records for result in parse_results
                         ),
+                        "invalid_records": sum(
+                            result.invalid_records for result in parse_results
+                        ),
                         "records_written": written,
                         "sources": [
                             {
@@ -497,6 +520,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                                 "records_seen": result.records_seen,
                                 "records_inserted": result.records_inserted,
                                 "duplicate_records": result.duplicate_records,
+                                "invalid_records": result.invalid_records,
                             }
                             for result in parse_results
                         ],
@@ -695,6 +719,28 @@ def main(argv: Sequence[str] | None = None) -> int:
                 )
             )
             return 0
+
+        if args.command == "prepare-postgres-import":
+            package = prepare_postgres_import_package(
+                manifest_path=args.manifest,
+                normalized_dir=args.normalized_dir,
+                output_dir=args.output_dir,
+                repo_root=args.repo_root,
+            )
+            print(
+                json.dumps(
+                    {
+                        "output_dir": package.output_dir,
+                        "table_counts": package.table_counts,
+                        "anomalies": package.anomalies,
+                        "load_order_sql": package.load_order_sql,
+                        "report_path": package.report_path,
+                    },
+                    ensure_ascii=False,
+                    indent=2,
+                )
+            )
+            return 1 if args.fail_on_anomaly and package.anomalies else 0
 
     except (ManifestError, FileNotFoundError, OSError) as exc:
         print(json.dumps({"error": str(exc)}, ensure_ascii=False, indent=2))

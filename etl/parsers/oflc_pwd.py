@@ -134,12 +134,13 @@ def parse_pwd_file(
     data_series: str | None = None,
 ) -> PwdParseResult:
     input_path = Path(path)
-    raw_rows = list(read_pwd_rows(input_path))
     seen_fingerprints: set[str] = set()
     normalized_records: list[NormalizedPwdRecord] = []
     duplicates = 0
+    records_seen = 0
 
-    for raw_row in raw_rows:
+    for raw_row in read_pwd_rows(input_path):
+        records_seen += 1
         record = normalize_pwd_row(
             raw_row,
             source_file_id=source_file_id,
@@ -156,7 +157,7 @@ def parse_pwd_file(
     return PwdParseResult(
         source_file_id=source_file_id,
         input_path=str(input_path),
-        records_seen=len(raw_rows),
+        records_seen=records_seen,
         records_inserted=len(normalized_records),
         duplicate_records=duplicates,
         records=tuple(normalized_records),
@@ -348,6 +349,10 @@ def read_pwd_rows(path: Path | str) -> Iterable[dict[str, object]]:
         return
 
     with zipfile.ZipFile(input_path) as archive:
+        if _looks_like_flag_wage_zip(archive):
+            yield from _read_flag_wage_zip_rows(archive)
+            return
+
         csv_name = _first_csv_member(archive)
         with archive.open(csv_name) as binary_handle:
             text_handle = TextIOWrapper(binary_handle, encoding="utf-8-sig", newline="")
@@ -392,6 +397,91 @@ def _first_csv_member(archive: zipfile.ZipFile) -> str:
         if name.lower().endswith(".csv"):
             return name
     raise ValueError("zip file does not contain a CSV wage data file")
+
+
+def _looks_like_flag_wage_zip(archive: zipfile.ZipFile) -> bool:
+    names = {name.rsplit("/", 1)[-1].lower() for name in archive.namelist()}
+    return {"geography.csv", "oes_soc_occs.csv"} <= names and (
+        "alc_export.csv" in names or "edc_export.csv" in names
+    )
+
+
+def _read_flag_wage_zip_rows(archive: zipfile.ZipFile) -> Iterable[dict[str, object]]:
+    geography = _read_flag_geography(archive)
+    soc_titles = _read_flag_soc_titles(archive)
+
+    for member_name in archive.namelist():
+        basename = member_name.rsplit("/", 1)[-1].lower()
+        if basename not in {"alc_export.csv", "edc_export.csv"}:
+            continue
+
+        with archive.open(member_name) as binary_handle:
+            text_handle = TextIOWrapper(binary_handle, encoding="utf-8-sig", newline="")
+            reader = csv.DictReader(text_handle)
+            for row in reader:
+                area = _clean_cell(row.get("Area"))
+                soc_code = _clean_cell(row.get("SocCode"))
+                if not area or not soc_code:
+                    continue
+
+                geo = geography.get(area, {})
+                yield {
+                    "SOURCE_RECORD_ID": ":".join(
+                        [
+                            member_name,
+                            area,
+                            soc_code,
+                            _clean_cell(row.get("GeoLvl")) or "",
+                        ]
+                    ),
+                    "DATA_SERIES": f"FLAG wage {member_name.rsplit('/', 1)[-1]}",
+                    "SOC_CODE": soc_code,
+                    "SOC_TITLE": soc_titles.get(soc_code),
+                    "AREA_NAME": geo.get("area_name"),
+                    "STATE": geo.get("state"),
+                    "WAGE_LEVEL_1": row.get("Level1"),
+                    "WAGE_LEVEL_2": row.get("Level2"),
+                    "WAGE_LEVEL_3": row.get("Level3"),
+                    "WAGE_LEVEL_4": row.get("Level4"),
+                    "WAGE_UNIT": "Hour",
+                }
+
+
+def _read_flag_geography(archive: zipfile.ZipFile) -> dict[str, dict[str, str | None]]:
+    geography_member = _member_named(archive, "geography.csv")
+    geography: dict[str, dict[str, str | None]] = {}
+    with archive.open(geography_member) as binary_handle:
+        text_handle = TextIOWrapper(binary_handle, encoding="utf-8-sig", newline="")
+        reader = csv.DictReader(text_handle)
+        for row in reader:
+            area = _clean_cell(row.get("Area"))
+            if area:
+                geography[area] = {
+                    "area_name": _clean_cell(row.get("AreaName")),
+                    "state": _clean_cell(row.get("StateAb")),
+                }
+    return geography
+
+
+def _read_flag_soc_titles(archive: zipfile.ZipFile) -> dict[str, str | None]:
+    soc_member = _member_named(archive, "oes_soc_occs.csv")
+    soc_titles: dict[str, str | None] = {}
+    with archive.open(soc_member) as binary_handle:
+        text_handle = TextIOWrapper(binary_handle, encoding="utf-8-sig", newline="")
+        reader = csv.DictReader(text_handle)
+        for row in reader:
+            soc_code = _clean_cell(row.get("soccode"))
+            if soc_code:
+                soc_titles[soc_code] = _clean_cell(row.get("Title"))
+    return soc_titles
+
+
+def _member_named(archive: zipfile.ZipFile, basename: str) -> str:
+    target = basename.lower()
+    for name in archive.namelist():
+        if name.rsplit("/", 1)[-1].lower() == target:
+            return name
+    raise ValueError(f"zip file does not contain {basename}")
 
 
 def _get(row: dict[str, str | None], candidates: list[str]) -> str | None:

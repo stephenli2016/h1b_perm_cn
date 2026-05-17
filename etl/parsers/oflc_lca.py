@@ -69,12 +69,16 @@ FIELD_ALIASES = {
 PII_KEY_PATTERNS = (
     "ALIEN",
     "ATTORNEY",
+    "ATTY",
     "BENEFICIARY",
     "CONTACT",
+    "DECLPREP",
     "EMAIL",
     "FEIN",
     "FOREIGNWORKER",
     "PHONE",
+    "POC",
+    "PREPARER",
     "SSN",
     "TAXID",
     "WORKER",
@@ -144,12 +148,13 @@ def parse_lca_file(
     fiscal_year: int | None = None,
 ) -> LcaParseResult:
     input_path = Path(path)
-    raw_rows = list(read_tabular_rows(input_path))
     seen_fingerprints: set[str] = set()
     normalized_records: list[NormalizedLcaRecord] = []
     duplicates = 0
+    records_seen = 0
 
-    for raw_row in raw_rows:
+    for raw_row in read_tabular_rows(input_path):
+        records_seen += 1
         record = normalize_lca_row(
             raw_row,
             source_file_id=source_file_id,
@@ -165,7 +170,7 @@ def parse_lca_file(
     return LcaParseResult(
         source_file_id=source_file_id,
         input_path=str(input_path),
-        records_seen=len(raw_rows),
+        records_seen=records_seen,
         records_inserted=len(normalized_records),
         duplicate_records=duplicates,
         records=tuple(normalized_records),
@@ -272,7 +277,7 @@ def sanitize_raw_row(raw_row: dict[str, str | None]) -> dict[str, str | None]:
             continue
         if any(pattern in compact_key for pattern in PII_KEY_PATTERNS if pattern != "SSN"):
             continue
-        if "ADDRESS" in compact_key and "WORKSITE" not in compact_key:
+        if ("ADDRESS" in compact_key or "ADDR" in compact_key) and "WORKSITE" not in compact_key:
             continue
         sanitized[key] = value
 
@@ -363,7 +368,11 @@ def normalize_employer_name(value: object) -> str | None:
         return None
 
     normalized = re.sub(r"[^\w\s&-]", " ", text.upper())
-    normalized = re.sub(r"\b(L\.?L\.?C\.?|INC\.?|CORP\.?|CORPORATION|CO\.?|LTD\.?)\b", " ", normalized)
+    normalized = re.sub(
+        r"\b(L\.?L\.?C\.?|INC\.?|INCORPORATED|CORP\.?|CORPORATION|CO\.?|COMPANY|LTD\.?|LIMITED)\b",
+        " ",
+        normalized,
+    )
     return re.sub(r"\s+", " ", normalized).strip().lower() or None
 
 
@@ -414,24 +423,35 @@ def _read_xlsx_rows(path: Path) -> Iterable[dict[str, object]]:
     with zipfile.ZipFile(path) as archive:
         shared_strings = _read_shared_strings(archive)
         worksheet_name = _first_worksheet_name(archive)
-        worksheet = ElementTree.fromstring(archive.read(worksheet_name))
+        with archive.open(worksheet_name) as worksheet:
+            headers: list[str] | None = None
+            for _, row_element in ElementTree.iterparse(worksheet, events=("end",)):
+                if _local_name(row_element.tag) != "row":
+                    continue
 
-    rows = []
-    for row_element in worksheet.findall(".//{*}sheetData/{*}row"):
-        cells: dict[int, str | None] = {}
-        for cell in row_element.findall("{*}c"):
-            reference = cell.attrib.get("r", "")
-            column_index = _column_index(reference)
-            cells[column_index] = _xlsx_cell_value(cell, shared_strings)
-        if cells:
-            rows.append([cells.get(index) for index in range(max(cells) + 1)])
+                cells: dict[int, str | None] = {}
+                for cell in row_element:
+                    if _local_name(cell.tag) != "c":
+                        continue
+                    reference = cell.attrib.get("r", "")
+                    column_index = _column_index(reference)
+                    cells[column_index] = _xlsx_cell_value(cell, shared_strings)
 
-    if not rows:
-        return
+                if cells:
+                    values = [cells.get(index) for index in range(max(cells) + 1)]
+                    if not any(_clean_cell(value) is not None for value in values):
+                        row_element.clear()
+                        continue
+                    if headers is None:
+                        headers = [_clean_cell(value) or "" for value in values]
+                    else:
+                        yield {
+                            header: values[index] if index < len(values) else None
+                            for index, header in enumerate(headers)
+                            if header
+                        }
 
-    headers = [_clean_cell(value) or "" for value in rows[0]]
-    for values in rows[1:]:
-        yield {header: values[index] if index < len(values) else None for index, header in enumerate(headers) if header}
+                row_element.clear()
 
 
 def _read_shared_strings(archive: zipfile.ZipFile) -> list[str]:
@@ -478,6 +498,10 @@ def _column_index(reference: str) -> int:
     for letter in letters:
         index = index * 26 + (ord(letter) - ord("A") + 1)
     return index - 1
+
+
+def _local_name(tag: str) -> str:
+    return tag.rsplit("}", 1)[-1]
 
 
 def _get(row: dict[str, str | None], candidates: list[str]) -> str | None:
