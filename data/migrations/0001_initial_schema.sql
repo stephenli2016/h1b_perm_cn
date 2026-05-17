@@ -382,6 +382,124 @@ CREATE TABLE IF NOT EXISTS company_page_metrics (
   generated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE IF NOT EXISTS company_yearly_immigration_stats (
+  id TEXT PRIMARY KEY,
+  employer_id TEXT NOT NULL REFERENCES employers(id) ON DELETE CASCADE,
+  fiscal_year INTEGER NOT NULL,
+  h1b_total INTEGER NOT NULL DEFAULT 0,
+  h1b_certified INTEGER NOT NULL DEFAULT 0,
+  h1b_withdrawn INTEGER NOT NULL DEFAULT 0,
+  h1b_denied INTEGER NOT NULL DEFAULT 0,
+  perm_total INTEGER NOT NULL DEFAULT 0,
+  perm_certified INTEGER NOT NULL DEFAULT 0,
+  perm_denied INTEGER NOT NULL DEFAULT 0,
+  perm_withdrawn INTEGER NOT NULL DEFAULT 0,
+  uscis_record_count INTEGER NOT NULL DEFAULT 0,
+  uscis_initial_approvals INTEGER NOT NULL DEFAULT 0,
+  uscis_initial_denials INTEGER NOT NULL DEFAULT 0,
+  uscis_continuing_approvals INTEGER NOT NULL DEFAULT 0,
+  uscis_continuing_denials INTEGER NOT NULL DEFAULT 0,
+  generated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE(employer_id, fiscal_year)
+);
+
+CREATE TABLE IF NOT EXISTS company_breakdown_stats (
+  id TEXT PRIMARY KEY,
+  employer_id TEXT NOT NULL REFERENCES employers(id) ON DELETE CASCADE,
+  kind TEXT NOT NULL,
+  label TEXT NOT NULL,
+  key TEXT NOT NULL,
+  soc_code TEXT,
+  soc_title TEXT,
+  city TEXT,
+  state TEXT,
+  h1b_count INTEGER NOT NULL DEFAULT 0,
+  perm_count INTEGER NOT NULL DEFAULT 0,
+  total_count INTEGER NOT NULL DEFAULT 0,
+  latest_fiscal_year INTEGER NOT NULL DEFAULT 0,
+  generated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS company_wage_stats (
+  id TEXT PRIMARY KEY,
+  employer_id TEXT NOT NULL UNIQUE REFERENCES employers(id) ON DELETE CASCADE,
+  record_count INTEGER NOT NULL DEFAULT 0,
+  wage_unit TEXT NOT NULL DEFAULT 'Year',
+  min_wage REAL NOT NULL DEFAULT 0,
+  p25_wage REAL NOT NULL DEFAULT 0,
+  median_wage REAL NOT NULL DEFAULT 0,
+  p75_wage REAL NOT NULL DEFAULT 0,
+  max_wage REAL NOT NULL DEFAULT 0,
+  fiscal_years_json TEXT NOT NULL DEFAULT '[]',
+  generated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS company_source_stats (
+  id TEXT PRIMARY KEY,
+  employer_id TEXT NOT NULL UNIQUE REFERENCES employers(id) ON DELETE CASCADE,
+  source_file_ids_json TEXT NOT NULL DEFAULT '[]',
+  source_names_json TEXT NOT NULL DEFAULT '[]',
+  latest_data_date TEXT,
+  generated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS company_recent_h1b_samples (
+  id TEXT PRIMARY KEY,
+  source_file_id TEXT NOT NULL REFERENCES source_files(id),
+  employer_id TEXT NOT NULL REFERENCES employers(id),
+  location_id TEXT REFERENCES locations(id),
+  source_record_id TEXT,
+  source_record_fingerprint TEXT,
+  case_number TEXT NOT NULL,
+  case_status TEXT NOT NULL,
+  raw_employer_name TEXT NOT NULL,
+  fiscal_year INTEGER NOT NULL,
+  soc_code TEXT NOT NULL,
+  soc_title TEXT NOT NULL,
+  job_title TEXT NOT NULL,
+  worksite_city TEXT NOT NULL,
+  worksite_state TEXT NOT NULL,
+  wage_rate_of_pay_from REAL NOT NULL DEFAULT 0,
+  wage_rate_of_pay_to REAL,
+  wage_unit TEXT NOT NULL DEFAULT 'Year',
+  annualized_wage_from REAL NOT NULL DEFAULT 0,
+  annualized_wage_to REAL,
+  prevailing_wage REAL NOT NULL DEFAULT 0,
+  prevailing_wage_unit TEXT NOT NULL DEFAULT 'Year',
+  wage_level TEXT,
+  full_time INTEGER NOT NULL DEFAULT 1,
+  received_date TEXT NOT NULL,
+  decision_date TEXT NOT NULL,
+  sample_rank INTEGER NOT NULL DEFAULT 0,
+  generated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS company_recent_perm_samples (
+  id TEXT PRIMARY KEY,
+  source_file_id TEXT NOT NULL REFERENCES source_files(id),
+  employer_id TEXT NOT NULL REFERENCES employers(id),
+  location_id TEXT REFERENCES locations(id),
+  source_record_id TEXT,
+  source_record_fingerprint TEXT,
+  case_number TEXT NOT NULL,
+  case_status TEXT NOT NULL,
+  raw_employer_name TEXT NOT NULL,
+  fiscal_year INTEGER NOT NULL,
+  job_title TEXT NOT NULL,
+  soc_code TEXT NOT NULL,
+  soc_title TEXT NOT NULL,
+  worksite_city TEXT NOT NULL,
+  worksite_state TEXT NOT NULL,
+  wage_offer_from REAL NOT NULL DEFAULT 0,
+  wage_offer_to REAL,
+  wage_unit TEXT NOT NULL DEFAULT 'Year',
+  priority_date TEXT,
+  received_date TEXT NOT NULL,
+  decision_date TEXT NOT NULL,
+  sample_rank INTEGER NOT NULL DEFAULT 0,
+  generated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
 CREATE TABLE IF NOT EXISTS guide_pages (
   slug TEXT PRIMARY KEY,
   title_zh TEXT NOT NULL,
@@ -503,6 +621,23 @@ CREATE INDEX IF NOT EXISTS idx_onet_job_zones_source_file_id ON onet_job_zones(s
 
 CREATE INDEX IF NOT EXISTS idx_company_page_metrics_indexable ON company_page_metrics(indexable, quality_score);
 CREATE INDEX IF NOT EXISTS idx_company_page_metrics_latest_year ON company_page_metrics(latest_fiscal_year);
+
+CREATE INDEX IF NOT EXISTS idx_company_yearly_stats_employer_year ON company_yearly_immigration_stats(employer_id, fiscal_year);
+CREATE INDEX IF NOT EXISTS idx_company_yearly_stats_fiscal_year ON company_yearly_immigration_stats(fiscal_year);
+CREATE INDEX IF NOT EXISTS idx_company_breakdown_stats_employer_kind ON company_breakdown_stats(employer_id, kind, total_count);
+CREATE INDEX IF NOT EXISTS idx_company_breakdown_stats_kind_key ON company_breakdown_stats(kind, key);
+CREATE INDEX IF NOT EXISTS idx_company_wage_stats_employer ON company_wage_stats(employer_id);
+CREATE INDEX IF NOT EXISTS idx_company_source_stats_employer ON company_source_stats(employer_id);
+CREATE INDEX IF NOT EXISTS idx_company_recent_h1b_samples_employer_rank ON company_recent_h1b_samples(employer_id, sample_rank);
+CREATE INDEX IF NOT EXISTS idx_company_recent_h1b_samples_source_file_id ON company_recent_h1b_samples(source_file_id);
+CREATE INDEX IF NOT EXISTS idx_company_recent_h1b_samples_location_id ON company_recent_h1b_samples(location_id);
+CREATE INDEX IF NOT EXISTS idx_company_recent_h1b_samples_year_status ON company_recent_h1b_samples(fiscal_year, case_status);
+CREATE INDEX IF NOT EXISTS idx_company_recent_h1b_samples_city_state ON company_recent_h1b_samples(worksite_city, worksite_state);
+CREATE INDEX IF NOT EXISTS idx_company_recent_perm_samples_employer_rank ON company_recent_perm_samples(employer_id, sample_rank);
+CREATE INDEX IF NOT EXISTS idx_company_recent_perm_samples_source_file_id ON company_recent_perm_samples(source_file_id);
+CREATE INDEX IF NOT EXISTS idx_company_recent_perm_samples_location_id ON company_recent_perm_samples(location_id);
+CREATE INDEX IF NOT EXISTS idx_company_recent_perm_samples_year_status ON company_recent_perm_samples(fiscal_year, case_status);
+CREATE INDEX IF NOT EXISTS idx_company_recent_perm_samples_city_state ON company_recent_perm_samples(worksite_city, worksite_state);
 
 CREATE INDEX IF NOT EXISTS idx_guide_pages_section_priority ON guide_pages(section, priority);
 CREATE INDEX IF NOT EXISTS idx_guide_pages_status ON guide_pages(status);

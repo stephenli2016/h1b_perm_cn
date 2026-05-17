@@ -43,6 +43,7 @@
     "production:data:parse:uscis": "python3 -m etl.cli parse-uscis-h1b-manifest --manifest data/source_manifest.json --output data/normalized/uscis_h1b_employer_records.jsonl.gz --omit-raw-record-json",
     "production:data:companies": "python3 -m etl.cli build-company-candidates --lca data/normalized/h1b_lca_records.jsonl.gz --perm data/normalized/perm_records.jsonl.gz --uscis-h1b data/normalized/uscis_h1b_employer_records.jsonl.gz --manual-aliases data/manual/employer_alias_seeds.json --employers-output data/normalized/employers.jsonl --aliases-output data/normalized/employer_aliases.jsonl --output data/normalized/company_page_candidates.jsonl",
     "production:data:prepare": "python3 -m etl.cli prepare-postgres-import --manifest data/source_manifest.json --normalized-dir data/normalized --output-dir data/production/postgres_import",
+    "production:data:aggregate": "python3 -m etl.production_aggregates --import-dir data/production/postgres_import --output-dir data/production/postgres_aggregates",
     "seo:audit": "node --no-warnings --experimental-strip-types scripts/seo-audit.ts",
     "data:freshness": "node --no-warnings --experimental-strip-types scripts/data-freshness.ts",
     "data:update:dry-run": "node --no-warnings --experimental-strip-types scripts/scheduled-data-update.ts --dry-run",

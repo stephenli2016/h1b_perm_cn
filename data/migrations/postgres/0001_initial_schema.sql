@@ -392,6 +392,124 @@ CREATE TABLE IF NOT EXISTS public.company_page_metrics (
   generated_at timestamptz NOT NULL DEFAULT now()
 );
 
+CREATE TABLE IF NOT EXISTS public.company_yearly_immigration_stats (
+  id text PRIMARY KEY,
+  employer_id text NOT NULL REFERENCES public.employers(id) ON DELETE CASCADE,
+  fiscal_year integer NOT NULL,
+  h1b_total integer NOT NULL DEFAULT 0,
+  h1b_certified integer NOT NULL DEFAULT 0,
+  h1b_withdrawn integer NOT NULL DEFAULT 0,
+  h1b_denied integer NOT NULL DEFAULT 0,
+  perm_total integer NOT NULL DEFAULT 0,
+  perm_certified integer NOT NULL DEFAULT 0,
+  perm_denied integer NOT NULL DEFAULT 0,
+  perm_withdrawn integer NOT NULL DEFAULT 0,
+  uscis_record_count integer NOT NULL DEFAULT 0,
+  uscis_initial_approvals integer NOT NULL DEFAULT 0,
+  uscis_initial_denials integer NOT NULL DEFAULT 0,
+  uscis_continuing_approvals integer NOT NULL DEFAULT 0,
+  uscis_continuing_denials integer NOT NULL DEFAULT 0,
+  generated_at timestamptz NOT NULL DEFAULT now(),
+  UNIQUE(employer_id, fiscal_year)
+);
+
+CREATE TABLE IF NOT EXISTS public.company_breakdown_stats (
+  id text PRIMARY KEY,
+  employer_id text NOT NULL REFERENCES public.employers(id) ON DELETE CASCADE,
+  kind text NOT NULL CHECK (kind IN ('job_title', 'location')),
+  label text NOT NULL,
+  key text NOT NULL,
+  soc_code text,
+  soc_title text,
+  city text,
+  state text,
+  h1b_count integer NOT NULL DEFAULT 0,
+  perm_count integer NOT NULL DEFAULT 0,
+  total_count integer NOT NULL DEFAULT 0,
+  latest_fiscal_year integer NOT NULL DEFAULT 0,
+  generated_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS public.company_wage_stats (
+  id text PRIMARY KEY,
+  employer_id text NOT NULL UNIQUE REFERENCES public.employers(id) ON DELETE CASCADE,
+  record_count integer NOT NULL DEFAULT 0,
+  wage_unit text NOT NULL DEFAULT 'Year',
+  min_wage numeric(14,2) NOT NULL DEFAULT 0,
+  p25_wage numeric(14,2) NOT NULL DEFAULT 0,
+  median_wage numeric(14,2) NOT NULL DEFAULT 0,
+  p75_wage numeric(14,2) NOT NULL DEFAULT 0,
+  max_wage numeric(14,2) NOT NULL DEFAULT 0,
+  fiscal_years_json jsonb NOT NULL DEFAULT '[]'::jsonb,
+  generated_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS public.company_source_stats (
+  id text PRIMARY KEY,
+  employer_id text NOT NULL UNIQUE REFERENCES public.employers(id) ON DELETE CASCADE,
+  source_file_ids_json jsonb NOT NULL DEFAULT '[]'::jsonb,
+  source_names_json jsonb NOT NULL DEFAULT '[]'::jsonb,
+  latest_data_date date,
+  generated_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS public.company_recent_h1b_samples (
+  id text PRIMARY KEY,
+  source_file_id text NOT NULL REFERENCES public.source_files(id),
+  employer_id text NOT NULL REFERENCES public.employers(id),
+  location_id text REFERENCES public.locations(id),
+  source_record_id text,
+  source_record_fingerprint text,
+  case_number text NOT NULL,
+  case_status text NOT NULL,
+  raw_employer_name text NOT NULL,
+  fiscal_year integer NOT NULL,
+  soc_code text NOT NULL,
+  soc_title text NOT NULL,
+  job_title text NOT NULL,
+  worksite_city text NOT NULL,
+  worksite_state text NOT NULL,
+  wage_rate_of_pay_from numeric(14,2) NOT NULL DEFAULT 0,
+  wage_rate_of_pay_to numeric(14,2),
+  wage_unit text NOT NULL DEFAULT 'Year',
+  annualized_wage_from numeric(14,2) NOT NULL DEFAULT 0,
+  annualized_wage_to numeric(14,2),
+  prevailing_wage numeric(14,2) NOT NULL DEFAULT 0,
+  prevailing_wage_unit text NOT NULL DEFAULT 'Year',
+  wage_level text,
+  full_time boolean NOT NULL DEFAULT true,
+  received_date date NOT NULL,
+  decision_date date NOT NULL,
+  sample_rank integer NOT NULL DEFAULT 0,
+  generated_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS public.company_recent_perm_samples (
+  id text PRIMARY KEY,
+  source_file_id text NOT NULL REFERENCES public.source_files(id),
+  employer_id text NOT NULL REFERENCES public.employers(id),
+  location_id text REFERENCES public.locations(id),
+  source_record_id text,
+  source_record_fingerprint text,
+  case_number text NOT NULL,
+  case_status text NOT NULL,
+  raw_employer_name text NOT NULL,
+  fiscal_year integer NOT NULL,
+  job_title text NOT NULL,
+  soc_code text NOT NULL,
+  soc_title text NOT NULL,
+  worksite_city text NOT NULL,
+  worksite_state text NOT NULL,
+  wage_offer_from numeric(14,2) NOT NULL DEFAULT 0,
+  wage_offer_to numeric(14,2),
+  wage_unit text NOT NULL DEFAULT 'Year',
+  priority_date date,
+  received_date date NOT NULL,
+  decision_date date NOT NULL,
+  sample_rank integer NOT NULL DEFAULT 0,
+  generated_at timestamptz NOT NULL DEFAULT now()
+);
+
 CREATE TABLE IF NOT EXISTS public.guide_pages (
   slug text PRIMARY KEY,
   title_zh text NOT NULL,
@@ -514,6 +632,23 @@ CREATE INDEX IF NOT EXISTS idx_onet_job_zones_source_file_id ON public.onet_job_
 CREATE INDEX IF NOT EXISTS idx_company_page_metrics_indexable ON public.company_page_metrics(indexable, quality_score);
 CREATE INDEX IF NOT EXISTS idx_company_page_metrics_latest_year ON public.company_page_metrics(latest_fiscal_year);
 
+CREATE INDEX IF NOT EXISTS idx_company_yearly_stats_employer_year ON public.company_yearly_immigration_stats(employer_id, fiscal_year);
+CREATE INDEX IF NOT EXISTS idx_company_yearly_stats_fiscal_year ON public.company_yearly_immigration_stats(fiscal_year);
+CREATE INDEX IF NOT EXISTS idx_company_breakdown_stats_employer_kind ON public.company_breakdown_stats(employer_id, kind, total_count);
+CREATE INDEX IF NOT EXISTS idx_company_breakdown_stats_kind_key ON public.company_breakdown_stats(kind, key);
+CREATE INDEX IF NOT EXISTS idx_company_wage_stats_employer ON public.company_wage_stats(employer_id);
+CREATE INDEX IF NOT EXISTS idx_company_source_stats_employer ON public.company_source_stats(employer_id);
+CREATE INDEX IF NOT EXISTS idx_company_recent_h1b_samples_employer_rank ON public.company_recent_h1b_samples(employer_id, sample_rank);
+CREATE INDEX IF NOT EXISTS idx_company_recent_h1b_samples_source_file_id ON public.company_recent_h1b_samples(source_file_id);
+CREATE INDEX IF NOT EXISTS idx_company_recent_h1b_samples_location_id ON public.company_recent_h1b_samples(location_id);
+CREATE INDEX IF NOT EXISTS idx_company_recent_h1b_samples_year_status ON public.company_recent_h1b_samples(fiscal_year, case_status);
+CREATE INDEX IF NOT EXISTS idx_company_recent_h1b_samples_city_state ON public.company_recent_h1b_samples(worksite_city, worksite_state);
+CREATE INDEX IF NOT EXISTS idx_company_recent_perm_samples_employer_rank ON public.company_recent_perm_samples(employer_id, sample_rank);
+CREATE INDEX IF NOT EXISTS idx_company_recent_perm_samples_source_file_id ON public.company_recent_perm_samples(source_file_id);
+CREATE INDEX IF NOT EXISTS idx_company_recent_perm_samples_location_id ON public.company_recent_perm_samples(location_id);
+CREATE INDEX IF NOT EXISTS idx_company_recent_perm_samples_year_status ON public.company_recent_perm_samples(fiscal_year, case_status);
+CREATE INDEX IF NOT EXISTS idx_company_recent_perm_samples_city_state ON public.company_recent_perm_samples(worksite_city, worksite_state);
+
 CREATE INDEX IF NOT EXISTS idx_guide_pages_section_priority ON public.guide_pages(section, priority);
 CREATE INDEX IF NOT EXISTS idx_guide_pages_status ON public.guide_pages(status);
 
@@ -540,6 +675,12 @@ ALTER TABLE public.naics_industries ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.onet_occupations ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.onet_job_zones ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.company_page_metrics ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.company_yearly_immigration_stats ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.company_breakdown_stats ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.company_wage_stats ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.company_source_stats ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.company_recent_h1b_samples ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.company_recent_perm_samples ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.guide_pages ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.correction_requests ENABLE ROW LEVEL SECURITY;
 

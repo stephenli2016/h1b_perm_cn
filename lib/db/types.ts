@@ -162,6 +162,62 @@ export type CompanyPageMetrics = {
   noindexReason?: string;
 };
 
+export type CompanyYearlyImmigrationStats = {
+  id: string;
+  employerId: string;
+  fiscalYear: number;
+  h1bTotal: number;
+  h1bCertified: number;
+  h1bWithdrawn: number;
+  h1bDenied: number;
+  permTotal: number;
+  permCertified: number;
+  permDenied: number;
+  permWithdrawn: number;
+  uscisRecordCount: number;
+  uscisInitialApprovals: number;
+  uscisInitialDenials: number;
+  uscisContinuingApprovals: number;
+  uscisContinuingDenials: number;
+};
+
+export type CompanyBreakdownStats = {
+  id: string;
+  employerId: string;
+  kind: "job_title" | "location";
+  label: string;
+  key: string;
+  socCode?: string;
+  socTitle?: string;
+  city?: string;
+  state?: string;
+  h1bCount: number;
+  permCount: number;
+  totalCount: number;
+  latestFiscalYear: number;
+};
+
+export type CompanyWageStats = {
+  id: string;
+  employerId: string;
+  recordCount: number;
+  wageUnit: "Year";
+  minWage: number;
+  p25Wage: number;
+  medianWage: number;
+  p75Wage: number;
+  maxWage: number;
+  fiscalYears: readonly number[];
+};
+
+export type CompanySourceStats = {
+  id: string;
+  employerId: string;
+  sourceFileIds: readonly string[];
+  sourceNames: readonly string[];
+  latestDataDate?: string;
+};
+
 export type GuidePage = {
   slug: string;
   titleZh: string;
@@ -209,6 +265,10 @@ export type FixtureData = {
   visaBulletinMonths: readonly VisaBulletinMonth[];
   visaBulletinDates: readonly VisaBulletinDate[];
   companyPageMetrics: readonly CompanyPageMetrics[];
+  companyYearlyImmigrationStats?: readonly CompanyYearlyImmigrationStats[];
+  companyBreakdownStats?: readonly CompanyBreakdownStats[];
+  companyWageStats?: readonly CompanyWageStats[];
+  companySourceStats?: readonly CompanySourceStats[];
   guidePages: readonly GuidePage[];
   correctionRequests: readonly CorrectionRequest[];
   etlRuns: readonly EtlRun[];

@@ -1,7 +1,11 @@
 import { Pool, type QueryResultRow } from "pg";
 
 import type {
+  CompanyBreakdownStats,
   CompanyPageMetrics,
+  CompanySourceStats,
+  CompanyWageStats,
+  CompanyYearlyImmigrationStats,
   Employer,
   EmployerAlias,
   EtlRun,
@@ -133,6 +137,10 @@ async function loadFreshPostgresFixtureData(): Promise<FixtureData> {
     visaBulletinMonths,
     visaBulletinDates,
     companyPageMetrics,
+    companyYearlyImmigrationStats,
+    companyBreakdownStats,
+    companyWageStats,
+    companySourceStats,
     guidePages,
     etlRuns,
   ] = await Promise.all([
@@ -149,10 +157,10 @@ async function loadFreshPostgresFixtureData(): Promise<FixtureData> {
       "select id, source_name, official_url, fiscal_year, quarter, file_type, latest_data_date from public.source_files order by id",
     ),
     queryRows<H1BLcaRecordRow>(
-      "select id, source_file_id, employer_id, location_id, source_record_id, source_record_fingerprint, case_number, case_status, raw_employer_name, fiscal_year, soc_code, soc_title, job_title, worksite_city, worksite_state, wage_rate_of_pay_from, wage_rate_of_pay_to, wage_unit, annualized_wage_from, annualized_wage_to, prevailing_wage, prevailing_wage_unit, wage_level, full_time, received_date, decision_date from public.h1b_lca_records order by decision_date desc nulls last, id",
+      "select id, source_file_id, employer_id, location_id, source_record_id, source_record_fingerprint, case_number, case_status, raw_employer_name, fiscal_year, soc_code, soc_title, job_title, worksite_city, worksite_state, wage_rate_of_pay_from, wage_rate_of_pay_to, wage_unit, annualized_wage_from, annualized_wage_to, prevailing_wage, prevailing_wage_unit, wage_level, full_time, received_date, decision_date from public.company_recent_h1b_samples order by sample_rank, id",
     ),
     queryRows<PermRecordRow>(
-      "select id, source_file_id, employer_id, location_id, source_record_id, source_record_fingerprint, case_number, case_status, raw_employer_name, fiscal_year, job_title, soc_code, soc_title, worksite_city, worksite_state, wage_offer_from, wage_offer_to, wage_unit, priority_date, received_date, decision_date from public.perm_records order by decision_date desc nulls last, id",
+      "select id, source_file_id, employer_id, location_id, source_record_id, source_record_fingerprint, case_number, case_status, raw_employer_name, fiscal_year, job_title, soc_code, soc_title, worksite_city, worksite_state, wage_offer_from, wage_offer_to, wage_unit, priority_date, received_date, decision_date from public.company_recent_perm_samples order by sample_rank, id",
     ),
     queryRows<PwdRecordRow>(
       "select id, source_file_id, location_id, source_record_id, source_record_fingerprint, data_series, effective_year, soc_code, soc_title, area_name, city, state, wage_level_1, wage_level_2, wage_level_3, wage_level_4, wage_unit from public.pwd_records order by effective_year desc, soc_code, state, city",
@@ -168,6 +176,18 @@ async function loadFreshPostgresFixtureData(): Promise<FixtureData> {
     ),
     queryRows<CompanyPageMetricsRow>(
       "select id, employer_id, lca_count_5y, perm_count_5y, uscis_record_count_5y, job_title_count, location_count, latest_fiscal_year, quality_score, indexable, noindex_reason from public.company_page_metrics order by quality_score desc, employer_id",
+    ),
+    queryRows<CompanyYearlyImmigrationStatsRow>(
+      "select id, employer_id, fiscal_year, h1b_total, h1b_certified, h1b_withdrawn, h1b_denied, perm_total, perm_certified, perm_denied, perm_withdrawn, uscis_record_count, uscis_initial_approvals, uscis_initial_denials, uscis_continuing_approvals, uscis_continuing_denials from public.company_yearly_immigration_stats order by employer_id, fiscal_year desc",
+    ),
+    queryRows<CompanyBreakdownStatsRow>(
+      "select id, employer_id, kind, label, key, soc_code, soc_title, city, state, h1b_count, perm_count, total_count, latest_fiscal_year from public.company_breakdown_stats order by employer_id, kind, total_count desc, label",
+    ),
+    queryRows<CompanyWageStatsRow>(
+      "select id, employer_id, record_count, wage_unit, min_wage, p25_wage, median_wage, p75_wage, max_wage, fiscal_years_json from public.company_wage_stats order by employer_id",
+    ),
+    queryRows<CompanySourceStatsRow>(
+      "select id, employer_id, source_file_ids_json, source_names_json, latest_data_date from public.company_source_stats order by employer_id",
     ),
     queryRows<GuidePageRow>(
       "select slug, title_zh, meta_description_zh, section, priority, status, last_reviewed_on, official_sources_json from public.guide_pages order by section, priority, slug",
@@ -191,6 +211,12 @@ async function loadFreshPostgresFixtureData(): Promise<FixtureData> {
     visaBulletinMonths: visaBulletinMonths.map(toVisaBulletinMonth),
     visaBulletinDates: visaBulletinDates.map(toVisaBulletinDate),
     companyPageMetrics: companyPageMetrics.map(toCompanyPageMetrics),
+    companyYearlyImmigrationStats: companyYearlyImmigrationStats.map(
+      toCompanyYearlyImmigrationStats,
+    ),
+    companyBreakdownStats: companyBreakdownStats.map(toCompanyBreakdownStats),
+    companyWageStats: companyWageStats.map(toCompanyWageStats),
+    companySourceStats: companySourceStats.map(toCompanySourceStats),
     guidePages: guidePages.map(toGuidePage),
     correctionRequests: [],
     etlRuns: etlRuns.map(toEtlRun),
@@ -463,6 +489,76 @@ function toCompanyPageMetrics(row: CompanyPageMetricsRow): CompanyPageMetrics {
   };
 }
 
+function toCompanyYearlyImmigrationStats(
+  row: CompanyYearlyImmigrationStatsRow,
+): CompanyYearlyImmigrationStats {
+  return {
+    id: row.id,
+    employerId: row.employer_id,
+    fiscalYear: toNumber(row.fiscal_year) ?? 0,
+    h1bTotal: toNumber(row.h1b_total) ?? 0,
+    h1bCertified: toNumber(row.h1b_certified) ?? 0,
+    h1bWithdrawn: toNumber(row.h1b_withdrawn) ?? 0,
+    h1bDenied: toNumber(row.h1b_denied) ?? 0,
+    permTotal: toNumber(row.perm_total) ?? 0,
+    permCertified: toNumber(row.perm_certified) ?? 0,
+    permDenied: toNumber(row.perm_denied) ?? 0,
+    permWithdrawn: toNumber(row.perm_withdrawn) ?? 0,
+    uscisRecordCount: toNumber(row.uscis_record_count) ?? 0,
+    uscisInitialApprovals: toNumber(row.uscis_initial_approvals) ?? 0,
+    uscisInitialDenials: toNumber(row.uscis_initial_denials) ?? 0,
+    uscisContinuingApprovals: toNumber(row.uscis_continuing_approvals) ?? 0,
+    uscisContinuingDenials: toNumber(row.uscis_continuing_denials) ?? 0,
+  };
+}
+
+function toCompanyBreakdownStats(
+  row: CompanyBreakdownStatsRow,
+): CompanyBreakdownStats {
+  return {
+    id: row.id,
+    employerId: row.employer_id,
+    kind: row.kind as CompanyBreakdownStats["kind"],
+    label: row.label,
+    key: row.key,
+    socCode: optionalString(row.soc_code),
+    socTitle: optionalString(row.soc_title),
+    city: optionalString(row.city),
+    state: optionalString(row.state),
+    h1bCount: toNumber(row.h1b_count) ?? 0,
+    permCount: toNumber(row.perm_count) ?? 0,
+    totalCount: toNumber(row.total_count) ?? 0,
+    latestFiscalYear: toNumber(row.latest_fiscal_year) ?? 0,
+  };
+}
+
+function toCompanyWageStats(row: CompanyWageStatsRow): CompanyWageStats {
+  return {
+    id: row.id,
+    employerId: row.employer_id,
+    recordCount: toNumber(row.record_count) ?? 0,
+    wageUnit: "Year",
+    minWage: toNumber(row.min_wage) ?? 0,
+    p25Wage: toNumber(row.p25_wage) ?? 0,
+    medianWage: toNumber(row.median_wage) ?? 0,
+    p75Wage: toNumber(row.p75_wage) ?? 0,
+    maxWage: toNumber(row.max_wage) ?? 0,
+    fiscalYears: parseJsonStringArray(row.fiscal_years_json)
+      .map((value) => Number(value))
+      .filter((value) => Number.isFinite(value)),
+  };
+}
+
+function toCompanySourceStats(row: CompanySourceStatsRow): CompanySourceStats {
+  return {
+    id: row.id,
+    employerId: row.employer_id,
+    sourceFileIds: parseJsonStringArray(row.source_file_ids_json),
+    sourceNames: parseJsonStringArray(row.source_names_json),
+    latestDataDate: toDateKey(row.latest_data_date),
+  };
+}
+
 function toGuidePage(row: GuidePageRow): GuidePage {
   return {
     slug: row.slug,
@@ -503,6 +599,27 @@ function toNumber(value: unknown): number | undefined {
   const numberValue = Number(value);
 
   return Number.isFinite(numberValue) ? numberValue : undefined;
+}
+
+function parseJsonStringArray(value: unknown): string[] {
+  if (Array.isArray(value)) {
+    return value
+      .map((entry) => String(entry))
+      .filter((entry) => entry.length > 0);
+  }
+
+  if (typeof value !== "string") {
+    return [];
+  }
+
+  try {
+    const parsed = JSON.parse(value) as unknown;
+    return Array.isArray(parsed)
+      ? parsed.map((entry) => String(entry)).filter((entry) => entry.length > 0)
+      : [];
+  } catch {
+    return [];
+  }
 }
 
 function toInteger(value: unknown): number | undefined {
@@ -701,6 +818,62 @@ type CompanyPageMetricsRow = QueryResultRow & {
   quality_score: string | number;
   indexable: boolean;
   noindex_reason: string | null;
+};
+
+type CompanyYearlyImmigrationStatsRow = QueryResultRow & {
+  id: string;
+  employer_id: string;
+  fiscal_year: number;
+  h1b_total: number;
+  h1b_certified: number;
+  h1b_withdrawn: number;
+  h1b_denied: number;
+  perm_total: number;
+  perm_certified: number;
+  perm_denied: number;
+  perm_withdrawn: number;
+  uscis_record_count: number;
+  uscis_initial_approvals: number;
+  uscis_initial_denials: number;
+  uscis_continuing_approvals: number;
+  uscis_continuing_denials: number;
+};
+
+type CompanyBreakdownStatsRow = QueryResultRow & {
+  id: string;
+  employer_id: string;
+  kind: string;
+  label: string;
+  key: string;
+  soc_code: string | null;
+  soc_title: string | null;
+  city: string | null;
+  state: string | null;
+  h1b_count: number;
+  perm_count: number;
+  total_count: number;
+  latest_fiscal_year: number;
+};
+
+type CompanyWageStatsRow = QueryResultRow & {
+  id: string;
+  employer_id: string;
+  record_count: number;
+  wage_unit: string;
+  min_wage: number | string;
+  p25_wage: number | string;
+  median_wage: number | string;
+  p75_wage: number | string;
+  max_wage: number | string;
+  fiscal_years_json: unknown;
+};
+
+type CompanySourceStatsRow = QueryResultRow & {
+  id: string;
+  employer_id: string;
+  source_file_ids_json: unknown;
+  source_names_json: unknown;
+  latest_data_date: string | Date | null;
 };
 
 type GuidePageRow = QueryResultRow & {

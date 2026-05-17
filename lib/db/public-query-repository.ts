@@ -19,7 +19,11 @@ import {
   type WageLevelMatchResult,
 } from "@/lib/db/local-repository";
 import type {
+  CompanyBreakdownStats,
   CompanyPageMetrics,
+  CompanySourceStats,
+  CompanyWageStats,
+  CompanyYearlyImmigrationStats,
   Employer,
   FixtureData,
   H1BLcaRecord,
@@ -33,7 +37,10 @@ import {
   COMPANY_PAGE_VISIBLE_LIMITS,
   EXPANDED_COMPANY_PAGE_TARGET,
 } from "@/lib/seo/company-page-selection";
-import type { CompanyPageMode } from "@/lib/seo/company-quality";
+import {
+  getCompanyPageSeo,
+  type CompanyPageMode,
+} from "@/lib/seo/company-quality";
 
 const DEFAULT_CACHE_TTL_MS = 5 * 60 * 1000;
 const SLUG_PATTERN = /^[a-z0-9](?:[a-z0-9-]{0,78}[a-z0-9])?$/;
@@ -524,6 +531,7 @@ export function createPublicQueryRepository(
   const cache = new Map<string, { expiresAt: number; value: unknown }>();
   let hits = 0;
   let misses = 0;
+  const hasAggregateData = hasCompanyAggregateData(data);
 
   function runCached<T>(
     namespace: string,
@@ -692,6 +700,12 @@ export function createPublicQueryRepository(
         return normalized;
       }
 
+      if (hasAggregateData) {
+        return runCached("searchCompanyDirectory", normalized.data, () =>
+          buildAggregateCompanyDirectoryPayload(normalized.data, data),
+        );
+      }
+
       return runCached("searchCompanyDirectory", normalized.data, () => {
         const allRows = [
           ...data.h1bLcaRecords
@@ -780,6 +794,10 @@ export function createPublicQueryRepository(
       mode: CompanyPageMode,
       limit = EXPANDED_COMPANY_PAGE_TARGET,
     ) {
+      if (hasAggregateData) {
+        return listAggregateCompanyStaticSlugs(data, mode, limit);
+      }
+
       return selectCompanyStaticSlugs(data, mode, limit);
     },
 
@@ -799,6 +817,10 @@ export function createPublicQueryRepository(
 
       const slug = input.slug.trim();
       return runCached("getCompanyProfileBySlug", { slug }, () => {
+        if (hasAggregateData) {
+          return buildAggregateCompanyProfilePayload(slug, data);
+        }
+
         const summary = getEmployerImmigrationSummary(slug, data);
 
         if (!summary) {
@@ -921,6 +943,38 @@ export function createPublicQueryRepository(
 
       const slug = input.slug.trim();
       return runCached("getH1BSummaryByEmployer", { slug }, () => {
+        if (hasAggregateData) {
+          const profile = buildAggregateCompanyProfilePayload(slug, data);
+          return profile.ok
+            ? success({
+                employer: profile.data.employer,
+                h1b: profile.data.h1b,
+                uscis: profile.data.uscis,
+                topJobTitles: profile.data.jobBreakdown
+                  .filter((row) => row.h1bCount > 0)
+                  .map((row) => ({
+                    jobTitle: row.label,
+                    count: row.h1bCount,
+                  })),
+                topLocations: profile.data.locationBreakdown
+                  .filter((row) => row.h1bCount > 0)
+                  .map((row) => ({
+                    location: row.label,
+                    count: row.h1bCount,
+                  })),
+                sourceNames: profile.data.sourceNames,
+                latestDataDate: profile.data.latestDataDate,
+                interpretationNoteZh:
+                  "LCA 和 USCIS Employer Data Hub 是公开数据信号，不代表个案批准、实际录用或未来 sponsor 承诺。",
+              })
+            : failure(
+                profile.error.code,
+                profile.error.messageZh,
+                profile.error.field,
+                profile.error.hintZh,
+              );
+        }
+
         const summary = getEmployerImmigrationSummary(slug, data);
 
         if (!summary) {
@@ -951,6 +1005,37 @@ export function createPublicQueryRepository(
 
       const slug = input.slug.trim();
       return runCached("getPermSummaryByEmployer", { slug }, () => {
+        if (hasAggregateData) {
+          const profile = buildAggregateCompanyProfilePayload(slug, data);
+          return profile.ok
+            ? success({
+                employer: profile.data.employer,
+                perm: profile.data.perm,
+                topJobTitles: profile.data.jobBreakdown
+                  .filter((row) => row.permCount > 0)
+                  .map((row) => ({
+                    jobTitle: row.label,
+                    count: row.permCount,
+                  })),
+                topLocations: profile.data.locationBreakdown
+                  .filter((row) => row.permCount > 0)
+                  .map((row) => ({
+                    location: row.label,
+                    count: row.permCount,
+                  })),
+                sourceNames: profile.data.sourceNames,
+                latestDataDate: profile.data.latestDataDate,
+                interpretationNoteZh:
+                  "PERM certification 是劳工认证公开记录，不等于 I-140、I-485 或绿卡获批。",
+              })
+            : failure(
+                profile.error.code,
+                profile.error.messageZh,
+                profile.error.field,
+                profile.error.hintZh,
+              );
+        }
+
         const summary = getEmployerImmigrationSummary(slug, data);
 
         if (!summary) {
@@ -1329,6 +1414,721 @@ export function createPublicQueryRepository(
 }
 
 export const publicQueryRepository = createPublicQueryRepository();
+
+function hasCompanyAggregateData(data: FixtureData) {
+  return (data.companyYearlyImmigrationStats?.length ?? 0) > 0;
+}
+
+function listAggregateCompanyStaticSlugs(
+  data: FixtureData,
+  mode: CompanyPageMode,
+  limit: number,
+) {
+  const employersById = new Map(
+    data.employers.map((employer) => [employer.id, employer]),
+  );
+
+  return [...data.companyPageMetrics]
+    .filter((metrics) => getCompanyPageSeo(metrics, mode).indexable)
+    .sort(compareAggregateMetrics)
+    .map((metrics) => employersById.get(metrics.employerId)?.slug)
+    .filter((slug): slug is string => Boolean(slug))
+    .slice(0, limit);
+}
+
+function buildAggregateCompanyProfilePayload(
+  slug: string,
+  data: FixtureData,
+): PublicQueryResult<PublicCompanyProfilePayload> {
+  const employer = getLocalEmployerBySlug(slug, data);
+
+  if (!employer) {
+    return failure(
+      "not_found",
+      "未找到对应公司的公开数据页面。",
+      "slug",
+      "请检查公司 URL，或从公司目录重新进入。",
+    );
+  }
+
+  const yearly = aggregateYearlyRowsForEmployer(employer.id, data);
+  const metrics = data.companyPageMetrics.find(
+    (candidate) => candidate.employerId === employer.id,
+  );
+
+  if (yearly.length === 0 && !metrics) {
+    return failure(
+      "not_found",
+      "未找到对应公司的聚合数据页面。",
+      "slug",
+      "请检查公司 URL，或从公司目录重新进入。",
+    );
+  }
+
+  const aliases = data.employerAliases
+    .filter((alias) => alias.employerId === employer.id)
+    .sort((left, right) => left.rawName.localeCompare(right.rawName));
+  const h1bRecentRecords = data.h1bLcaRecords
+    .filter((record) => record.employerId === employer.id)
+    .map((record) => toH1BDirectoryRow(record, data))
+    .filter((row): row is PublicDisclosureRecordRow => Boolean(row))
+    .sort(compareDirectoryRows)
+    .slice(0, COMPANY_PAGE_VISIBLE_LIMITS.h1bRecentRecords);
+  const permRecords = data.permRecords.filter(
+    (record) => record.employerId === employer.id,
+  );
+  const sourceStats = data.companySourceStats?.find(
+    (candidate) => candidate.employerId === employer.id,
+  );
+  const sourceInfo =
+    sourceStats ??
+    summarizeSourceFiles(
+      [
+        ...h1bRecentRecords.map((row) => row.sourceFileId),
+        ...permRecords.map((record) => record.sourceFileId),
+      ],
+      data,
+    );
+  const jobBreakdown = aggregateBreakdownRows(employer.id, data, "job_title");
+  const locationBreakdown = aggregateBreakdownRows(
+    employer.id,
+    data,
+    "location",
+  );
+  const wageDistribution = aggregateWageDistribution(employer.id, data);
+  const h1b = aggregateH1BSummary(yearly);
+  const perm = aggregatePermSummary(yearly);
+  const uscis = aggregateUscisSummary(yearly);
+  const indexability = metrics
+    ? getCompanyIndexabilityDecision(metrics)
+    : undefined;
+
+  return success({
+    employer,
+    aliases: aliases.map((alias) => alias.rawName),
+    metrics,
+    h1b,
+    perm,
+    uscis,
+    fiscalYears: yearly
+      .slice(0, COMPANY_PAGE_VISIBLE_LIMITS.fiscalYearRows)
+      .map((row) => ({
+        fiscalYear: row.fiscalYear,
+        h1bTotal: row.h1bTotal,
+        h1bCertified: row.h1bCertified,
+        h1bWithdrawn: row.h1bWithdrawn,
+        h1bDenied: row.h1bDenied,
+        permTotal: row.permTotal,
+        permCertified: row.permCertified,
+        permDenied: row.permDenied,
+        permWithdrawn: row.permWithdrawn,
+      })),
+    h1bRecentRecords,
+    permTimeline: buildPermTimeline(permRecords),
+    jobBreakdown,
+    locationBreakdown,
+    wageDistribution,
+    immigrationSignal: buildAggregateImmigrationSignal({
+      employer,
+      yearly,
+      aliases,
+      jobBreakdown,
+      locationBreakdown,
+      wageDistribution,
+      sourceNames: sourceInfo.sourceNames,
+      latestDataDate: sourceInfo.latestDataDate,
+    }),
+    relatedCompanies: buildAggregateRelatedEntities(employer, data),
+    relatedJobTitles: jobBreakdown.map((row) => ({
+      value: row.label,
+      count: row.totalCount,
+    })),
+    relatedLocations: locationBreakdown.map((row) => ({
+      value: row.label,
+      count: row.totalCount,
+    })),
+    sourceNames: sourceInfo.sourceNames,
+    latestDataDate: sourceInfo.latestDataDate,
+    interpretationNoteZh:
+      "公司页把 H-1B LCA、PERM 和 USCIS Employer Data Hub 公开记录的聚合结果作为历史活动信号展示，不代表个案批准、实际录用、未来 sponsor 承诺或法律意见。",
+    seo: {
+      indexable: indexability?.indexable ?? false,
+      noindex: !(indexability?.indexable ?? false),
+      qualityScore: metrics?.qualityScore ?? 0,
+      matchedThresholds: indexability?.matchedThresholds ?? [],
+      noindexReason: indexability?.noindexReason,
+      noindexReasonZh: indexability?.noindexReasonZh,
+    },
+  });
+}
+
+function buildAggregateCompanyDirectoryPayload(
+  normalized: {
+    filters: PublicDirectoryFilters;
+    page: number;
+    pageSize: number;
+  },
+  data: FixtureData,
+): PublicQueryResult<PublicCompanyDirectoryPayload> {
+  const employersById = new Map(
+    data.employers.map((employer) => [employer.id, employer]),
+  );
+  const rows: PublicCompanyDirectoryResult[] = [];
+
+  for (const metrics of data.companyPageMetrics) {
+    const employer = employersById.get(metrics.employerId);
+    if (!employer) {
+      continue;
+    }
+    const yearly = aggregateYearlyRowsForEmployer(employer.id, data);
+    if (
+      !aggregateCompanyMatchesFilters(
+        employer,
+        yearly,
+        normalized.filters,
+        data,
+      )
+    ) {
+      continue;
+    }
+    const h1bRecordCount = sum(yearly.map((row) => row.h1bTotal));
+    const permRecordCount = sum(yearly.map((row) => row.permTotal));
+    const latestFiscalYear = Math.max(
+      ...yearly.map((row) => row.fiscalYear),
+      metrics.latestFiscalYear,
+      0,
+    );
+
+    rows.push({
+      employer,
+      h1bRecordCount,
+      permRecordCount,
+      matchedRecordCount: h1bRecordCount + permRecordCount,
+      latestFiscalYear,
+      topJobTitles: aggregateBreakdownRows(employer.id, data, "job_title")
+        .map((row) => ({ value: row.label, count: row.totalCount }))
+        .slice(0, 5),
+      topLocations: aggregateBreakdownRows(employer.id, data, "location")
+        .map((row) => ({ value: row.label, count: row.totalCount }))
+        .slice(0, 5),
+      qualityScore: metrics.qualityScore,
+      indexable: metrics.indexable,
+      noindexReason: metrics.noindexReason,
+    });
+  }
+
+  rows.sort(compareCompanyDirectoryResults);
+  const paginated = paginate(rows, normalized.page, normalized.pageSize);
+  const sourceInfo = aggregateGlobalSourceInfo(data);
+
+  return success({
+    filters: normalized.filters,
+    pagination: paginated.pagination,
+    results: paginated.items,
+    availableFilters: aggregateDirectoryFilterOptions(data),
+    sourceNames: sourceInfo.sourceNames,
+    latestDataDate: sourceInfo.latestDataDate,
+    interpretationNoteZh:
+      "公司目录把 H-1B LCA 与 PERM 公开记录的聚合结果作为雇主信号合并展示，不代表个案批准、实际招聘或未来 sponsor 承诺。",
+    seo: noindexDirectorySeo(normalized.filters),
+  });
+}
+
+function aggregateCompanyMatchesFilters(
+  employer: Employer,
+  yearly: readonly CompanyYearlyImmigrationStats[],
+  filters: PublicDirectoryFilters,
+  data: FixtureData,
+) {
+  if (filters.employer) {
+    const employerQuery = normalizeEmployerName(filters.employer);
+    const aliases = data.employerAliases.filter(
+      (alias) => alias.employerId === employer.id,
+    );
+    const matched = [
+      employer.canonicalName,
+      employer.displayName,
+      employer.normalizedName,
+      ...aliases.map((alias) => alias.rawName),
+      ...aliases.map((alias) => alias.normalizedName),
+    ]
+      .map(normalizeEmployerName)
+      .some((value) => value.includes(employerQuery));
+    if (!matched) {
+      return false;
+    }
+  }
+
+  const filteredYearly = filters.fiscalYear
+    ? yearly.filter((row) => row.fiscalYear === filters.fiscalYear)
+    : yearly;
+  if (filters.fiscalYear && filteredYearly.length === 0) {
+    return false;
+  }
+
+  if (filters.caseStatus) {
+    const status = filters.caseStatus.toLowerCase();
+    const matchedStatus = filteredYearly.some((row) => {
+      if (status === "certified") {
+        return row.h1bCertified + row.permCertified > 0;
+      }
+      if (status === "withdrawn") {
+        return row.h1bWithdrawn + row.permWithdrawn > 0;
+      }
+      if (status === "denied") {
+        return row.h1bDenied + row.permDenied > 0;
+      }
+      return false;
+    });
+    if (!matchedStatus) {
+      return false;
+    }
+  }
+
+  if (filters.jobOrSoc) {
+    const jobQuery = normalizeEmployerName(filters.jobOrSoc);
+    const rawQuery = filters.jobOrSoc.toLowerCase();
+    const matchedJob = aggregateBreakdownRows(
+      employer.id,
+      data,
+      "job_title",
+    ).some((row) =>
+      [row.label, row.socTitle ?? "", row.socCode ?? ""].some((value) => {
+        return (
+          value.toLowerCase().includes(rawQuery) ||
+          normalizeEmployerName(value).includes(jobQuery)
+        );
+      }),
+    );
+    if (!matchedJob) {
+      return false;
+    }
+  }
+
+  if (filters.state || filters.city) {
+    const matchedLocation = aggregateBreakdownRows(
+      employer.id,
+      data,
+      "location",
+    ).some((row) => {
+      const stateMatched =
+        !filters.state || row.state?.toUpperCase() === filters.state;
+      const cityMatched =
+        !filters.city ||
+        normalizeLocationText(row.city ?? "").includes(
+          normalizeLocationText(filters.city),
+        );
+      return stateMatched && cityMatched;
+    });
+    if (!matchedLocation) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+function aggregateYearlyRowsForEmployer(employerId: string, data: FixtureData) {
+  return [...(data.companyYearlyImmigrationStats ?? [])]
+    .filter((row) => row.employerId === employerId)
+    .sort((left, right) => right.fiscalYear - left.fiscalYear);
+}
+
+function aggregateBreakdownRows(
+  employerId: string,
+  data: FixtureData,
+  kind: CompanyBreakdownStats["kind"],
+): PublicCompanyBreakdownRow[] {
+  return (data.companyBreakdownStats ?? [])
+    .filter((row) => row.employerId === employerId && row.kind === kind)
+    .sort(
+      (left, right) =>
+        right.totalCount - left.totalCount ||
+        right.latestFiscalYear - left.latestFiscalYear ||
+        left.label.localeCompare(right.label),
+    )
+    .slice(
+      0,
+      kind === "job_title"
+        ? COMPANY_PAGE_VISIBLE_LIMITS.jobBreakdownRows
+        : COMPANY_PAGE_VISIBLE_LIMITS.locationBreakdownRows,
+    )
+    .map((row) => ({
+      key: row.key,
+      label: row.label,
+      socCode: row.socCode,
+      socTitle: row.socTitle,
+      city: row.city,
+      state: row.state,
+      h1bCount: row.h1bCount,
+      permCount: row.permCount,
+      totalCount: row.totalCount,
+    }));
+}
+
+function aggregateWageDistribution(
+  employerId: string,
+  data: FixtureData,
+): PublicCompanyWageDistribution | undefined {
+  const row = data.companyWageStats?.find(
+    (candidate) => candidate.employerId === employerId,
+  );
+  if (!row || row.recordCount === 0) {
+    return undefined;
+  }
+
+  return {
+    count: row.recordCount,
+    wageUnit: "Year",
+    min: row.minWage,
+    p25: row.p25Wage,
+    median: row.medianWage,
+    p75: row.p75Wage,
+    max: row.maxWage,
+    fiscalYears: row.fiscalYears,
+    sampleWarningZh:
+      row.recordCount < 3
+        ? "样本少于 3 条，只能作为非常粗略的公开数据参考。"
+        : undefined,
+  };
+}
+
+function aggregateH1BSummary(
+  yearly: readonly CompanyYearlyImmigrationStats[],
+): PublicH1BSummaryPayload["h1b"] {
+  return {
+    total: sum(yearly.map((row) => row.h1bTotal)),
+    certified: sum(yearly.map((row) => row.h1bCertified)),
+    withdrawn: sum(yearly.map((row) => row.h1bWithdrawn)),
+    denied: sum(yearly.map((row) => row.h1bDenied)),
+    fiscalYears: yearly
+      .filter((row) => row.h1bTotal > 0)
+      .map((row) => row.fiscalYear),
+  };
+}
+
+function aggregatePermSummary(
+  yearly: readonly CompanyYearlyImmigrationStats[],
+): PublicPermSummaryPayload["perm"] {
+  return {
+    total: sum(yearly.map((row) => row.permTotal)),
+    certified: sum(yearly.map((row) => row.permCertified)),
+    denied: sum(yearly.map((row) => row.permDenied)),
+    withdrawn: sum(yearly.map((row) => row.permWithdrawn)),
+    fiscalYears: yearly
+      .filter((row) => row.permTotal > 0)
+      .map((row) => row.fiscalYear),
+  };
+}
+
+function aggregateUscisSummary(
+  yearly: readonly CompanyYearlyImmigrationStats[],
+): PublicH1BSummaryPayload["uscis"] {
+  return {
+    totalRecords: sum(yearly.map((row) => row.uscisRecordCount)),
+    initialApprovals: sum(yearly.map((row) => row.uscisInitialApprovals)),
+    initialDenials: sum(yearly.map((row) => row.uscisInitialDenials)),
+    continuingApprovals: sum(yearly.map((row) => row.uscisContinuingApprovals)),
+    continuingDenials: sum(yearly.map((row) => row.uscisContinuingDenials)),
+  };
+}
+
+function buildAggregateRelatedEntities(
+  employer: Employer,
+  data: FixtureData,
+): PublicRelatedEntitiesPayload["relatedEmployers"] {
+  const currentJobs = new Set(
+    aggregateBreakdownRows(employer.id, data, "job_title")
+      .map((row) => row.socCode ?? normalizeEmployerName(row.label))
+      .filter(Boolean),
+  );
+  const currentLocations = new Set(
+    aggregateBreakdownRows(employer.id, data, "location").map((row) =>
+      normalizeLocationText(row.label),
+    ),
+  );
+
+  const related: PublicRelatedEntitiesPayload["relatedEmployers"][number][] =
+    [];
+
+  for (const metrics of data.companyPageMetrics) {
+    if (metrics.employerId === employer.id) {
+      continue;
+    }
+    const candidate = data.employers.find(
+      (row) => row.id === metrics.employerId,
+    );
+    if (!candidate) {
+      continue;
+    }
+
+    const sharedSignals = new Set<string>();
+    let score = 0;
+    for (const row of aggregateBreakdownRows(candidate.id, data, "job_title")) {
+      const key = row.socCode ?? normalizeEmployerName(row.label);
+      if (currentJobs.has(key)) {
+        sharedSignals.add(
+          row.socCode ? `SOC: ${row.socCode}` : `职位: ${row.label}`,
+        );
+        score += 2;
+      }
+    }
+    for (const row of aggregateBreakdownRows(candidate.id, data, "location")) {
+      if (currentLocations.has(normalizeLocationText(row.label))) {
+        sharedSignals.add(`地点: ${row.label}`);
+        score += 1;
+      }
+    }
+
+    if (score > 0) {
+      related.push({
+        employer: candidate,
+        sharedSignals: [...sharedSignals].sort(),
+        score,
+      });
+    }
+  }
+
+  return related
+    .sort(
+      (left, right) =>
+        right.score - left.score ||
+        left.employer.displayName.localeCompare(right.employer.displayName),
+    )
+    .slice(0, 5);
+}
+
+function buildAggregateImmigrationSignal(input: {
+  employer: Employer;
+  yearly: readonly CompanyYearlyImmigrationStats[];
+  aliases: readonly { reviewStatus: string }[];
+  jobBreakdown: readonly PublicCompanyBreakdownRow[];
+  locationBreakdown: readonly PublicCompanyBreakdownRow[];
+  wageDistribution?: PublicCompanyWageDistribution;
+  sourceNames: readonly string[];
+  latestDataDate?: string;
+}): CompanyImmigrationSignal {
+  const recentRows = input.yearly.slice(0, 5);
+  const h1bTotal = sum(recentRows.map((row) => row.h1bTotal));
+  const h1bCertified = sum(recentRows.map((row) => row.h1bCertified));
+  const permTotal = sum(recentRows.map((row) => row.permTotal));
+  const permCertified = sum(recentRows.map((row) => row.permCertified));
+  const uscisRows = sum(recentRows.map((row) => row.uscisRecordCount));
+  const fiscalYears = recentRows
+    .filter((row) => row.h1bTotal + row.permTotal + row.uscisRecordCount > 0)
+    .map((row) => row.fiscalYear);
+  const hasH1B = h1bTotal + uscisRows > 0;
+  const hasPerm = permTotal > 0;
+  const dimensions = [
+    aggregateSignalDimension({
+      key: "recent_lca_activity",
+      labelZh: "近期 LCA 活动",
+      maxScore: 18,
+      score:
+        Math.min(h1bTotal * 3, 12) +
+        (h1bCertified > 0 ? 3 : 0) +
+        Math.min(uscisRows * 1.5, 3),
+      evidenceZh: [
+        `近 5 年 LCA 记录：${h1bTotal} 条`,
+        `Certified LCA：${h1bCertified} 条`,
+        `USCIS Employer Data Hub 行：${uscisRows} 条`,
+      ],
+      explanationZh:
+        "LCA 与 USCIS Employer Data Hub 只能说明公开记录中有 H-1B 相关活动，不代表 petition 批准或未来 sponsor 承诺。",
+    }),
+    aggregateSignalDimension({
+      key: "perm_activity",
+      labelZh: "PERM 活动",
+      maxScore: 18,
+      score: Math.min(permTotal * 5, 15) + (permCertified > 0 ? 3 : 0),
+      evidenceZh: [
+        `近 5 年 PERM 记录：${permTotal} 条`,
+        `Certified PERM：${permCertified} 条`,
+      ],
+      explanationZh:
+        "PERM certification 是劳工认证公开记录，不等于 I-140、I-485 或绿卡最终获批。",
+    }),
+    aggregateSignalDimension({
+      key: "repeat_filing_history",
+      labelZh: "跨年重复记录",
+      maxScore: 16,
+      score: Math.min(fiscalYears.length * 4, 12) + (hasH1B && hasPerm ? 4 : 0),
+      evidenceZh: [
+        `覆盖 fiscal years：${fiscalYears.length > 0 ? fiscalYears.map((year) => `FY${year}`).join("、") : "暂无"}`,
+        `同时有 H-1B 与 PERM 公开活动：${hasH1B && hasPerm ? "是" : "否"}`,
+      ],
+      explanationZh:
+        "跨年记录说明公开活动有一定连续性，但不能说明雇主一定会为某个候选人继续办理。",
+    }),
+    aggregateSignalDimension({
+      key: "data_consistency",
+      labelZh: "数据一致性与来源",
+      maxScore: 16,
+      score:
+        Math.min(input.sourceNames.length * 4, 8) +
+        (input.latestDataDate ? 4 : 0) +
+        Math.min(input.aliases.length, 4),
+      evidenceZh: [
+        `官方来源数：${input.sourceNames.length}`,
+        `最新数据日期：${input.latestDataDate ?? "暂无"}`,
+        `别名映射数：${input.aliases.length}`,
+      ],
+      explanationZh:
+        "来源和别名越完整，页面越容易审计；仍可能存在雇主名称拆分或合并误差。",
+    }),
+    aggregateSignalDimension({
+      key: "job_location_diversity",
+      labelZh: "职位/地点覆盖",
+      maxScore: 16,
+      score:
+        Math.min(input.jobBreakdown.length * 2, 8) +
+        Math.min(input.locationBreakdown.length * 2, 8),
+      evidenceZh: [
+        `职位/SOC 聚合项：${input.jobBreakdown.length}`,
+        `地点聚合项：${input.locationBreakdown.length}`,
+      ],
+      explanationZh:
+        "职位和地点覆盖越多，可比较背景越丰富；这不是对岗位质量或 sponsor 意愿的判断。",
+    }),
+    aggregateSignalDimension({
+      key: "wage_context",
+      labelZh: "工资上下文",
+      maxScore: 16,
+      score: input.wageDistribution
+        ? Math.min(input.wageDistribution.count * 1.5, 16)
+        : 0,
+      evidenceZh: [`H-1B 工资样本：${input.wageDistribution?.count ?? 0} 条`],
+      explanationZh:
+        "工资分布来自 H-1B LCA 公开记录的年化工资字段，只能作为公开数据背景。",
+    }),
+  ];
+  const rawScore = dimensions.reduce((total, row) => total + row.score, 0);
+  const filingRecordCount = h1bTotal + permTotal;
+  const totalPublicRecordCount = filingRecordCount + uscisRows;
+  const lowSampleFlagged = totalPublicRecordCount < 3 || filingRecordCount < 3;
+  const score = lowSampleFlagged ? Math.min(rawScore, 45) : rawScore;
+  const band = aggregateSignalBand(score, lowSampleFlagged);
+
+  return {
+    score,
+    maxScore: 100,
+    labelZh: "公开数据友好度信号",
+    band,
+    bandLabelZh: aggregateSignalBandLabelZh(band),
+    lowSample: {
+      flagged: lowSampleFlagged,
+      messageZh: lowSampleFlagged
+        ? `近 5 个 fiscal years 只有 ${filingRecordCount} 条 H-1B/PERM 公开记录、${totalPublicRecordCount} 条相关公开记录。样本太少，只能说明公开数据覆盖有限，不能推断雇主政策或个案结果。`
+        : undefined,
+    },
+    dimensions,
+    methodologyHref: "/tools/company-immigration-score",
+    interpretationNoteZh:
+      "公开数据友好度信号只衡量官方公开记录的覆盖、连续性和可解释程度，不是 H-1B、PERM、I-140、I-485 或绿卡结果的获批概率。",
+  };
+}
+
+function aggregateSignalDimension(input: {
+  key: CompanyImmigrationSignal["dimensions"][number]["key"];
+  labelZh: string;
+  maxScore: number;
+  score: number;
+  evidenceZh: readonly string[];
+  explanationZh: string;
+}): CompanyImmigrationSignal["dimensions"][number] {
+  const score = Math.max(0, Math.min(input.maxScore, Math.round(input.score)));
+  const ratio = input.maxScore === 0 ? 0 : score / input.maxScore;
+  const level = ratio >= 0.7 ? "strong" : ratio >= 0.35 ? "some" : "limited";
+
+  return {
+    key: input.key,
+    labelZh: input.labelZh,
+    maxScore: input.maxScore,
+    score,
+    level,
+    evidenceZh: input.evidenceZh,
+    explanationZh: input.explanationZh,
+  };
+}
+
+function aggregateSignalBand(
+  score: number,
+  lowSampleFlagged: boolean,
+): CompanyImmigrationSignal["band"] {
+  if (lowSampleFlagged) {
+    return "low_sample";
+  }
+  if (score >= 80) {
+    return "rich_public_record";
+  }
+  if (score >= 60) {
+    return "multi_signal";
+  }
+  if (score >= 40) {
+    return "visible_activity";
+  }
+  return "limited_public_record";
+}
+
+function aggregateSignalBandLabelZh(band: CompanyImmigrationSignal["band"]) {
+  const labels: Record<CompanyImmigrationSignal["band"], string> = {
+    low_sample: "样本较少",
+    limited_public_record: "公开记录有限",
+    visible_activity: "可见公开活动",
+    multi_signal: "多维公开信号",
+    rich_public_record: "公开记录较丰富",
+  };
+  return labels[band];
+}
+
+function aggregateGlobalSourceInfo(data: FixtureData) {
+  const sourceNames = uniqueStrings(
+    (data.companySourceStats ?? []).flatMap((row) => row.sourceNames),
+  );
+  const latestDataDate = (data.companySourceStats ?? [])
+    .map((row) => row.latestDataDate)
+    .filter((date): date is string => Boolean(date))
+    .sort()
+    .at(-1);
+  return { sourceNames, latestDataDate };
+}
+
+function aggregateDirectoryFilterOptions(
+  data: FixtureData,
+): PublicDirectoryFilterOptions {
+  return {
+    fiscalYears: uniqueSorted(
+      (data.companyYearlyImmigrationStats ?? []).map((row) => row.fiscalYear),
+    ),
+    states: uniqueStrings(
+      (data.companyBreakdownStats ?? [])
+        .filter((row) => row.kind === "location")
+        .map((row) => row.state ?? ""),
+    ),
+    caseStatuses: [
+      "CERTIFIED",
+      "Certified",
+      "DENIED",
+      "Denied",
+      "WITHDRAWN",
+      "Withdrawn",
+    ],
+  };
+}
+
+function compareAggregateMetrics(
+  left: CompanyPageMetrics,
+  right: CompanyPageMetrics,
+) {
+  return (
+    right.qualityScore - left.qualityScore ||
+    right.lcaCount5y +
+      right.permCount5y +
+      right.uscisRecordCount5y -
+      (left.lcaCount5y + left.permCount5y + left.uscisRecordCount5y) ||
+    left.employerId.localeCompare(right.employerId)
+  );
+}
 
 function success<T>(data: T): PublicQueryResult<T> {
   return {
@@ -2649,6 +3449,9 @@ function getDataSignature(data: FixtureData) {
     data.uscisH1BEmployerRecords.length,
     data.visaBulletinMonths.length,
     data.visaBulletinDates.length,
+    data.companyYearlyImmigrationStats?.length ?? 0,
+    data.companyBreakdownStats?.length ?? 0,
+    data.companyWageStats?.length ?? 0,
   ].join(":");
 }
 
@@ -2713,6 +3516,10 @@ function isValidIsoDate(value: string) {
 
 function uniqueSorted(values: readonly number[]) {
   return [...new Set(values)].sort((left, right) => right - left);
+}
+
+function sum(values: readonly number[]) {
+  return values.reduce((total, value) => total + value, 0);
 }
 
 function uniqueStrings(values: readonly string[]) {
