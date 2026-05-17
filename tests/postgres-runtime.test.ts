@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   getDatabaseRuntimeStatus,
   getRuntimeDataMode,
+  normalizeDatabaseUrlForPg,
 } from "@/lib/db/postgres-fixture-data";
 
 describe("Postgres runtime database mode", () => {
@@ -38,5 +39,15 @@ describe("Postgres runtime database mode", () => {
       configured: false,
       missing: ["DATABASE_URL"],
     });
+  });
+
+  it("normalizes Supabase pooler URLs for node-postgres SSL handling", () => {
+    expect(
+      normalizeDatabaseUrlForPg(
+        "postgresql://postgres.ref:secret@aws-1-us-east-1.pooler.supabase.com:5432/postgres?sslmode=require",
+      ),
+    ).toBe(
+      "postgresql://postgres.ref:secret@aws-1-us-east-1.pooler.supabase.com:5432/postgres",
+    );
   });
 });

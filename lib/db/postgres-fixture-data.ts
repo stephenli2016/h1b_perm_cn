@@ -214,7 +214,7 @@ function getPool() {
     }
 
     globalThis.__visaradarPostgresPool = new Pool({
-      connectionString: databaseUrl,
+      connectionString: normalizeDatabaseUrlForPg(databaseUrl),
       max: toInteger(process.env.DATABASE_POOL_MAX) ?? 3,
       ssl: shouldUseSsl(databaseUrl)
         ? {
@@ -239,9 +239,27 @@ function shouldUseSsl(databaseUrl: string) {
     return false;
   }
 
+  try {
+    if (new URL(databaseUrl).searchParams.get("sslmode") === "disable") {
+      return false;
+    }
+  } catch {
+    return true;
+  }
+
   const host = getSafeDatabaseHost(databaseUrl);
 
   return !["localhost", "127.0.0.1", "::1"].includes(host);
+}
+
+export function normalizeDatabaseUrlForPg(databaseUrl: string) {
+  try {
+    const url = new URL(databaseUrl);
+    url.searchParams.delete("sslmode");
+    return url.toString();
+  } catch {
+    return databaseUrl;
+  }
 }
 
 function getSafeDatabaseHost(databaseUrl: string) {
