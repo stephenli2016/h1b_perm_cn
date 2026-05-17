@@ -185,11 +185,16 @@ describe("M12 UI components", () => {
     expect(html).toContain("Brightline Health");
     expect(html).toContain("暂无 H-1B LCA 记录");
     expect(html).toContain("PERM timeline 与状态");
+    expect(html).toContain("建议这样读这个公司页");
+    expect(html).toContain("下一步可以查看");
+    expect(html).toContain("跳槽后 PERM 重办时间线估算器");
+    expect(html).toContain("页面质量状态");
     expect(html).toContain("公开数据友好度信号");
     expect(html).toContain("查看方法说明");
     expect(html).toContain('type="application/ld+json"');
     expect(html).toContain("FAQPage");
     expect(html).toContain("PERM Certified 是否等于绿卡获批");
+    expect(html).not.toContain("M15");
   });
 
   it("renders the company immigration signal methodology page", async () => {

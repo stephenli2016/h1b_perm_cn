@@ -324,13 +324,15 @@ export function CompanyProfile({ mode, profile }: CompanyProfileProps) {
         <MetricCard
           description={
             pageSeo.indexable
-              ? "该路由达到 M15 数据量、来源、内链和可见内容阈值，可进入对应 XML sitemap。"
+              ? "该公司页有足够的来源、样本和可见解释，适合公开收录。"
               : pageSeo.noindexReasonZh
           }
-          label="页面索引状态"
-          value={pageSeo.indexable ? "index" : "noindex"}
+          label="页面质量状态"
+          value={pageSeo.indexable ? "可公开收录" : "暂不收录"}
         />
       </section>
+
+      <CompanyReadingGuide mode={mode} profile={profile} />
 
       <CompanyImmigrationSignalPanel signal={profile.immigrationSignal} />
 
@@ -441,13 +443,14 @@ export function CompanyProfile({ mode, profile }: CompanyProfileProps) {
         />
       </CompanySection>
 
+      <RelatedLinks items={buildNextStepItems(mode)} title="下一步可以查看" />
       <RelatedLinks items={relatedCompanyItems} title="相关公司" />
       <RelatedLinks items={relatedEntityItems} title="相关职位与地点" />
 
       <FaqSection items={faqItems} />
 
       <SourceNote
-        latestDataLabel={`当前页面最新数据日期：${profile.latestDataDate ?? "暂无来源日期"}。当前路由索引状态：${pageSeo.indexable ? "index" : "noindex"}。`}
+        latestDataLabel={`当前页面最新数据日期：${profile.latestDataDate ?? "暂无来源日期"}。页面质量状态：${pageSeo.indexable ? "达到公开收录阈值" : "未达到公开收录阈值"}。`}
         names={profile.sourceNames}
       />
 
@@ -467,6 +470,59 @@ export function CompanyProfile({ mode, profile }: CompanyProfileProps) {
 
       <p className="sr-only">Canonical URL: {getCanonicalUrl(canonicalPath)}</p>
     </div>
+  );
+}
+
+function CompanyReadingGuide({
+  mode,
+  profile,
+}: {
+  mode: CompanyProfileMode;
+  profile: PublicCompanyProfilePayload;
+}) {
+  const primaryRecord =
+    mode === "h1b" ? "H-1B / LCA 记录" : "PERM 劳工认证记录";
+  const secondaryRecord =
+    mode === "h1b" ? "USCIS employer-level 数据" : "H-1B / LCA 历史";
+
+  return (
+    <section className="rounded-lg border border-[var(--line)] bg-white p-5 shadow-sm">
+      <div>
+        <h2 className="text-lg font-semibold">建议这样读这个公司页</h2>
+        <p className="mt-2 text-sm leading-6 text-[var(--muted)]">
+          先把公开记录当作背景研究，而不是雇主承诺。最有价值的用法，是把它转成面试、
+          offer 沟通或内部 immigration team 可以回答的问题。
+        </p>
+      </div>
+      <ol className="mt-5 grid gap-4 md:grid-cols-3">
+        <li className="rounded-md bg-slate-50 p-4">
+          <p className="text-sm font-semibold">1. 先确认公司实体</p>
+          <p className="mt-2 text-sm leading-6 text-[var(--muted)]">
+            查看页面标题和别名映射，确认它是否接近 offer、payroll 或 filing
+            中会出现的雇主名称。
+          </p>
+        </li>
+        <li className="rounded-md bg-slate-50 p-4">
+          <p className="text-sm font-semibold">2. 再看相似岗位</p>
+          <p className="mt-2 text-sm leading-6 text-[var(--muted)]">
+            优先比较 {primaryRecord}
+            的职位、SOC、worksite 和年份，而不是只看公司总数。
+          </p>
+        </li>
+        <li className="rounded-md bg-slate-50 p-4">
+          <p className="text-sm font-semibold">3. 最后准备问题</p>
+          <p className="mt-2 text-sm leading-6 text-[var(--muted)]">
+            结合 {secondaryRecord}
+            、工资和 PERM timeline，整理要问 HR、recruiter 或律师的问题。
+          </p>
+        </li>
+      </ol>
+      {profile.aliases.length === 0 ? (
+        <p className="mt-4 text-sm leading-6 text-[var(--muted)]">
+          当前页面没有额外别名映射；如果你发现同一雇主被拆成多个名称，可以通过纠错页提交线索。
+        </p>
+      ) : null}
+    </section>
   );
 }
 
@@ -510,6 +566,59 @@ function FaqSection({ items }: { items: readonly FaqItem[] }) {
       </div>
     </section>
   );
+}
+
+function buildNextStepItems(mode: CompanyProfileMode) {
+  const sharedItems = [
+    {
+      title: "公司目录",
+      href: "/companies",
+      description: "回到公司目录，按职位、地点或年份比较其他雇主。",
+      meta: "比较",
+    },
+    {
+      title: "数据纠错与移除请求",
+      href: "/corrections",
+      description: "发现名称归并、来源解释或隐私展示问题时提交线索。",
+      meta: "纠错",
+    },
+  ];
+
+  if (mode === "h1b") {
+    return [
+      {
+        title: "H-1B 工资 Level 中文判断工具",
+        href: "/tools/h1b-wage-level-checker",
+        description:
+          "把相似 SOC、worksite 和公开工资放到 prevailing wage 背景下理解。",
+        meta: "工资",
+      },
+      {
+        title: "用 H-1B 数据做谈薪参考",
+        href: "/tools/wage-negotiation-with-h1b-data",
+        description: "把公开工资样本转成 offer 沟通前的问题清单。",
+        meta: "谈薪",
+      },
+      ...sharedItems,
+    ];
+  }
+
+  return [
+    {
+      title: "跳槽后 PERM 重办时间线估算器",
+      href: "/tools/perm-restart-timeline-estimator",
+      description: "理解换雇主、换职位或换地点后 PERM 可能需要重新规划的节点。",
+      meta: "PERM",
+    },
+    {
+      title: "中国 EB-2 / EB-3 优先日排期计算器",
+      href: "/tools/eb2-eb3-china-priority-date-calculator",
+      description:
+        "把 priority date 放到指定 Visa Bulletin 月份和 chart type 下对照。",
+      meta: "排期",
+    },
+    ...sharedItems,
+  ];
 }
 
 function buildFaqItems(profile: PublicCompanyProfilePayload): FaqItem[] {
