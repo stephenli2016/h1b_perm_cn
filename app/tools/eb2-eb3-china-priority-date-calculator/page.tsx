@@ -42,7 +42,7 @@ export async function generateMetadata({
       ? "中国 EB-2 / EB-3 优先日排期查询结果"
       : "中国 EB-2 / EB-3 优先日排期计算器",
     description:
-      "输入职业移民类别、priority date、Final Action 或 Dates for Filing，对照 Department of State Visa Bulletin 和 USCIS filing chart 公开信息。",
+      "输入职业移民类别、优先日（priority date）、最终裁定表或递件排期表，对照 Department of State Visa Bulletin 和 USCIS 当月 I-485 用表公开信息。",
     path: "/tools/eb2-eb3-china-priority-date-calculator",
     index: !hasQuery,
     pageType: "tool",
@@ -59,12 +59,12 @@ const bulletinColumns: DataTableColumn<VisaBulletinRow>[] = [
   },
   {
     key: "final-action",
-    header: "Final Action Date",
+    header: "最终裁定表（Final Action Date）",
     render: (row) => formatVisaCutoff(row.finalAction),
   },
   {
     key: "dates-for-filing",
-    header: "Dates for Filing",
+    header: "递件排期表（Dates for Filing）",
     render: (row) => formatVisaCutoff(row.datesForFiling),
   },
 ];
@@ -99,12 +99,12 @@ export default async function PriorityDateCalculatorPage({
         { label: "EB 优先日排期计算器" },
       ]}
       canonicalPath="/tools/eb2-eb3-china-priority-date-calculator"
-      description="输入 priority date 后，对照中国大陆出生 EB-1、EB-2、EB-3 在所选月份和所选排期表中的公开日期。结果只解释公开表格关系，不判断个人 I-485 或签证资格。"
+      description="输入优先日（priority date）后，对照中国大陆出生 EB-1、EB-2、EB-3 在所选月份和所选排期表中的公开日期。结果只解释公开表格关系，不判断个人 I-485 或签证资格。"
       eyebrow="Visa Bulletin 工具"
       structuredData={buildWebApplicationJsonLd({
         title: "中国 EB-2 / EB-3 优先日排期计算器",
         description:
-          "输入职业移民类别、priority date、Final Action 或 Dates for Filing，对照 Department of State Visa Bulletin 和 USCIS filing chart 公开信息。",
+          "输入职业移民类别、优先日（priority date）、最终裁定表或递件排期表，对照 Department of State Visa Bulletin 和 USCIS 当月 I-485 用表公开信息。",
         path: "/tools/eb2-eb3-china-priority-date-calculator",
         dateModified: "2026-05-16",
       })}
@@ -121,6 +121,22 @@ export default async function PriorityDateCalculatorPage({
           />
         ) : (
           <ErrorState
+            action={
+              <div className="flex flex-wrap gap-3">
+                <Link
+                  className="rounded-md bg-white px-4 py-2 text-sm font-semibold text-red-900 ring-1 ring-red-200 hover:bg-red-100"
+                  href="/tools/eb2-eb3-china-priority-date-calculator"
+                >
+                  重新开始
+                </Link>
+                <Link
+                  className="rounded-md bg-white px-4 py-2 text-sm font-semibold text-red-900 ring-1 ring-red-200 hover:bg-red-100"
+                  href="/visa-bulletin"
+                >
+                  查看月度排期
+                </Link>
+              </div>
+            }
             description={result.error.hintZh ?? result.error.messageZh}
             title={result.error.messageZh}
           />
@@ -131,15 +147,16 @@ export default async function PriorityDateCalculatorPage({
             <h2 className="text-lg font-semibold">如何理解日期对照</h2>
             <ol className="mt-4 list-decimal space-y-3 pl-5 text-sm leading-6 text-[var(--muted)]">
               <li>
-                优先日早于 cut-off date 时，公开表格通常显示该表下排期已到。
+                优先日早于截止日期（cut-off
+                date）时，公开表格通常显示该表下排期已到。
               </li>
-              <li>优先日等于 cut-off date 时，本工具按未早于处理。</li>
+              <li>优先日等于截止日期时，本工具按未早于处理。</li>
               <li>
-                Dates for Filing 能否用于 I-485，还要看 USCIS 当月职业移民
-                filing chart 选择。
+                递件排期表（Dates for Filing）能否用于 I-485，还要看 USCIS
+                当月职业移民 I-485 用表选择。
               </li>
               <li>
-                Current 和 Unavailable 是 Visa Bulletin
+                无排期（Current）和暂不可用（Unavailable）是 Visa Bulletin
                 的特殊状态，不代表个人案件结论。
               </li>
             </ol>
@@ -151,7 +168,7 @@ export default async function PriorityDateCalculatorPage({
               <li>排期已到不等于 I-485 一定可以提交或一定会批准。</li>
               <li>排期未到不等于雇主、PERM、I-140 或身份路径没有价值。</li>
               <li>
-                Visa Bulletin 月份、USCIS chart 选择和个人类别必须同时核对。
+                排期月份、USCIS 当月 I-485 用表选择和个人类别必须同时核对。
               </li>
             </ul>
           </article>
@@ -160,8 +177,8 @@ export default async function PriorityDateCalculatorPage({
         <SourceNote
           latestDataLabel={
             result.ok
-              ? `当前结果使用 ${result.data.month.monthKey} Visa Bulletin 与 USCIS filing chart 官方来源数据快照，来源发布日期 ${result.data.month.publishedAt}。`
-              : "本页使用 Department of State Visa Bulletin 与 USCIS Adjustment of Status filing chart 官方来源；当前输入未能匹配到可展示记录。"
+              ? `当前结果使用 ${result.data.month.monthKey} Visa Bulletin 与 USCIS 当月 I-485 用表官方来源数据快照，来源发布日期 ${result.data.month.publishedAt}。`
+              : "本页使用 Department of State Visa Bulletin 与 USCIS Adjustment of Status Filing Charts 官方来源；当前输入未能匹配到可展示记录。"
           }
           names={
             result.ok
@@ -210,10 +227,10 @@ export default async function PriorityDateCalculatorPage({
               meta: "月度页",
             },
             {
-              title: "H-1B 工资 Level 中文判断",
+              title: "H-1B 工资等级中文判断",
               href: "/tools/h1b-wage-level-checker",
               description:
-                "用 DOL/FLAG prevailing wage 数据做工资 level 背景对照。",
+                "用 DOL/FLAG 通行工资（prevailing wage）数据做工资等级背景对照。",
               meta: "相关工具",
             },
             {
@@ -269,7 +286,7 @@ function PriorityDateForm({
           </select>
         </label>
         <label className="grid gap-2 text-sm font-medium">
-          <span>Chargeability</span>
+          <span>出生地 / Chargeability</span>
           <select
             className="rounded-md border border-[var(--line)] px-3 py-2"
             defaultValue={values.chargeabilityArea}
@@ -279,7 +296,7 @@ function PriorityDateForm({
           </select>
         </label>
         <label className="grid gap-2 text-sm font-medium">
-          <span>Priority date</span>
+          <span>优先日</span>
           <input
             className="rounded-md border border-[var(--line)] px-3 py-2"
             defaultValue={values.priorityDate}
@@ -294,12 +311,16 @@ function PriorityDateForm({
             defaultValue={values.chartType}
             name="chartType"
           >
-            <option value="final_action">Final Action Dates</option>
-            <option value="dates_for_filing">Dates for Filing</option>
+            <option value="final_action">
+              最终裁定表（Final Action Dates）
+            </option>
+            <option value="dates_for_filing">
+              递件排期表（Dates for Filing）
+            </option>
           </select>
         </label>
         <label className="grid gap-2 text-sm font-medium">
-          <span>Visa Bulletin 月份</span>
+          <span>排期月份（Visa Bulletin）</span>
           <select
             className="rounded-md border border-[var(--line)] px-3 py-2"
             defaultValue={values.monthKey}
@@ -370,7 +391,7 @@ function PriorityDateResult({
         />
         <MetricCard
           description={payload.uscisFilingChartNoteZh}
-          label="USCIS 当月 chart"
+          label="USCIS 当月 I-485 用表"
           trend={
             payload.selectedChartUsableForAdjustment ? "同一张表" : "所选表不同"
           }
@@ -381,12 +402,27 @@ function PriorityDateResult({
         />
       </section>
 
+      <section className="rounded-lg border border-[var(--line)] bg-white p-5 shadow-sm">
+        <h3 className="text-lg font-semibold">结果怎么读</h3>
+        <ul className="mt-4 space-y-3 text-sm leading-6 text-[var(--muted)]">
+          <li>先看“日期对照结果”：它只回答优先日和所选公开表格的机械关系。</li>
+          <li>
+            再看 USCIS 当月 I-485
+            用表：如果你在美国境内考虑调整身份，所选表格还要和 USCIS
+            当月选择一致。
+          </li>
+          <li>
+            最后把类别、出生地、I-140、身份状态和个案事实交给雇主或律师核对。
+          </li>
+        </ul>
+      </section>
+
       <section className="grid gap-4 lg:grid-cols-[0.8fr_1.2fr]">
         <article className="rounded-lg border border-[var(--line)] bg-white p-5 shadow-sm">
           <h3 className="text-lg font-semibold">输入摘要</h3>
           <dl className="mt-4 grid gap-3 text-sm">
             <div>
-              <dt className="text-[var(--muted)]">Priority date</dt>
+              <dt className="text-[var(--muted)]">优先日</dt>
               <dd className="mt-1 font-semibold">
                 {payload.input.priorityDate}
               </dd>
@@ -411,7 +447,7 @@ function PriorityDateResult({
         </article>
 
         <DataTable
-          caption={`${payload.month.monthKey} China EB visa bulletin rows`}
+          caption={`${payload.month.monthKey} 中国大陆出生 EB 排期表`}
           columns={bulletinColumns}
           emptyDescription="当前月份没有可展示的排期行。"
           emptyTitle="暂无排期数据"

@@ -153,7 +153,7 @@ describe("M23 technical SEO hardening", () => {
     expect(guideHtml).toContain("Article");
     expect(toolHtml).toContain("WebApplication");
     expect(guideHtml).toContain("LCA 是什么");
-    expect(toolHtml).toContain("Prevailing Wage 中文查询入口");
+    expect(toolHtml).toContain("通行工资（Prevailing Wage）中文查询入口");
   });
 
   it("validates internal links, sitemap cleanliness, and noindex exclusions", () => {
@@ -192,5 +192,8 @@ describe("M23 technical SEO hardening", () => {
     expect(notFoundHtml).toContain("提交纠错");
     expect(errorHtml).toContain("页面暂时无法加载");
     expect(errorHtml).toContain("重试");
+    expect(errorHtml).toContain("查看数据来源");
+    expect(errorHtml).toContain("提交纠错");
+    expect(errorHtml).not.toContain("Error digest");
   });
 });

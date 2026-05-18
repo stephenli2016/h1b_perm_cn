@@ -12,13 +12,14 @@ import { getRuntimeDataMode } from "@/lib/db/postgres-fixture-data";
 import type { PublicVisaBulletinDatesPayload } from "@/lib/db/public-query-repository";
 import { waitForRuntimeDataRequestBoundary } from "@/lib/db/runtime-rendering";
 import { getRuntimePublicQueryRepository } from "@/lib/db/runtime-public-query-repository";
+import { chartTypeLabelZh, formatVisaCutoff } from "@/lib/priority-date-tool";
 import { buildDatasetJsonLd } from "@/lib/seo/json-ld";
 import { buildSeoMetadata } from "@/lib/seo/metadata";
 
 export const metadata: Metadata = buildSeoMetadata({
   title: "中国职业移民排期",
   description:
-    "查看中国大陆出生 EB-1、EB-2、EB-3 Visa Bulletin、Final Action Date、Dates for Filing 和 USCIS filing chart 说明。",
+    "查看中国大陆出生 EB-1、EB-2、EB-3 Visa Bulletin、最终裁定表、递件排期表和 USCIS 当月 I-485 用表说明。",
   path: "/visa-bulletin",
   pageType: "data",
 });
@@ -49,13 +50,13 @@ export default async function VisaBulletinPage() {
     },
     {
       key: "final-action",
-      header: "Final Action Date",
-      render: (row) => formatCutoff(row.finalAction),
+      header: "最终裁定表（Final Action Date）",
+      render: (row) => formatVisaCutoff(row.finalAction),
     },
     {
       key: "dates-for-filing",
-      header: "Dates for Filing",
-      render: (row) => formatCutoff(row.datesForFiling),
+      header: "递件排期表（Dates for Filing）",
+      render: (row) => formatVisaCutoff(row.datesForFiling),
     },
     {
       key: "selected-chart",
@@ -68,7 +69,7 @@ export default async function VisaBulletinPage() {
 
         return (
           <span className="font-medium text-slate-950">
-            {formatCutoff(selected)}
+            {formatVisaCutoff(selected)}
           </span>
         );
       },
@@ -79,12 +80,12 @@ export default async function VisaBulletinPage() {
     <PageShell
       breadcrumbs={[{ href: "/", label: "首页" }, { label: "排期" }]}
       canonicalPath="/visa-bulletin"
-      description="查看中国大陆出生 EB-1、EB-2、EB-3 Visa Bulletin、Final Action Date、Dates for Filing 和 USCIS filing chart 说明。"
+      description="查看中国大陆出生 EB-1、EB-2、EB-3 Visa Bulletin、最终裁定表、递件排期表和 USCIS 当月 I-485 用表说明。"
       eyebrow="Visa Bulletin"
       structuredData={buildDatasetJsonLd({
         name: "中国职业移民排期",
         description:
-          "中国大陆出生 EB-1、EB-2、EB-3 的 Department of State Visa Bulletin 官方来源数据快照，以及 USCIS 当月 filing chart 选择。",
+          "中国大陆出生 EB-1、EB-2、EB-3 的 Department of State Visa Bulletin 官方来源数据快照，以及 USCIS 当月 I-485 用表选择。",
         path: "/visa-bulletin",
         dateModified: latestMonth?.publishedAt,
         sources: [
@@ -107,15 +108,15 @@ export default async function VisaBulletinPage() {
             <article className="rounded-lg border border-[var(--line)] bg-white p-5 shadow-sm">
               <h2 className="text-base font-semibold">两张表用途不同</h2>
               <p className="mt-3 text-sm leading-6 text-[var(--muted)]">
-                Final Action Date 和 Dates for Filing
-                不能混用；在美国境内调整身份还要看 USCIS 当月选择。
+                最终裁定表（Final Action Date）和递件排期表（Dates for
+                Filing）不能混用；在美国境内调整身份还要看 USCIS 当月选择。
               </p>
             </article>
             <article className="rounded-lg border border-[var(--line)] bg-white p-5 shadow-sm">
               <h2 className="text-base font-semibold">不预测未来排期</h2>
               <p className="mt-3 text-sm leading-6 text-[var(--muted)]">
-                本页只解释公开表格和当前数据快照，不预测某个 priority date
-                未来何时到达。
+                本页只解释公开表格和当前数据快照，不预测某个优先日（priority
+                date）未来何时到达。
               </p>
             </article>
           </section>
@@ -123,8 +124,8 @@ export default async function VisaBulletinPage() {
           <div className="grid gap-4 md:grid-cols-3">
             <MetricCard label="月份" value={latestMonth.monthKey} />
             <MetricCard
-              label="USCIS filing chart"
-              value={chartLabelZh(latestMonth.uscisFilingChart)}
+              label="USCIS 当月 I-485 用表"
+              value={chartTypeLabelZh(latestMonth.uscisFilingChart)}
             />
             <MetricCard label="最近来源日期" value={latestMonth.publishedAt} />
           </div>
@@ -140,9 +141,9 @@ export default async function VisaBulletinPage() {
 
           <DisclaimerBox compact>
             <p>
-              日期对照只表示公开表格中的 cut-off date。是否能提交 I-485 还要看
-              USCIS
-              当月选择、个人类别、chargeability、身份和案件事实。本站内容仅供信息参考，不构成法律、移民、税务或职业建议。
+              日期对照只表示公开表格中的截止日期（cut-off date）。是否能提交
+              I-485 还要看 USCIS
+              当月选择、个人类别、出生地/Chargeability、身份和案件事实。本站内容仅供信息参考，不构成法律、移民、税务或职业建议。
             </p>
           </DisclaimerBox>
 
@@ -165,7 +166,7 @@ export default async function VisaBulletinPage() {
         </section>
       ) : (
         <EmptyState
-          description="请先导入 Department of State Visa Bulletin 与 USCIS filing chart 官方来源数据。"
+          description="请先导入 Department of State Visa Bulletin 与 USCIS 当月 I-485 用表官方来源数据。"
           title="暂无 Visa Bulletin 数据"
           tone="warning"
         />
@@ -174,7 +175,7 @@ export default async function VisaBulletinPage() {
       <section className="mt-8 grid gap-4 md:grid-cols-2">
         <div className="border-t border-slate-200 pt-4">
           <h2 className="text-base font-semibold text-slate-950">
-            Final Action Date
+            最终裁定表（Final Action Date）
           </h2>
           <p className="mt-2 text-sm leading-6 text-slate-600">
             通常用于判断是否有移民签证名额可用于最终批准或签证签发。
@@ -182,7 +183,7 @@ export default async function VisaBulletinPage() {
         </div>
         <div className="border-t border-slate-200 pt-4">
           <h2 className="text-base font-semibold text-slate-950">
-            Dates for Filing
+            递件排期表（Dates for Filing）
           </h2>
           <p className="mt-2 text-sm leading-6 text-slate-600">
             通常用于国务院/NVC 文件准备；在美国境内调整身份时，还要看 USCIS
@@ -195,9 +196,9 @@ export default async function VisaBulletinPage() {
         <h2 className="text-lg font-semibold">每月更新时建议核对</h2>
         <ol className="mt-4 list-decimal space-y-3 pl-5 text-sm leading-6 text-[var(--muted)]">
           <li>确认 Visa Bulletin 月份是否已经更新。</li>
-          <li>确认自己的 employment-based category 和 chargeability area。</li>
-          <li>分别查看 Final Action Date 和 Dates for Filing。</li>
-          <li>打开 USCIS filing chart 页面，确认本月 AOS 使用哪张表。</li>
+          <li>确认自己的职业移民类别和出生地/Chargeability。</li>
+          <li>分别查看最终裁定表和递件排期表。</li>
+          <li>打开 USCIS I-485 用表页面，确认本月境内调整身份使用哪张表。</li>
           <li>把页面结论当作公开数据对照，不当作个案法律建议。</li>
         </ol>
       </section>
@@ -206,7 +207,7 @@ export default async function VisaBulletinPage() {
         <SourceNote
           latestDataLabel={
             latestMonth
-              ? `本页使用 ${latestMonth.monthKey} Department of State Visa Bulletin 与 USCIS filing chart 官方来源数据快照，来源发布日期 ${latestMonth.publishedAt}。`
+              ? `本页使用 ${latestMonth.monthKey} Department of State Visa Bulletin 与 USCIS 当月 I-485 用表官方来源数据快照，来源发布日期 ${latestMonth.publishedAt}。`
               : "本页尚无 Visa Bulletin 数据。"
           }
           names={[
@@ -217,29 +218,4 @@ export default async function VisaBulletinPage() {
       </div>
     </PageShell>
   );
-}
-
-function chartLabelZh(chart: "final_action" | "dates_for_filing") {
-  return chart === "final_action" ? "Final Action Dates" : "Dates for Filing";
-}
-
-function formatCutoff(
-  date:
-    | {
-        cutoffDate?: string;
-        cutoffStatus: "date" | "current" | "unavailable";
-        rawValue: string;
-      }
-    | undefined,
-) {
-  if (!date) {
-    return "暂无";
-  }
-  if (date.cutoffStatus === "current") {
-    return "Current";
-  }
-  if (date.cutoffStatus === "unavailable") {
-    return "Unavailable";
-  }
-  return date.cutoffDate ?? date.rawValue;
 }

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 
 import { PageShell } from "@/components/page-shell";
 import { DirectoryFilterForm } from "@/components/search/directory-filter-form";
@@ -18,6 +19,7 @@ import { getRuntimePublicQueryRepository } from "@/lib/db/runtime-public-query-r
 import {
   activeFilterCount,
   formatCurrency,
+  getCleanDirectoryRedirectHref,
   parseDirectorySearchParams,
   permStatusLabels,
   statusLabel,
@@ -41,7 +43,7 @@ export async function generateMetadata({
     title:
       filterCount > 0 ? "PERM / 绿卡公司搜索结果" : "PERM / 绿卡公司数据库",
     description:
-      "查询公司 PERM 劳工认证公开记录，按雇主、职位、地点和状态理解绿卡 sponsor 历史信号。",
+      "查询公司 PERM 劳工认证公开记录，按雇主、职位、地点和状态理解绿卡担保历史信号。",
     path: "/perm",
     index: filterCount === 0,
     pageType: "data",
@@ -69,7 +71,7 @@ const permColumns: DataTableColumn<PublicDisclosureRecordRow>[] = [
     header: "年份 / 状态",
     render: (row) => (
       <div>
-        <p className="font-medium">FY{row.fiscalYear}</p>
+        <p className="font-medium">{row.fiscalYear} 财年</p>
         <p className="mt-1 text-xs text-[var(--muted)]">
           {statusLabel(row.caseStatus, permStatusLabels)}
         </p>
@@ -90,26 +92,38 @@ const permColumns: DataTableColumn<PublicDisclosureRecordRow>[] = [
   },
   {
     key: "location",
-    header: "Worksite",
+    header: "工作地点",
     render: (row) => `${row.city}, ${row.state}`,
   },
   {
     key: "wage",
-    header: "Offer wage",
+    header: "记录工资",
     align: "right",
     render: (row) => formatCurrency(row.wageAmount, row.wageUnit),
   },
   {
     key: "decision",
-    header: "Decision date",
+    header: "决定日期",
     render: (row) => row.decisionDate,
   },
 ];
 
 export default async function PermPage({ searchParams }: PermPageProps) {
+  const rawSearchParams = await searchParams;
+  const parsed = parseDirectorySearchParams(rawSearchParams);
+  const cleanHref = getCleanDirectoryRedirectHref(
+    "/perm",
+    rawSearchParams,
+    parsed.values,
+    "perm",
+  );
+
+  if (cleanHref) {
+    redirect(cleanHref);
+  }
+
   await waitForRuntimeDataRequestBoundary();
 
-  const parsed = parseDirectorySearchParams(await searchParams);
   const filterCount = activeFilterCount(parsed.values);
   const result =
     getRuntimeDataMode() === "postgres"
@@ -125,7 +139,7 @@ export default async function PermPage({ searchParams }: PermPageProps) {
     <PageShell
       breadcrumbs={[{ href: "/", label: "首页" }, { label: "PERM" }]}
       canonicalPath="/perm"
-      description="查询公司 PERM 劳工认证公开记录，按雇主、职位、地点和状态理解绿卡 sponsor 历史信号。PERM 记录不等于 I-140、I-485 或绿卡结果。"
+      description="查询公司 PERM 劳工认证公开记录，按雇主、职位、地点和状态理解绿卡担保历史信号。PERM 记录不等于 I-140、I-485 或绿卡结果。"
       eyebrow={siteConfig.tagline}
       structuredData={buildWebPageJsonLd({
         title: "PERM / 绿卡公司数据库",
@@ -140,15 +154,13 @@ export default async function PermPage({ searchParams }: PermPageProps) {
           <article className="rounded-lg border border-[var(--line)] bg-white p-5 shadow-sm">
             <h2 className="text-base font-semibold">PERM 是劳工认证节点</h2>
             <p className="mt-3 text-sm leading-6 text-[var(--muted)]">
-              PERM certified 不等于 I-140 approved，也不等于 I-485
-              可提交或绿卡获批。
+              PERM 已认证不等于 I-140 获批，也不等于 I-485 可提交或绿卡获批。
             </p>
           </article>
           <article className="rounded-lg border border-[var(--line)] bg-white p-5 shadow-sm">
             <h2 className="text-base font-semibold">看职位和地点</h2>
             <p className="mt-3 text-sm leading-6 text-[var(--muted)]">
-              PERM 围绕具体 permanent job
-              opportunity。公司总数之外，更要看职位、地点和年份。
+              PERM 围绕具体永久职位。公司总数之外，更要看职位、地点和年份。
             </p>
           </article>
           <article className="rounded-lg border border-[var(--line)] bg-white p-5 shadow-sm">
@@ -181,11 +193,11 @@ export default async function PermPage({ searchParams }: PermPageProps) {
               <MetricCard
                 description={
                   filterCount > 0
-                    ? "筛选结果页不收录，避免参数组合造成低价值页面。"
-                    : "PERM 入口页已开放索引；公司页按数据质量阈值判断。"
+                    ? "筛选后的结果页不单独收录，避免生成大量重复页面。"
+                    : "PERM 入口可被收录；公司页按资料完整度判断。"
                 }
-                label="页面收录"
-                value={filterCount > 0 ? "筛选页 noindex" : "入口页 index"}
+                label="公开展示"
+                value={filterCount > 0 ? "结果页不单独收录" : "入口可收录"}
               />
               <MetricCard
                 description="来自官方公开数据导入；展示当前数据库覆盖的最新日期。"
@@ -197,6 +209,16 @@ export default async function PermPage({ searchParams }: PermPageProps) {
             <DataTable
               caption="PERM 搜索结果"
               columns={permColumns}
+              emptyAction={
+                <Link
+                  className="font-semibold text-[var(--accent-strong)] underline-offset-4 hover:underline"
+                  href={filterCount > 0 ? "/perm" : "/sources"}
+                >
+                  {filterCount > 0
+                    ? "清除筛选，查看全部 PERM 记录"
+                    : "查看数据来源与覆盖"}
+                </Link>
+              }
               emptyDescription="当前筛选条件没有匹配的 PERM 公开记录样本。可以减少筛选条件或回到全部记录。"
               emptyTitle="没有找到 PERM 记录"
               getRowKey={(row) => row.id}
@@ -211,14 +233,30 @@ export default async function PermPage({ searchParams }: PermPageProps) {
 
             <InterpretationPanel title="如何解读 PERM 搜索结果">
               <p>
-                PERM disclosure data 反映 DOL 劳工认证公开记录。Certified PERM
-                不等于 I-140 批准、I-485 可提交或绿卡获批；Denied/Withdrawn
-                也不能直接推断个案细节。请把这些记录看作雇主历史活动和职位/地区分布信号。
+                PERM 公开数据反映 DOL 劳工认证记录。已认证的 PERM 不等于 I-140
+                批准、I-485
+                可提交或绿卡获批；未通过或撤回也不能直接推断个案细节。请把这些记录看作雇主历史活动和职位/地区分布信号。
               </p>
             </InterpretationPanel>
           </>
         ) : (
           <ErrorState
+            action={
+              <div className="flex flex-wrap gap-3">
+                <Link
+                  className="rounded-md bg-white px-4 py-2 text-sm font-semibold text-red-900 ring-1 ring-red-200 hover:bg-red-100"
+                  href="/perm"
+                >
+                  回到 PERM 数据入口
+                </Link>
+                <Link
+                  className="rounded-md bg-white px-4 py-2 text-sm font-semibold text-red-900 ring-1 ring-red-200 hover:bg-red-100"
+                  href="/sources"
+                >
+                  查看数据来源
+                </Link>
+              </div>
+            }
             description={result.error.hintZh ?? result.error.messageZh}
             title={result.error.messageZh}
           />
@@ -227,7 +265,7 @@ export default async function PermPage({ searchParams }: PermPageProps) {
         <SourceNote
           latestDataLabel={
             result.ok
-              ? `当前官方公开数据最新日期：${result.data.latestDataDate ?? "暂无来源日期"}。筛选结果页默认 noindex，入口页和合格公司页可被收录。`
+              ? `当前官方公开数据最新日期：${result.data.latestDataDate ?? "暂无来源日期"}。筛选后的结果页不单独收录，入口和资料较完整的公司页可被收录。`
               : undefined
           }
           names={["DOL OFLC PERM disclosure data"]}

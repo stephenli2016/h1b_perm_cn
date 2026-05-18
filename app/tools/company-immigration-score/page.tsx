@@ -83,7 +83,7 @@ export default async function CompanyImmigrationScorePage() {
         { label: "公开数据友好度信号" },
       ]}
       canonicalPath="/tools/company-immigration-score"
-      description="这个页面解释公司页里的“公开数据友好度信号”怎么计算、能看什么、不能看什么。它衡量官方公开数据的覆盖和可解释程度，不是 sponsor 获批概率。"
+      description="这个页面解释公司页里的“公开数据友好度信号”怎么计算、能看什么、不能看什么。它衡量官方公开数据的覆盖和可解释程度，不是担保获批概率。"
       eyebrow="方法说明"
       structuredData={buildWebApplicationJsonLd({
         title: "公司职业移民公开数据友好度信号",
@@ -148,7 +148,7 @@ export default async function CompanyImmigrationScorePage() {
               <MetricCard
                 description={
                   exampleSignal.lowSample.messageZh ??
-                  "样本达到当前展示阈值，但仍不能推断个案结果。"
+                  "样本达到当前展示标准，但仍不能推断个案结果。"
                 }
                 label="样本提示"
                 trend={exampleSignal.lowSample.flagged ? "低样本" : "可比较"}
@@ -221,9 +221,10 @@ export default async function CompanyImmigrationScorePage() {
               meta: "PERM",
             },
             {
-              title: "H-1B 工资 Level 中文判断",
+              title: "H-1B 工资等级中文判断",
               href: "/tools/h1b-wage-level-checker",
-              description: "用 DOL/FLAG prevailing wage 数据做工资背景对照。",
+              description:
+                "用 DOL/FLAG 通行工资（prevailing wage）数据做工资背景对照。",
               meta: "相关工具",
             },
           ]}

@@ -1,3 +1,14 @@
+"use client";
+
+import { useState, useTransition, type FormEvent } from "react";
+import { useRouter } from "next/navigation";
+
+import {
+  normalizeCaseStatusForAllowed,
+  normalizeStateCode,
+  normalizeStateOptions,
+} from "@/lib/directory-filter-normalization";
+
 type DirectoryFilterFormProps = {
   action: string;
   values: {
@@ -26,11 +37,52 @@ export function DirectoryFilterForm({
   submitLabel,
   resetLabel = "清除筛选",
 }: DirectoryFilterFormProps) {
+  const router = useRouter();
+  const [isPending, startTransition] = useTransition();
+  const [hasSubmitted, setHasSubmitted] = useState(false);
+  const selectedCaseStatus =
+    normalizeCaseStatusForAllowed(values.caseStatus, caseStatuses) ?? "";
+  const selectedState = normalizeStateCode(values.state) ?? "";
+  const stateOptions = normalizeStateOptions(states);
+  const isSearching = isPending || hasSubmitted;
+
+  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setHasSubmitted(true);
+
+    const formData = new FormData(event.currentTarget);
+    const params = new URLSearchParams();
+
+    for (const name of [
+      "employer",
+      "fiscalYear",
+      "caseStatus",
+      "state",
+      "city",
+      "jobOrSoc",
+    ]) {
+      const rawValue = formData.get(name);
+      const value = typeof rawValue === "string" ? rawValue.trim() : "";
+
+      if (value) {
+        params.set(name, value);
+      }
+    }
+
+    const query = params.toString();
+    const target = query ? `${action}?${query}` : action;
+
+    startTransition(() => {
+      router.push(target);
+    });
+  }
+
   return (
     <form
       action={action}
       className="rounded-lg border border-[var(--line)] bg-white p-5 shadow-sm"
       method="get"
+      onSubmit={handleSubmit}
     >
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         <label className="grid gap-2 text-sm font-medium">
@@ -45,7 +97,7 @@ export function DirectoryFilterForm({
         </label>
 
         <label className="grid gap-2 text-sm font-medium">
-          <span>Fiscal year</span>
+          <span>数据年份</span>
           <select
             className="rounded-md border border-[var(--line)] bg-white px-3 py-2 text-sm"
             defaultValue={values.fiscalYear ?? ""}
@@ -54,17 +106,17 @@ export function DirectoryFilterForm({
             <option value="">全部年份</option>
             {fiscalYears.map((year) => (
               <option key={year} value={year}>
-                FY{year}
+                {year} 财年
               </option>
             ))}
           </select>
         </label>
 
         <label className="grid gap-2 text-sm font-medium">
-          <span>Case status</span>
+          <span>记录状态</span>
           <select
             className="rounded-md border border-[var(--line)] bg-white px-3 py-2 text-sm"
-            defaultValue={values.caseStatus ?? ""}
+            defaultValue={selectedCaseStatus}
             name="caseStatus"
           >
             <option value="">全部状态</option>
@@ -80,11 +132,11 @@ export function DirectoryFilterForm({
           <span>州</span>
           <select
             className="rounded-md border border-[var(--line)] bg-white px-3 py-2 text-sm"
-            defaultValue={values.state ?? ""}
+            defaultValue={selectedState}
             name="state"
           >
             <option value="">全部州</option>
-            {states.map((state) => (
+            {stateOptions.map((state) => (
               <option key={state} value={state}>
                 {state}
               </option>
@@ -117,10 +169,12 @@ export function DirectoryFilterForm({
 
       <div className="mt-5 flex flex-wrap gap-3">
         <button
-          className="rounded-md bg-[var(--accent)] px-4 py-2 text-sm font-semibold text-white hover:bg-[var(--accent-strong)]"
+          aria-busy={isSearching}
+          className="rounded-md bg-[var(--accent)] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[var(--accent-strong)] active:translate-y-px active:bg-[var(--accent-strong)] disabled:cursor-wait disabled:opacity-75"
+          disabled={isSearching}
           type="submit"
         >
-          {submitLabel}
+          {isSearching ? "正在搜索..." : submitLabel}
         </button>
         <a
           className="rounded-md border border-[var(--line)] bg-white px-4 py-2 text-sm font-semibold"

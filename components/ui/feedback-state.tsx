@@ -1,6 +1,9 @@
+import type { ReactNode } from "react";
+
 type FeedbackStateProps = {
   title: string;
   description: string;
+  action?: ReactNode;
 };
 
 export function LoadingState({
@@ -27,7 +30,7 @@ export function LoadingState({
   );
 }
 
-export function ErrorState({ title, description }: FeedbackStateProps) {
+export function ErrorState({ title, description, action }: FeedbackStateProps) {
   return (
     <section
       aria-live="assertive"
@@ -36,6 +39,7 @@ export function ErrorState({ title, description }: FeedbackStateProps) {
     >
       <h2 className="text-base font-semibold">{title}</h2>
       <p className="mt-2 text-sm leading-6">{description}</p>
+      {action ? <div className="mt-4">{action}</div> : null}
     </section>
   );
 }

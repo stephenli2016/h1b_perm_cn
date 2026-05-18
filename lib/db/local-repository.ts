@@ -678,7 +678,7 @@ export function checkVisaBulletinPriorityDate(
       month: cutoff.month,
       date: cutoff.date,
       messageZh:
-        "该类别在所选表格中显示为 Current。仍需确认 USCIS 当月采用哪张表以及个人资格。",
+        "该类别在所选表格中显示为无排期（Current）。仍需确认 USCIS 当月采用哪张表以及个人资格。",
     };
   }
 
@@ -691,7 +691,7 @@ export function checkVisaBulletinPriorityDate(
       canProceedByChart: false,
       month: cutoff.month,
       date: cutoff.date,
-      messageZh: "该类别在所选表格中显示为 Unavailable。",
+      messageZh: "该类别在所选表格中显示为暂不可用（Unavailable）。",
     };
   }
 

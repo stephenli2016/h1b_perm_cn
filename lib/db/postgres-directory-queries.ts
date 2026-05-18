@@ -36,15 +36,24 @@ import {
   COMPANY_IMMIGRATION_SIGNAL_METHODOLOGY_HREF,
 } from "@/lib/company-immigration-signals";
 import { getCompanyIndexabilityDecision } from "@/lib/db/local-repository";
+import {
+  getStateFilterAliases,
+  normalizeCaseStatusForAllowed,
+  normalizeCaseStatusForDataset,
+  normalizeCaseStatusOptions,
+  normalizeStateCode,
+  normalizeStateOptions,
+} from "@/lib/directory-filter-normalization";
 import { COMPANY_PAGE_VISIBLE_LIMITS } from "@/lib/seo/company-page-selection";
 
 const DEFAULT_DIRECTORY_PAGE_SIZE = 2;
 const MAX_DIRECTORY_PAGE_SIZE = 50;
 const MAX_DIRECTORY_TEXT_LENGTH = 120;
+const DEFAULT_DIRECTORY_AUX_CACHE_TTL_MS = 5 * 60 * 1000;
 
 const H1B_STATUSES = ["CERTIFIED", "WITHDRAWN", "DENIED"] as const;
 const PERM_STATUSES = ["Certified", "Denied", "Withdrawn"] as const;
-const COMBINED_STATUSES = [...H1B_STATUSES, ...PERM_STATUSES] as const;
+const COMBINED_STATUSES = ["CERTIFIED", "WITHDRAWN", "DENIED"] as const;
 
 type Dataset = "h1b" | "perm";
 
@@ -74,6 +83,24 @@ type FilterOptionRow = {
   states: string[] | null;
   case_statuses: string[] | null;
 };
+
+type SourceInfo = {
+  sourceNames: string[];
+  latestDataDate?: string;
+};
+
+let cachedCompanyFilterOptions:
+  | {
+      expiresAt: number;
+      value: PublicDirectoryFilterOptions;
+    }
+  | undefined;
+let cachedGlobalSourceInfo:
+  | {
+      expiresAt: number;
+      value: SourceInfo;
+    }
+  | undefined;
 
 type DisclosureRow = {
   id: string;
@@ -287,9 +314,9 @@ export async function searchPostgresCompanyDirectory(
           e.slug,
           e.normalized_name,
           e.headquarters_location_id,
-          coalesce(yearly.h1b_record_count, 0)::text as h1b_record_count,
-          coalesce(yearly.perm_record_count, 0)::text as perm_record_count,
-          greatest(coalesce(yearly.latest_fiscal_year, 0), coalesce(m.latest_fiscal_year, 0))::text as latest_fiscal_year,
+          (m.lca_count_5y + m.uscis_record_count_5y)::text as h1b_record_count,
+          m.perm_count_5y::text as perm_record_count,
+          m.latest_fiscal_year::text as latest_fiscal_year,
           m.quality_score::text as quality_score,
           m.indexable,
           m.noindex_reason,
@@ -297,14 +324,6 @@ export async function searchPostgresCompanyDirectory(
           coalesce(locations.top_items, '[]'::jsonb) as top_locations
         from public.company_page_metrics m
         join public.employers e on e.id = m.employer_id
-        left join lateral (
-          select
-            sum(y.h1b_total) as h1b_record_count,
-            sum(y.perm_total) as perm_record_count,
-            max(y.fiscal_year) as latest_fiscal_year
-          from public.company_yearly_immigration_stats y
-          where y.employer_id = m.employer_id
-        ) yearly on true
         left join lateral (
           select jsonb_agg(
             jsonb_build_object('value', label, 'count', total_count)
@@ -349,7 +368,7 @@ export async function searchPostgresCompanyDirectory(
     sourceNames: sourceInfo.sourceNames,
     latestDataDate: sourceInfo.latestDataDate,
     interpretationNoteZh:
-      "公司目录把 H-1B LCA 与 PERM 公开记录的聚合结果作为雇主信号合并展示，不代表个案批准、实际招聘或未来 sponsor 承诺。",
+      "公司目录把 H-1B LCA 与 PERM 公开记录的聚合结果作为雇主信号合并展示，不代表个案批准、实际招聘或未来担保承诺。",
     seo: noindexDirectorySeo(normalized.data.filters),
   });
 }
@@ -360,9 +379,9 @@ export async function getPostgresCompanyProfileBySlug(
   if (!/^[a-z0-9](?:[a-z0-9-]{0,78}[a-z0-9])?$/.test(slug)) {
     return failure(
       "invalid_input",
-      "公司 slug 格式无效。",
+      "公司网址格式无效。",
       "slug",
-      "slug 只能包含小写英文字母、数字和连字符，且不能包含路径符号。",
+      "公司网址标识只能包含小写英文字母、数字和连字符，且不能包含路径符号。",
     );
   }
 
@@ -501,7 +520,7 @@ export async function getPostgresCompanyProfileBySlug(
     sourceNames: sourceInfo.sourceNames,
     latestDataDate: sourceInfo.latestDataDate,
     interpretationNoteZh:
-      "公司页把 H-1B LCA、PERM 和 USCIS Employer Data Hub 公开记录的聚合结果作为历史活动信号展示，不代表个案批准、实际录用、未来 sponsor 承诺或法律意见。",
+      "公司页把 H-1B LCA、PERM 和 USCIS Employer Data Hub 公开记录的聚合结果作为历史活动信号展示，不代表个案批准、实际录用、未来担保承诺或法律意见。",
     seo: {
       indexable: indexability?.indexable ?? false,
       noindex: !(indexability?.indexable ?? false),
@@ -536,7 +555,7 @@ export async function getPostgresVisaBulletinDates(
   if (chargeabilityArea !== "china-mainland") {
     return failure(
       "invalid_input",
-      "当前查询层只支持中国大陆出生 chargeability area。",
+      "当前查询层只支持中国大陆出生地/Chargeability。",
       "chargeabilityArea",
     );
   }
@@ -601,7 +620,7 @@ export async function getPostgresVisaBulletinDates(
       })),
     sourceUrl: month.sourceUrl,
     interpretationNoteZh:
-      "Visa Bulletin 日期只是公开排期表信号；实际 I-485 filing chart 还需看 USCIS 当月选择和个人情况。",
+      "Visa Bulletin 日期只是公开排期表信号；实际 I-485 用表还需看 USCIS 当月选择和个人情况。",
   });
 }
 
@@ -692,8 +711,8 @@ async function searchPostgresDisclosureRecords(
     latestDataDate: sourceInfo.latestDataDate,
     interpretationNoteZh:
       dataset === "h1b"
-        ? "LCA 是 H-1B 流程中的劳工条件申请记录，不等于 H-1B petition 批准，也不代表雇主实际录用或未来承诺。"
-        : "PERM certification 是劳工认证公开记录，不等于 I-140、I-485 或绿卡最终获批。",
+        ? "LCA 是 H-1B 流程中的劳工条件申请记录，不等于 H-1B 申请批准，也不代表雇主实际录用或未来承诺。"
+        : "PERM 劳工认证是公开记录，不等于 I-140、I-485 或绿卡最终获批。",
     seo: noindexDirectorySeo(normalized.data.filters),
   });
 }
@@ -839,7 +858,7 @@ async function getCompanyPermTimeline(
     socCode: row.soc_code,
     socTitle: row.soc_title,
     city: row.worksite_city,
-    state: row.worksite_state,
+    state: normalizeStateCode(row.worksite_state) ?? row.worksite_state,
     wageOfferFrom: toNumber(row.wage_offer_from),
     wageUnit: row.wage_unit === "Hour" ? "Hour" : "Year",
     priorityDate: toDateKey(row.priority_date),
@@ -1024,8 +1043,9 @@ function addDisclosureFilters(
   }
 
   if (filters.state) {
+    const aliases = getStateFilterAliases(filters.state);
     builder.conditions.push(
-      `upper(s.worksite_state) = ${builder.add(filters.state)}`,
+      `upper(s.worksite_state) = any(${builder.add(aliases)}::text[])`,
     );
   }
 
@@ -1045,8 +1065,9 @@ function addDisclosureFilters(
   }
 
   if (filters.caseStatus) {
+    const aliases = getCaseStatusFilterAliases(filters.caseStatus);
     builder.conditions.push(
-      `lower(s.case_status) = ${builder.add(filters.caseStatus.toLowerCase())}`,
+      `lower(s.case_status) = any(${builder.add(aliases)}::text[])`,
     );
   }
 }
@@ -1118,8 +1139,9 @@ function addCompanyDirectoryFilters(
     const locationConditions = ["b.employer_id = e.id", "b.kind = 'location'"];
 
     if (filters.state) {
+      const aliases = getStateFilterAliases(filters.state);
       locationConditions.push(
-        `upper(coalesce(b.state, '')) = ${builder.add(filters.state)}`,
+        `upper(coalesce(b.state, '')) = any(${builder.add(aliases)}::text[])`,
       );
     }
 
@@ -1135,6 +1157,30 @@ function addCompanyDirectoryFilters(
       where ${locationConditions.join(" and ")}
     )`);
   }
+}
+
+function getCaseStatusFilterAliases(status: string) {
+  const normalized = normalizeCaseStatusForDataset(status, "combined");
+
+  if (normalized === "CERTIFIED") {
+    return ["certified", "certified - expired", "certified-expired"];
+  }
+
+  if (normalized === "WITHDRAWN") {
+    return [
+      "withdrawn",
+      "certified withdrawn",
+      "certified-withdrawn",
+      "certified_withdrawn",
+      "certified_-_withdrawn",
+    ];
+  }
+
+  if (normalized === "DENIED") {
+    return ["denied"];
+  }
+
+  return [status.toLowerCase()];
 }
 
 async function getPostgresDisclosureFilterOptions(
@@ -1156,12 +1202,24 @@ async function getPostgresDisclosureFilterOptions(
 
   return {
     fiscalYears: rows[0]?.fiscal_years ?? [],
-    states: rows[0]?.states ?? [],
-    caseStatuses: rows[0]?.case_statuses ?? [],
+    states: normalizeStateOptions(rows[0]?.states ?? []),
+    caseStatuses: normalizeCaseStatusOptions(
+      rows[0]?.case_statuses ?? [],
+      dataset,
+    ),
   };
 }
 
 async function getPostgresCompanyFilterOptions(): Promise<PublicDirectoryFilterOptions> {
+  const now = Date.now();
+
+  if (
+    cachedCompanyFilterOptions &&
+    cachedCompanyFilterOptions.expiresAt > now
+  ) {
+    return cachedCompanyFilterOptions.value;
+  }
+
   const [years, states] = await Promise.all([
     queryPostgresRows<{ fiscal_year: number }>(
       `
@@ -1179,12 +1237,18 @@ async function getPostgresCompanyFilterOptions(): Promise<PublicDirectoryFilterO
       `,
     ),
   ]);
-
-  return {
+  const value = {
     fiscalYears: years.map((row) => row.fiscal_year),
-    states: states.map((row) => row.state),
+    states: normalizeStateOptions(states.map((row) => row.state)),
     caseStatuses: [...COMBINED_STATUSES],
   };
+
+  cachedCompanyFilterOptions = {
+    expiresAt: now + getDirectoryAuxCacheTtlMs(),
+    value,
+  };
+
+  return value;
 }
 
 async function getDisclosureSourceInfo(dataset: Dataset) {
@@ -1210,6 +1274,12 @@ async function getDisclosureSourceInfo(dataset: Dataset) {
 }
 
 async function getGlobalSourceInfo() {
+  const now = Date.now();
+
+  if (cachedGlobalSourceInfo && cachedGlobalSourceInfo.expiresAt > now) {
+    return cachedGlobalSourceInfo.value;
+  }
+
   const rows = await queryPostgresRows<SourceInfoRow>(
     `
       select
@@ -1219,7 +1289,13 @@ async function getGlobalSourceInfo() {
     `,
   );
 
-  return toSourceInfo(rows[0]);
+  const value = toSourceInfo(rows[0]);
+  cachedGlobalSourceInfo = {
+    expiresAt: now + getDirectoryAuxCacheTtlMs(),
+    value,
+  };
+
+  return value;
 }
 
 function toDisclosureRecordRow(
@@ -1228,19 +1304,22 @@ function toDisclosureRecordRow(
   companyBasePath: string,
 ): PublicDisclosureRecordRow {
   const wageUnit = row.wage_unit === "Hour" ? "Hour" : "Year";
+  const caseStatus =
+    normalizeCaseStatusForDataset(row.case_status, dataset) ?? row.case_status;
+  const state = normalizeStateCode(row.worksite_state) ?? row.worksite_state;
 
   return {
     id: row.id,
     employer: toEmployer(row),
     companyHref: `${companyBasePath}/${row.slug}`,
     caseNumber: row.case_number,
-    caseStatus: row.case_status,
+    caseStatus,
     fiscalYear: toNumber(row.fiscal_year),
     jobTitle: row.job_title,
     socCode: row.soc_code,
     socTitle: row.soc_title,
     city: row.worksite_city,
-    state: row.worksite_state,
+    state,
     wageAmount: toNumber(row.wage_amount),
     wageUnit,
     decisionDate: toDateKey(row.decision_date) ?? "",
@@ -1336,27 +1415,27 @@ function buildPostgresImmigrationSignal(input: {
         Math.min(uscisRows * 1.5, 3),
       evidenceZh: [
         `近 5 年 LCA 记录：${h1bTotal} 条`,
-        `Certified LCA：${h1bCertified} 条`,
+        `已认证 LCA：${h1bCertified} 条`,
         `USCIS Employer Data Hub 行：${uscisRows} 条`,
       ],
       explanationZh:
-        "LCA 与 USCIS Employer Data Hub 只能说明公开记录中有 H-1B 相关活动，不代表 petition 批准或未来 sponsor 承诺。",
+        "LCA 与 USCIS Employer Data Hub 只能说明公开记录中有 H-1B 相关活动，不代表申请批准或未来担保承诺。",
     }),
     buildSignalDimension({
       key: "perm_activity",
       score: Math.min(permTotal * 5, 15) + (permCertified > 0 ? 3 : 0),
       evidenceZh: [
         `近 5 年 PERM 记录：${permTotal} 条`,
-        `Certified PERM：${permCertified} 条`,
+        `已认证 PERM：${permCertified} 条`,
       ],
       explanationZh:
-        "PERM certification 是劳工认证公开记录，不等于 I-140、I-485 或绿卡最终获批。",
+        "PERM 劳工认证是公开记录，不等于 I-140、I-485 或绿卡最终获批。",
     }),
     buildSignalDimension({
       key: "repeat_filing_history",
       score: Math.min(fiscalYears.length * 4, 12) + (hasH1B && hasPerm ? 4 : 0),
       evidenceZh: [
-        `覆盖 fiscal years：${fiscalYears.length > 0 ? fiscalYears.map((year) => `FY${year}`).join("、") : "暂无"}`,
+        `覆盖财年：${fiscalYears.length > 0 ? fiscalYears.map((year) => `${year} 财年`).join("、") : "暂无"}`,
         `同时有 H-1B 与 PERM 公开活动：${hasH1B && hasPerm ? "是" : "否"}`,
       ],
       explanationZh:
@@ -1386,7 +1465,7 @@ function buildPostgresImmigrationSignal(input: {
         `地点聚合项：${input.locationBreakdown.length}`,
       ],
       explanationZh:
-        "职位和地点覆盖越多，可比较背景越丰富；这不是对岗位质量或 sponsor 意愿的判断。",
+        "职位和地点覆盖越多，可比较背景越丰富；这不是对岗位质量或担保意愿的判断。",
     }),
     buildSignalDimension({
       key: "wage_context",
@@ -1398,7 +1477,7 @@ function buildPostgresImmigrationSignal(input: {
       evidenceZh: input.wageDistribution
         ? [
             `H-1B 工资样本：${input.wageDistribution.count} 条`,
-            `工资年份：${input.wageDistribution.fiscalYears.map((year) => `FY${year}`).join("、")}`,
+            `工资年份：${input.wageDistribution.fiscalYears.map((year) => `${year} 财年`).join("、")}`,
             `中位数：USD ${Math.round(input.wageDistribution.median).toLocaleString("en-US")}`,
           ]
         : ["暂无 H-1B 工资样本"],
@@ -1424,7 +1503,7 @@ function buildPostgresImmigrationSignal(input: {
     lowSample: {
       flagged: lowSampleFlagged,
       messageZh: lowSampleFlagged
-        ? `近 5 个 fiscal years 只有 ${filingRecordCount} 条 H-1B/PERM 公开记录、${totalPublicRecordCount} 条相关公开记录。样本太少，只能说明公开数据覆盖有限，不能推断雇主政策或个案结果。`
+        ? `近 5 个财年只有 ${filingRecordCount} 条 H-1B/PERM 公开记录、${totalPublicRecordCount} 条相关公开记录。样本太少，只能说明公开数据覆盖有限，不能推断雇主政策或个案结果。`
         : undefined,
     },
     dimensions,
@@ -1659,7 +1738,7 @@ function normalizeFiscalYear(
   if (!Number.isInteger(value) || value < 2000 || value > 2100) {
     return failure(
       "invalid_input",
-      "Fiscal year 格式无效。",
+      "数据年份格式无效。",
       "fiscalYear",
       "请使用四位年份，例如 2025。",
     );
@@ -1671,14 +1750,12 @@ function normalizeFiscalYear(
 function normalizeOptionalState(
   value: string | undefined,
 ): PublicQueryResult<string | undefined> {
-  const state = value?.trim().toUpperCase();
+  const state = normalizeStateCode(value);
 
   if (!state) {
-    return success(undefined);
-  }
-
-  if (!/^[A-Z]{2}$/.test(state)) {
-    return failure("invalid_input", "州代码格式无效。", "state");
+    return value?.trim()
+      ? failure("invalid_input", "州代码格式无效。", "state")
+      : success(undefined);
   }
 
   return success(state);
@@ -1694,14 +1771,12 @@ function normalizeOptionalCaseStatus(
     return success(undefined);
   }
 
-  const matchedStatus = allowedStatuses.find(
-    (status) => status.toLowerCase() === trimmed.toLowerCase(),
-  );
+  const matchedStatus = normalizeCaseStatusForAllowed(trimmed, allowedStatuses);
 
   if (!matchedStatus) {
     return failure(
       "invalid_input",
-      "Case status 不在当前数据集支持范围内。",
+      "记录状态不在当前数据集支持范围内。",
       "caseStatus",
       `可选状态：${allowedStatuses.join(", ")}。`,
     );
@@ -1760,8 +1835,8 @@ function noindexDirectorySeo(filters: PublicDirectoryFilters) {
   return {
     noindex: true as const,
     noindexReasonZh: filters.hasActiveFilters
-      ? "筛选结果页默认 noindex，避免产生大量参数组合页面。"
-      : "目录页将在生产数据质量门槛通过后再开放索引。",
+      ? "筛选结果页不单独收录，避免产生大量参数组合页面。"
+      : "目录页将在生产数据质量门槛通过后再开放公开收录。",
   };
 }
 
@@ -1793,6 +1868,14 @@ function cloneSqlBuilder(builder: SqlBuilder): SqlBuilder {
 
 function toWhereClause(conditions: readonly string[]) {
   return conditions.length > 0 ? `where ${conditions.join(" and ")}` : "";
+}
+
+function getDirectoryAuxCacheTtlMs() {
+  const configured = Number(process.env.DATABASE_FIXTURE_CACHE_TTL_MS);
+
+  return Number.isFinite(configured) && configured > 0
+    ? configured
+    : DEFAULT_DIRECTORY_AUX_CACHE_TTL_MS;
 }
 
 function toSourceInfo(row: SourceInfoRow | undefined) {

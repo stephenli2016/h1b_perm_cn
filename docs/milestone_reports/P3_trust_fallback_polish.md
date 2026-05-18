@@ -2,42 +2,36 @@
 
 ## Status
 
-Completed, committed, pushed, and production-deployed.
+Completed locally. P3 changes are not committed yet.
 
 ## Built
 
-- Upgraded the site footer with a “常用动作” area:
-  - 查公司
-  - 查工资
-  - 查排期
-  - 提交纠错
-- Added clearer footer trust copy explaining source, sample, coverage, and no-advice boundaries.
-- Expanded the 404 page with:
-  - likely reasons a page is unavailable
-  - links back to company directory, tools, guides, and correction request flow
-- Expanded `/sources` with:
-  - “如何核验一页数据”
-  - “不会作为数据输入的来源”
-- Expanded `/disclaimer` with a decision checklist for users before relying on any public-data page.
-- Added tests for footer quick actions, source trust sections, disclaimer checklist, and 404 recovery links.
-- After production smoke testing, removed stale dynamic company sample links from public navigation and changed the company-signal example CTA back to the company directory.
-- Made the company-pages sitemap return no company URLs in production database mode until the production import contains indexable company rows, avoiding fixture-only URLs.
-- Kept the company-signal methodology example on local fixture data so the public method page does not wait on production database availability.
+- Made fallback states actionable instead of dead ends:
+  - `DataTable` now supports an empty-state action
+  - `ErrorState` now supports an action area
+  - company, H-1B, and PERM search pages now link users back to cleared results or source coverage when no records match
+- Added recovery paths to data loading/error states:
+  - company directory errors link back to the company directory and correction flow
+  - H-1B and PERM data errors link back to their data entry pages and source notes
+  - wage-level and priority-date tool errors link to restart or related source pages
+- Polished the 500 error page:
+  - replaced the raw `Error digest` label with a user-facing `错误参考码`
+  - added links to the data source page and correction flow
+- Added regression coverage for empty-state actions, error-state actions, and the updated 500 recovery links.
 
 ## Files changed
 
-- `components/site-footer.tsx`
-- `lib/site.ts`
-- `lib/seo/sitemaps.ts`
-- `app/not-found.tsx`
-- `app/sources/page.tsx`
-- `app/disclaimer/page.tsx`
-- `app/sitemaps/company-pages.xml/route.ts`
-- `app/sitemaps/company-pages/[page]/route.ts`
-- `app/tools/company-immigration-score/page.tsx`
-- `tests/ui-components.test.tsx`
-- `tests/compliance-pages.test.tsx`
+- `app/companies/page.tsx`
+- `app/error.tsx`
+- `app/h1b/page.tsx`
+- `app/perm/page.tsx`
+- `app/tools/eb2-eb3-china-priority-date-calculator/page.tsx`
+- `app/tools/h1b-wage-level-checker/page.tsx`
+- `components/ui/data-table.tsx`
+- `components/ui/feedback-state.tsx`
 - `tests/technical-seo.test.tsx`
+- `tests/ui-components.test.tsx`
+- `docs/milestone_reports/P3_trust_fallback_polish.md`
 
 ## Validation
 
@@ -48,53 +42,46 @@ Completed, committed, pushed, and production-deployed.
 - Command: `pnpm typecheck`
 - Result: pass
 - Command: `pnpm test`
-- Result: pass, 21 files / 133 tests
+- Result: pass, 21 files / 136 tests
 - Command: `pnpm seo:audit`
-- Result: pass, 4 files / 29 tests
-- Command: `pnpm launch:readiness`
-- Result: expected `blocked`, with no failures. Remaining blockers are owner-gated production data/deployment checks in the launch script.
+- Result: pass, 4 files / 30 tests
 - Command: `pnpm build`
-- Result: pass, 80 static pages generated
-- Command: production Vercel deployment check
-- Result: pass, GitHub push triggered a production Vercel deployment that reached `READY`
-- Command: production smoke checks for `/`, `/sources`, `/disclaimer`, `/not-a-real-page`, `/robots.txt`, `/sitemap.xml`, `/companies`, `/tools`, `/guides`, and `/visa-bulletin`
-- Result: pass after stale dynamic company links were fixed; public navigation no longer exposes fixture-only company URLs
+- Result: pass, 79 static pages generated
 
 ## Screenshots / local URLs
 
-- Browser-verified local production server at `http://127.0.0.1:3000`.
-- Production verified at `https://h1b-perm-cn.vercel.app`.
-- Verified `/`:
-  - footer contains `常用动作`, `查公司`, `查工资`, `查排期`, `提交纠错`
-  - canonical `https://h1b-perm-cn.vercel.app`
-  - `index, follow`
-- Verified `/sources`:
-  - contains `如何核验一页数据`, `不会作为数据输入的来源`, and official-source boundary copy
-  - canonical `https://h1b-perm-cn.vercel.app/sources`
-  - `index, follow`
-- Verified `/disclaimer`:
-  - contains `做决定前请另外确认`, `雇主当前政策`, and `个人身份`
-  - canonical `https://h1b-perm-cn.vercel.app/disclaimer`
-  - `index, follow`
-- Verified `/not-a-real-page`:
-  - renders `页面未找到`, `可能发生了什么`, `回到公司目录`, and `提交纠错`
-  - canonical `https://h1b-perm-cn.vercel.app/404`
-  - `noindex`
+- Browser-verified local fixture server at `http://localhost:3001`.
+- Verified `/h1b?employer=definitely-no-company-p3`:
+  - contains `没有找到 H-1B 记录`
+  - contains `清除筛选，查看全部 H-1B 记录`
+- Verified `/perm?employer=definitely-no-company-p3`:
+  - contains `没有找到 PERM 记录`
+  - contains `清除筛选，查看全部 PERM 记录`
+- Verified `/tools/h1b-wage-level-checker?offeredWage=abc&wageYear=2025`:
+  - contains `重新开始`
+  - contains `查看数据来源`
+- Verified `/not-a-real-p3-page`:
+  - contains `页面未找到`
+  - contains `可能发生了什么`
+  - contains `回到公司目录`
+  - contains `提交纠错`
 
 ## Decisions made without owner input
 
-- Treated P3 as the final trust, fallback, and recovery polish bucket.
-- Kept footer actions short and task-oriented instead of adding a larger navigation redesign.
-- Kept 404 noindex and focused it on recovery paths rather than search.
+- Treated P3 as the trust, fallback, and recovery polish pass after P1 terminology cleanup and P2 company-page reading-flow work.
+- Kept fallback actions as plain server-rendered links so they remain simple, accessible, and SEO-safe.
+- Did not add site-wide search; the immediate gap was recovery from empty/error states, not discovery volume.
 
 ## Known limitations
 
-- No site search was added; current content volume can still be served by task-based navigation and category pages.
+- P3 is complete locally but not committed, pushed, or deployed.
+- Browser verification used local fixture data for deterministic empty-result and 404 checks.
+- Runtime production database errors still depend on Vercel/Supabase availability; this pass improves user recovery paths, not infrastructure reliability.
 
 ## Owner action needed
 
-None for P3.
+- Confirm whether P3 is accepted.
 
 ## Recommended next milestone
 
-The four priority polish buckets are complete. Recommended next step: review the next product gap list and choose the next priority bucket.
+P4 — Continue the next priority bucket after owner confirmation.

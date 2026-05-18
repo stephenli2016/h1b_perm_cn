@@ -3,7 +3,7 @@ export type ContentKind = "tool" | "guide";
 export type ContentCategory =
   | "核心工具"
   | "H-1B 数据解释"
-  | "Prevailing Wage 和薪资"
+  | "通行工资（Prevailing Wage）和薪资"
   | "PERM 和绿卡"
   | "排期与中国 backlog"
   | "求职与公司判断";
@@ -166,25 +166,25 @@ export const contentPages = [
     kind: "tool",
     category: "核心工具",
     priority: 1,
-    title: "H-1B 公司 Sponsor 记录查询工具",
+    title: "H-1B 公司担保记录查询工具",
     metaDescription:
-      "用中文理解雇主 H-1B LCA 和 USCIS Employer Data Hub 公开记录，区分 sponsor 信号、历史样本和不能推断的结论。",
+      "用中文理解雇主 H-1B LCA 和 USCIS Employer Data Hub 公开记录，区分担保信号、历史样本和不能推断的结论。",
     summary:
       "这页适合在投递或面试前做背景调查：先看公司是否有近期 LCA、USCIS employer-level H-1B 记录，再看职位、地点和年份是否接近。公开记录只能说明过去公开流程中出现过，不代表当前岗位或个人个案。",
     sourceContext:
-      "DOL OFLC LCA disclosure data 展示劳工条件申请记录；USCIS Employer Data Hub 展示雇主层面的 H-1B petition 决定数据。两个来源节点不同，必须分开理解。",
+      "DOL OFLC LCA disclosure data 展示劳工条件申请记录；USCIS Employer Data Hub 展示雇主层面的 H-1B 申请决定数据。两个来源节点不同，必须分开理解。",
     checklistTitle: "查公司时的四步",
     checklist: [
       "先用雇主英文 legal name 和常见别名查公开记录。",
       "看最近 3-5 个 fiscal years 是否有连续或重复记录。",
-      "把 job title、SOC、worksite city/state 和工资字段一起看。",
+      "把职位名称、SOC、工作地点城市/州和工资字段一起看。",
       "低样本时只记录问题清单，不做强判断。",
     ],
     exampleTitle: "示例读法",
     example:
-      "如果某公司有多条 Software Engineer LCA，地点集中在 WA 和 CA，可以把它作为“有类似公开历史”的信号，再向 recruiter 询问当前岗位是否由同一 entity sponsor。",
+      "如果某公司有多条 Software Engineer LCA，地点集中在 WA 和 CA，可以把它作为“有类似公开历史”的信号，再向招聘方询问当前岗位是否由同一雇主实体担保。",
     mistakes: [
-      "把 certified LCA 当作 H-1B petition approved。",
+      "把已认证 LCA 当作 H-1B 已获批。",
       "只看公司总记录数，不看岗位和地点是否接近。",
       "把历史记录理解成未来承诺。",
     ],
@@ -203,19 +203,19 @@ export const contentPages = [
     summary:
       "PERM 公开记录适合用来观察公司是否有职业移民劳工认证历史。它能帮助你准备面试问题，但不能替代公司政策、律师评估或个人排期判断。",
     sourceContext:
-      "DOL FLAG 和 OFLC performance data 是 PERM 官方来源；USCIS employment-based green card 页面用于理解 PERM 之后仍有 I-140、排期和身份路径等后续节点。",
+      "DOL FLAG 和 OFLC performance data 是 PERM 官方来源；USCIS 职业移民绿卡（employment-based green card）页面用于理解 PERM 之后仍有 I-140、排期和身份路径等后续节点。",
     checklistTitle: "查 PERM 记录时看什么",
     checklist: [
       "先确认 employer name 是否和 offer entity 一致。",
-      "看 certified、denied、withdrawn 等状态的近年分布。",
-      "关注 job title、worksite、minimum requirements 和工资字段。",
+      "看已认证、未通过、已撤回等状态的近年分布。",
+      "关注 job title、工作地点、minimum requirements 和工资字段。",
       "结合公司页低样本提示，避免从一两条记录推出政策结论。",
     ],
     exampleTitle: "示例读法",
     example:
-      "一家公司近年有多条同类工程岗位 certified PERM，可作为绿卡流程经验的公开信号；下一步仍应问 HR 绿卡启动时间、岗位要求和律师流程。",
+      "一家公司近年有多条同类工程岗位 已认证 PERM，可作为绿卡流程经验的公开信号；下一步仍应问 HR 绿卡启动时间、岗位要求和律师流程。",
     mistakes: [
-      "把 PERM certified 当作绿卡已经获批。",
+      "把 PERM 已认证 当作绿卡已经获批。",
       "忽略换雇主或换岗位时 PERM 与具体 job opportunity 的关系。",
       "只看总数，不看年份和职位变化。",
     ],
@@ -232,25 +232,25 @@ export const contentPages = [
     kind: "tool",
     category: "核心工具",
     priority: 1,
-    title: "H-1B 工资 Level 中文判断工具",
+    title: "H-1B 工资等级中文判断工具",
     metaDescription:
-      "按 SOC、worksite、offered wage 和年份对照 DOL/FLAG prevailing wage level，理解公开工资数据能说明什么。",
+      "按 SOC、工作地点、offer 工资和年份对照 DOL/FLAG 通行工资等级（prevailing wage level），理解公开工资数据能说明什么。",
     summary:
-      "工资 level 工具用于把 offered wage 放到公开 prevailing wage 背景里看。它适合做 offer 沟通准备，但正式 LCA 和 wage 判断还要看雇主、律师、SOC、职责、经验要求和地点。",
+      "工资等级工具用于把 offer 工资放到公开通行工资（prevailing wage）背景里看。它适合做 offer 沟通准备，但正式 LCA 和工资判断还要看雇主、律师、SOC、职责、经验要求和地点。",
     sourceContext:
       "DOL/FLAG wage data 提供职业和地区工资背景；DOL OFLC LCA disclosure data 可用于观察历史 H-1B 工资样本。",
-    checklistTitle: "使用工资 level 工具",
+    checklistTitle: "使用工资等级工具",
     checklist: [
       "先确认 SOC code 或英文职位关键词。",
-      "使用实际 worksite，而不是只看公司总部。",
-      "选择对应 wage year，并留意页面展示的数据日期。",
+      "使用实际工作地点，而不是只看公司总部。",
+      "选择对应工资年份，并留意页面展示的数据日期。",
       "把结果当作沟通材料，不当作法律合规结论。",
     ],
     exampleTitle: "示例读法",
     example:
-      "如果 Bellevue 的 Software Developer 年薪落在 Level 2 和 Level 3 之间，可以记录为工资背景位置，再确认岗位职责和 LCA 口径是否匹配。",
+      "如果 Bellevue 的 Software Developer 年薪落在 等级 2 和等级 3 之间，可以记录为工资背景位置，再确认岗位职责和 LCA 口径是否匹配。",
     mistakes: [
-      "认为高于某个 level 就完成所有 H-1B 工资判断。",
+      "认为高于某个工资等级就完成所有 H-1B 工资判断。",
       "把州级匹配和 metro 匹配看成同等精度。",
       "用不同年份或不同 SOC 的工资表直接比较。",
     ],
@@ -267,18 +267,18 @@ export const contentPages = [
     kind: "tool",
     category: "核心工具",
     priority: 2,
-    title: "Prevailing Wage 中文查询入口",
+    title: "通行工资（Prevailing Wage）中文查询入口",
     metaDescription:
-      "用中文理解 FLAG Wage Search 和 prevailing wage 数据下载，按职业、地区和年份做工资背景查询。",
+      "用中文理解 FLAG Wage Search 和通行工资（prevailing wage）数据下载，按职业、地区和年份做工资背景查询。",
     summary:
-      "Prevailing wage 查询入口帮助你找到官方 wage search 与数据下载的位置，并提醒你工资判断离不开 SOC、地区、职责和经验要求。它不是正式 wage determination。",
+      "通行工资查询入口帮助你找到官方 wage search 与数据下载的位置，并提醒你工资判断离不开 SOC、地区、职责和经验要求。它不是正式工资决定（wage determination）。",
     sourceContext:
       "FLAG Wage Search 是官方 wage 查询入口；DOL wage 页面解释外劳认证流程中的工资来源和数据口径。",
     checklistTitle: "查询前准备",
     checklist: [
       "准备英文职位描述和可能的 SOC 代码。",
-      "确认 worksite city、state 和 remote/hybrid 安排。",
-      "选择正确 wage year 或 effective period。",
+      "确认工作地点城市、州和远程/混合安排。",
+      "选择正确工资年份或生效期间（effective period）。",
       "保存 source URL 和查询条件，便于和雇主核对。",
     ],
     exampleTitle: "示例读法",
@@ -304,25 +304,25 @@ export const contentPages = [
     priority: 1,
     title: "中国 EB-2 / EB-3 排期计算器",
     metaDescription:
-      "输入职业移民类别、priority date、Visa Bulletin 月份和 chart type，对照中国大陆出生 EB 排期公开信息。",
+      "输入职业移民类别、优先日、Visa Bulletin 月份和排期表类型，对照中国大陆出生 EB 排期公开信息。",
     summary:
-      "排期计算器只解释 priority date 和官方表格日期之间的关系。它不能决定个人 I-485、签证或身份路径，尤其要同时核对 USCIS 当月使用哪张 filing chart。",
+      "排期计算器只解释优先日和官方表格日期之间的关系。它不能决定个人 I-485、签证或身份路径，尤其要同时核对 USCIS 当月使用哪张 I-485 用表。",
     sourceContext:
-      "Department of State Visa Bulletin 发布每月排期；USCIS filing chart 页面说明当月调整身份是否可用 Dates for Filing。",
+      "Department of State Visa Bulletin 发布每月排期；USCIS I-485 用表页面说明当月调整身份是否可用递件排期表（Dates for Filing）。",
     checklistTitle: "排期对照步骤",
     checklist: [
       "选择 EB-1、EB-2 或 EB-3 等类别。",
-      "确认 chargeability area 是否为中国大陆出生。",
-      "选择 Final Action 或 Dates for Filing。",
-      "再查看 USCIS 当月 filing chart 选择。",
+      "确认出生地/Chargeability 是否为中国大陆出生。",
+      "选择最终裁定表或递件排期表（Dates for Filing）。",
+      "再查看 USCIS 当月 I-485 用表选择。",
     ],
     exampleTitle: "示例读法",
     example:
-      "如果 EB-2 China Dates for Filing 晚于你的 priority date，表格关系可能显示排期已到；实际提交仍要看 USCIS 当月 chart 和个人情况。",
+      "如果 EB-2 中国递件排期表（Dates for Filing）晚于你的优先日，表格关系可能显示排期已到；实际提交仍要看 USCIS 当月 I-485 用表和个人情况。",
     mistakes: [
-      "只看 Visa Bulletin，不看 USCIS filing chart。",
+      "只看 Visa Bulletin，不看 USCIS 当月 I-485 用表。",
       "把排期已到理解成个人申请会被接受或批准。",
-      "混淆 Final Action Date 和 Dates for Filing。",
+      "混淆最终裁定表（Final Action Date）和递件排期表（Dates for Filing）。",
     ],
     relatedPaths: [
       "/visa-bulletin",
@@ -337,27 +337,27 @@ export const contentPages = [
     kind: "tool",
     category: "核心工具",
     priority: 2,
-    title: "H-1B Transfer 风险清单",
+    title: "H-1B 换雇主风险清单",
     metaDescription:
-      "用通用场景核对 H-1B 换雇主前需要问 HR、律师和新雇主 immigration team 的问题。",
+      "用通用场景核对 H-1B 换雇主前需要问 HR、律师和新雇主移民事务负责人的问题。",
     summary:
-      "H-1B transfer 清单帮助你把新雇主 filing、LCA/worksite、开始日期和公开公司数据分开核对。页面不收集身份日期、receipt number 或工资。",
+      "H-1B 换雇主清单帮助你把新雇主提交计划、LCA/工作地点、开始日期和公开公司数据分开核对。页面不收集身份日期、收据号或工资。",
     sourceContext:
-      "USCIS H-1B 和 Form I-129 页面提供 petition 背景；DOL LCA 数据用于公司公开历史背景。",
+      "USCIS H-1B 和 Form I-129 页面提供申请背景；DOL LCA 数据用于公司公开历史背景。",
     checklistTitle: "换雇主核对点",
     checklist: [
-      "确认 petitioning employer 和 Form I-129 filing 计划。",
-      "核对职位、worksite、工资和 requested start date。",
-      "区分 filed、receipt issued、approved 和公司内部政策。",
+      "确认申请雇主和 Form I-129 提交计划。",
+      "核对职位、工作地点、工资和预计开始日期。",
+      "区分已提交、收到收据、已批准和公司内部政策。",
       "用公司 H-1B/PERM 数据准备问题，而不是替代律师判断。",
     ],
     exampleTitle: "示例读法",
     example:
-      "如果新岗位地点和职责都变了，应把 amended/new petition、LCA 覆盖和开始日期作为单独问题交给雇主 immigration team。",
+      "如果新岗位地点和职责都变了，应把修正或新申请、LCA 覆盖和开始日期作为单独问题交给雇主移民事务负责人。",
     mistakes: [
       "只凭口头 offer 判断开始时间。",
-      "忽略 remote 或 hybrid worksite 对 LCA 的影响。",
-      "把公司历史记录当作当前 filing 承诺。",
+      "忽略远程或混合办公地点对 LCA 的影响。",
+      "把公司历史记录当作当前申请承诺。",
     ],
     relatedPaths: [
       "/h1b",
@@ -378,20 +378,20 @@ export const contentPages = [
     summary:
       "PERM 重启时间线展示雇主、职位机会、PWD、recruitment、ETA-9089 和 I-140 后续节点的相对顺序，不计算个人日期，也不判断旧 PERM 是否可继续使用。",
     sourceContext:
-      "DOL FLAG PERM 页面和 OFLC disclosure data 用于理解 PERM 流程与公开记录；USCIS employment-based green card 页面用于后续节点背景。",
+      "DOL FLAG PERM 页面和 OFLC disclosure data 用于理解 PERM 流程与公开记录；USCIS 职业移民绿卡（employment-based green card）页面用于后续节点背景。",
     checklistTitle: "重启时间线怎么读",
     checklist: [
-      "先确认新雇主和 permanent job opportunity。",
+      "先确认新雇主和永久职位机会（permanent job opportunity）。",
       "比较旧职位和新职位的职责、地点、工资与最低要求。",
-      "把 PWD、recruitment 和 ETA-9089 filing 拆开问。",
-      "已有 I-140 时单独核对 priority date 和工作计划关系。",
+      "把 PWD、招聘流程和 ETA-9089 提交节点拆开问。",
+      "已有 I-140 时单独核对 优先日和工作计划关系。",
     ],
     exampleTitle: "示例读法",
     example:
       "跳到新雇主时，通常要围绕新雇主的岗位重新规划 PERM；如果仍在同雇主换组，也要核对原岗位机会是否仍一致。",
     mistakes: [
       "把 pending PERM 当作可自动转移。",
-      "把 PERM certified 当作绿卡完成。",
+      "把 PERM 已认证当作绿卡完成。",
       "只看时间，不看 job opportunity 是否变化。",
     ],
     relatedPaths: [
@@ -411,9 +411,9 @@ export const contentPages = [
     metaDescription:
       "用中文梳理 F-1 OPT、STEM OPT、H-1B cap season 和雇主准备问题的非个案时间线。",
     summary:
-      "这页帮助 OPT/STEM OPT 用户把求职、雇主注册、H-1B petition、cap-gap 和工作授权问题拆成沟通清单。它不收集 SEVIS、EAD 或身份日期。",
+      "这页帮助 OPT/STEM OPT 用户把求职、雇主注册、H-1B 申请、cap-gap 和工作授权问题拆成沟通清单。它不收集 SEVIS、EAD 或身份日期。",
     sourceContext:
-      "USCIS OPT/STEM OPT 页面解释学生就业授权背景；USCIS H-1B 页面用于理解 H-1B specialty occupation 和雇主 petition 节点。",
+      "USCIS OPT/STEM OPT 页面解释学生就业授权背景；USCIS H-1B 页面用于理解 H-1B specialty occupation 和雇主申请节点。",
     checklistTitle: "规划时间线",
     checklist: [
       "确认当前 OPT 或 STEM OPT 类型和雇主资格背景。",
@@ -427,7 +427,7 @@ export const contentPages = [
     mistakes: [
       "把 offer start date 当作身份授权结论。",
       "忽略 STEM OPT 对雇主和 training plan 的要求。",
-      "等到 cap season 结束后才问 sponsor 流程。",
+      "等到抽签季结束后才问担保流程。",
     ],
     relatedPaths: [
       "/tools/stem-opt-employer-checklist",
@@ -446,21 +446,21 @@ export const contentPages = [
     metaDescription:
       "面向 STEM OPT 求职者的雇主检查清单，覆盖 E-Verify、training plan、H-1B 规划和公开数据背景。",
     summary:
-      "STEM OPT 不只是延长工作时间，还涉及雇主资格、training plan 和后续 H-1B 规划。清单帮助你准备 recruiter 和 HR 问题，不判断个人资格。",
+      "STEM OPT 不只是延长工作时间，还涉及雇主资格、training plan 和后续 H-1B 规划。清单帮助你准备招聘方和 HR 问题，不判断个人资格。",
     sourceContext:
-      "USCIS STEM OPT 和 OPT 页面提供学生就业授权背景；DOL/USCIS H-1B 来源用于后续雇主 sponsor 数据解释。",
+      "USCIS STEM OPT 和 OPT 页面提供学生就业授权背景；DOL/USCIS H-1B 来源用于后续雇主担保数据解释。",
     checklistTitle: "面试前可以问",
     checklist: [
       "雇主是否熟悉 STEM OPT training plan 和报告义务。",
       "岗位职责是否和专业训练目标一致。",
-      "公司是否参与 H-1B cap registration 和 petition。",
+      "公司是否参与 H-1B cap registration 和 申请。",
       "公开 H-1B/PERM 记录是否有类似岗位背景。",
     ],
     exampleTitle: "示例读法",
     example:
       "如果雇主有 STEM OPT 员工但没有 H-1B 历史，求职者仍应问清 cap season 支持和外部律师安排。",
     mistakes: [
-      "只问是否 sponsor，不问 STEM OPT 操作能力。",
+      "只问是否担保，不问 STEM OPT 操作能力。",
       "忽略岗位职责和专业训练关系。",
       "把过去 H-1B 记录当作当前政策。",
     ],
@@ -481,9 +481,9 @@ export const contentPages = [
     metaDescription:
       "解释公司公开数据友好度信号如何按 H-1B、PERM、跨年记录、来源、职位地点和工资上下文生成。",
     summary:
-      "这个信号只衡量公开数据是否足够丰富、连续和可解释，帮助求职者做背景研究。它不是 sponsor 审批概率、雇主承诺或法律判断。",
+      "这个信号只衡量公开数据是否足够丰富、连续和可解释，帮助求职者做背景研究。它不是担保审批概率、雇主承诺或法律判断。",
     sourceContext:
-      "信号维度来自 DOL LCA、PERM、prevailing wage 和 USCIS Employer Data Hub 等官方公开来源，各来源流程节点不同。",
+      "信号维度来自 DOL LCA、PERM、通行工资（prevailing wage）和 USCIS Employer Data Hub 等官方公开来源，各来源流程节点不同。",
     checklistTitle: "读分数时看证据",
     checklist: [
       "先看低样本提示，再看综合信号。",
@@ -510,11 +510,11 @@ export const contentPages = [
     priority: 2,
     title: "用 H-1B 数据做谈薪参考",
     metaDescription:
-      "学习如何把 H-1B LCA 工资样本和 prevailing wage 背景用于谈薪准备，同时避免误读公开记录。",
+      "学习如何把 H-1B LCA 工资样本和通行工资（prevailing wage）背景用于谈薪准备，同时避免误读公开记录。",
     summary:
       "H-1B 工资数据可以帮助你理解同类职位和地区的公开历史样本。谈薪时应把它作为市场背景之一，而不是证明雇主必须给某个数额。",
     sourceContext:
-      "DOL OFLC LCA data 展示历史 offered wage 和 worksite；FLAG wage data 展示职业地区工资背景，两者都需要结合岗位职责解释。",
+      "DOL OFLC LCA data 展示历史 offer 工资和 工作地点；FLAG wage data 展示职业地区工资背景，两者都需要结合岗位职责解释。",
     checklistTitle: "谈薪前准备",
     checklist: [
       "筛选同 SOC、同地区、近年记录。",
@@ -545,25 +545,25 @@ export const contentPages = [
     priority: 2,
     title: "Visa Bulletin 排期提醒/解释页",
     metaDescription:
-      "用中文理解每月 Visa Bulletin 更新、USCIS filing chart 选择和中国 EB 类别排期变化的提醒口径。",
+      "用中文理解每月 Visa Bulletin 更新、USCIS 当月 I-485 用表选择和中国 EB 类别排期变化的提醒口径。",
     summary:
-      "排期提醒页目前提供本地解释和后续提醒功能占位。它帮助用户知道每月应看哪两类官方页面、如何记录 priority date 对照，并明确不预测未来排期。",
+      "排期提醒页目前提供本地解释和后续提醒功能占位。它帮助用户知道每月应看哪两类官方页面、如何记录优先日对照，并明确不预测未来排期。",
     sourceContext:
-      "Department of State 发布 Visa Bulletin；USCIS 单独公布调整身份当月使用 Final Action Date 还是 Dates for Filing。",
+      "Department of State 发布 Visa Bulletin；USCIS 单独公布调整身份当月使用最终裁定表（Final Action Date）还是递件排期表（Dates for Filing）。",
     checklistTitle: "每月更新时看",
     checklist: [
-      "确认 Visa Bulletin 月份和 employment-based category。",
+      "确认 Visa Bulletin 月份和职业移民类别。",
       "查看中国大陆出生 EB-1、EB-2、EB-3 两张表。",
-      "再查看 USCIS 当月 filing chart 选择。",
+      "再查看 USCIS 当月 I-485 用表选择。",
       "记录变化，不把单月移动当作长期趋势。",
     ],
     exampleTitle: "示例读法",
     example:
-      "如果 EB-3 China Dates for Filing 前进，仍要等 USCIS 确认该月是否允许使用 Dates for Filing。",
+      "如果 EB-3 中国递件排期表（Dates for Filing）前进，仍要等 USCIS 确认该月是否允许使用递件排期表。",
     mistakes: [
-      "只订阅 Visa Bulletin，不看 USCIS chart。",
+      "只订阅 Visa Bulletin，不看 USCIS 当月 I-485 用表。",
       "根据一个月变化预测未来。",
-      "混淆 China mainland-born 和其他 chargeability areas。",
+      "混淆中国大陆出生和其他出生地/Chargeability。",
     ],
     relatedPaths: [
       "/visa-bulletin",
@@ -580,25 +580,25 @@ export const contentPages = [
     priority: 1,
     title: "LCA 是什么？为什么不等于 H-1B 批准",
     metaDescription:
-      "用中文解释 Labor Condition Application (LCA) 在 H-1B 流程中的位置，以及为什么 certified LCA 不是 petition 批准。",
+      "用中文解释 Labor Condition Application (LCA) 在 H-1B 流程中的位置，以及为什么 已认证 LCA 不是申请批准。",
     summary:
-      "LCA 是雇主在 H-1B petition 前后使用的劳工条件申请记录，关注工资、工作地点和劳动条件等信息。它是重要公开信号，但不是 USCIS 对 H-1B petition 的批准记录。",
+      "LCA 是雇主在 H-1B申请前后使用的劳工条件申请记录，关注工资、工作地点和劳动条件等信息。它是重要公开信号，但不是 USCIS 对 H-1B申请的批准记录。",
     sourceContext:
-      "DOL OFLC performance data 提供 LCA disclosure records；USCIS H-1B 页面说明 petition 仍由 USCIS 审理。",
+      "DOL OFLC performance data 提供 LCA disclosure records；USCIS H-1B 页面说明申请仍由 USCIS 审理。",
     checklistTitle: "读 LCA 的基本顺序",
     checklist: [
       "先看 case status 和 fiscal year。",
-      "再看 employer、job title、SOC、worksite 和 wage。",
+      "再看雇主、职位名称、SOC、工作地点和工资。",
       "与 USCIS Employer Data Hub 分开理解。",
       "只用作公开数据背景，不推断个人入职。",
     ],
     exampleTitle: "示例读法",
     example:
-      "一条 certified LCA 说明 DOL 层面的 LCA 记录通过了，但还不能说明对应 H-1B petition 已由 USCIS 批准。",
+      "一条 已认证 LCA 说明 DOL 层面的 LCA 记录通过了，但还不能说明对应 H-1B申请已由 USCIS 批准。",
     mistakes: [
-      "把 LCA 编号当作 H-1B receipt number。",
+      "把 LCA 编号当作 H-1B 收据号。",
       "把 LCA status 当作最终移民结果。",
-      "忽略 worksite 和 wage 字段。",
+      "忽略工作地点和工资字段。",
     ],
     relatedPaths: [
       "/h1b",
@@ -615,11 +615,11 @@ export const contentPages = [
     priority: 1,
     title: "USCIS H-1B Employer Data Hub 中文解释",
     metaDescription:
-      "解释 USCIS H-1B Employer Data Hub 的雇主层面 petition 决定数据、字段含义和与 LCA 数据的区别。",
+      "解释 USCIS H-1B Employer Data Hub 的雇主层面申请决定数据、字段含义和与 LCA 数据的区别。",
     summary:
-      "Employer Data Hub 是 USCIS 按雇主展示的 H-1B petition 决定数据。它和 DOL LCA 属于不同机构、不同流程节点，适合结合使用但不能混成同一个审批概率指标。",
+      "Employer Data Hub 是 USCIS 按雇主展示的 H-1B申请决定数据。它和 DOL LCA 属于不同机构、不同流程节点，适合结合使用但不能混成同一个审批概率指标。",
     sourceContext:
-      "USCIS Employer Data Hub 和历史下载文件是官方 employer-level H-1B petition 数据来源；DOL LCA 数据用于补充职位和 worksite 背景。",
+      "USCIS Employer Data Hub 和历史下载文件是官方雇主层面的 H-1B 申请数据来源；DOL LCA 数据用于补充职位和工作地点背景。",
     checklistTitle: "使用 Employer Data Hub",
     checklist: [
       "先确认雇主名称是否匹配。",
@@ -648,26 +648,26 @@ export const contentPages = [
     kind: "guide",
     category: "H-1B 数据解释",
     priority: 2,
-    title: "Certified LCA 到底代表什么",
+    title: "已认证 LCA 到底代表什么",
     metaDescription:
-      "解释 certified LCA 的公开数据含义、能作为哪些 sponsor 信号，以及不能推断哪些个人或法律结果。",
+      "解释已认证 LCA 的公开数据含义、能作为哪些担保信号，以及不能推断哪些个人或法律结果。",
     summary:
-      "Certified LCA 表示 LCA 这个 DOL 环节在公开记录中显示 certified。它能说明雇主曾为某类职位和地点准备 H-1B 相关材料，但不能说明 USCIS petition 或个人身份结果。",
+      "已认证 LCA 表示 LCA 这个 DOL 环节在公开记录中显示通过。它能说明雇主曾为某类职位和地点准备 H-1B 相关材料，但不能说明 USCIS 申请或个人身份结果。",
     sourceContext:
-      "DOL OFLC disclosure data 是 certified LCA 的来源；USCIS H-1B 信息用于理解后续 petition 不属于同一数据表。",
-    checklistTitle: "读 certified LCA",
+      "DOL OFLC disclosure data 是已认证 LCA 的来源；USCIS H-1B 信息用于理解后续申请不属于同一数据表。",
+    checklistTitle: "读已认证 LCA",
     checklist: [
-      "查看 certified date 和 fiscal year。",
-      "核对职位、SOC 和 worksite。",
+      "查看认证日期和财年。",
+      "核对职位、SOC 和 工作地点。",
       "看同类记录是否重复出现。",
       "避免从单条记录推断雇主政策。",
     ],
     exampleTitle: "示例读法",
     example:
-      "某公司 FY2025 有多条 certified LCA，可作为历史 H-1B 准备信号；仍需问当前岗位是否启动 petition。",
+      "某公司 FY2025 有多条 已认证 LCA，可作为历史 H-1B 准备信号；仍需问当前岗位是否启动 申请。",
     mistakes: [
-      "把 certified LCA 当作 H-1B approval notice。",
-      "忽略 withdrawn 或 denied LCA 的区别。",
+      "把已认证 LCA 当作 H-1B 批准通知。",
+      "忽略 withdrawn 或 未通过 LCA 的区别。",
       "把 LCA 人数等同于实际员工人数。",
     ],
     relatedPaths: [
@@ -683,25 +683,25 @@ export const contentPages = [
     kind: "guide",
     category: "H-1B 数据解释",
     priority: 2,
-    title: "Withdrawn / Denied LCA 怎么看",
+    title: "撤回 / 未通过的 LCA 怎么看",
     metaDescription:
-      "解释 withdrawn、denied 等 LCA 状态的公开数据含义，以及为什么不能把它们直接当作 H-1B 失败结论。",
+      "解释撤回、未通过等 LCA 状态的公开数据含义，以及为什么不能把它们直接当作 H-1B 失败结论。",
     summary:
-      "LCA withdrawn 或 denied 只说明 DOL LCA 环节的公开状态。它可能和岗位取消、信息变更、重新提交等情况有关，不能自动对应 USCIS H-1B petition 结果。",
+      "LCA 撤回或未通过只说明 DOL LCA 环节的公开状态。它可能和岗位取消、信息变更、重新提交等情况有关，不能自动对应 USCIS H-1B 申请结果。",
     sourceContext:
-      "DOL OFLC disclosure data 提供 LCA status 字段；USCIS H-1B 来源用于提醒后续 petition 是另一套流程。",
-    checklistTitle: "遇到非 certified 状态",
+      "DOL OFLC disclosure data 提供 LCA status 字段；USCIS H-1B 来源用于提醒后续申请是另一套流程。",
+    checklistTitle: "遇到非认证状态",
     checklist: [
       "先确认状态字段和 decision date。",
-      "看同一雇主同类职位是否有后续 certified 记录。",
+      "看同一雇主同类职位是否有后续认证记录。",
       "避免把单条 withdrawn 记录当作公司风险结论。",
       "结合 Employer Data Hub 和公司页面整体信号。",
     ],
     exampleTitle: "示例读法",
     example:
-      "同一职位先 withdrawn 后出现 certified LCA，可能只是材料或岗位调整；页面应展示状态而不是推断原因。",
+      "同一职位先 withdrawn 后出现 已认证 LCA，可能只是材料或岗位调整；页面应展示状态而不是推断原因。",
     mistakes: [
-      "把 denied LCA 等同 H-1B petition denial。",
+      "把未通过 LCA 等同 H-1B 申请被拒。",
       "只展示负面状态，不展示总体样本。",
       "从状态字段推测个人身份。",
     ],
@@ -724,13 +724,13 @@ export const contentPages = [
     summary:
       "Job title 是查 H-1B 工资的入口，但同一个 title 可能对应不同 SOC、职责和级别。更稳妥的做法是用 title 先缩小范围，再用 SOC、地点和年份筛选。",
     sourceContext:
-      "DOL LCA disclosure data 包含 job title、SOC、worksite 和 wage；FLAG wage data 提供 SOC/地区工资背景。",
+      "DOL LCA disclosure data 包含职位名称、SOC、工作地点和工资；FLAG wage data 提供 SOC/地区工资背景。",
     checklistTitle: "Job title 查询步骤",
     checklist: [
       "先用英文 title 的核心词搜索。",
       "观察常见 SOC code 和 SOC title。",
-      "按 worksite state/city 缩小样本。",
-      "对比 offered wage 和 prevailing wage 背景。",
+      "按工作地点州/城市缩小样本。",
+      "对比 offer 工资和通行工资（prevailing wage）背景。",
     ],
     exampleTitle: "示例读法",
     example:
@@ -755,14 +755,14 @@ export const contentPages = [
     priority: 2,
     title: "如何按城市查 H-1B 薪资",
     metaDescription:
-      "解释 H-1B 薪资查询为什么要看 worksite city/state、metro area、工资单位和 fiscal year。",
+      "解释 H-1B 薪资查询为什么要看工作地点城市/州、都会区、工资单位、财年和职位背景。",
     summary:
-      "H-1B 工资公开记录跟 worksite 绑定。按城市查薪资时，需要确认记录地点、工资单位、职位和年份，否则很容易把不可比样本混在一起。",
+      "H-1B 工资公开记录跟工作地点绑定。按城市查薪资时，需要确认记录地点、工资单位、职位和年份，否则很容易把不可比样本混在一起。",
     sourceContext:
-      "DOL LCA disclosure data 包含 worksite 字段；FLAG wage data 以职业和地区提供 wage 背景。",
+      "DOL LCA disclosure data 包含工作地点字段；FLAG wage data 以职业和地区提供工资背景。",
     checklistTitle: "城市薪资查询步骤",
     checklist: [
-      "优先用 worksite city/state，而不是公司总部。",
+      "优先用工作地点城市/州，而不是公司总部。",
       "固定 SOC 或相近 job title。",
       "统一 wage unit 和 fiscal year。",
       "低样本城市可以扩展到 metro 或州级背景。",
@@ -773,7 +773,7 @@ export const contentPages = [
     mistakes: [
       "用总部城市代表所有岗位。",
       "混用 hourly 和 yearly 工资。",
-      "忽略 remote worksite 可能需要单独处理。",
+      "忽略远程工作地点可能需要单独处理。",
     ],
     relatedPaths: [
       "/tools/h1b-wage-level-checker",
@@ -790,16 +790,16 @@ export const contentPages = [
     priority: 2,
     title: "SOC Code 中文解释",
     metaDescription:
-      "解释 SOC code 在 H-1B LCA、prevailing wage 和工资 level 查询中的作用，以及为什么不能只看职位名称。",
+      "解释 SOC code 在 H-1B LCA、通行工资（prevailing wage）和工资等级查询中的作用，以及为什么不能只看职位名称。",
     summary:
-      "SOC code 是把职位放进职业分类和工资背景中的关键字段。它不能完整描述岗位职责，但能让公开工资、LCA 和 wage level 查询更可比。",
+      "SOC code 是把职位放进职业分类和工资背景中的关键字段。它不能完整描述岗位职责，但能让公开工资、LCA 和工资等级（wage level）查询更可比。",
     sourceContext:
       "DOL LCA 和 FLAG wage data 都使用 SOC 相关字段；DOL wage 页面提供外劳认证工资背景。",
     checklistTitle: "核对 SOC 时看",
     checklist: [
       "看 SOC code 和 SOC title 是否与职责接近。",
       "比较同公司同岗位近年 SOC 是否稳定。",
-      "查 wage level 前先固定 SOC。",
+      "查工资等级（wage level）前先固定 SOC。",
       "职位变化明显时把 SOC 作为律师核对点。",
     ],
     exampleTitle: "示例读法",
@@ -808,7 +808,7 @@ export const contentPages = [
     mistakes: [
       "把中文岗位名直接等同 SOC。",
       "忽略同一 title 在不同公司可能不同 SOC。",
-      "用错误 SOC 做工资 level 对照。",
+      "用错误 SOC 做工资等级对照。",
     ],
     relatedPaths: [
       "/guides/h1b-job-title-search",
@@ -827,15 +827,15 @@ export const contentPages = [
     metaDescription:
       "解释 LCA 中 full-time/part-time 字段的公开数据含义，以及工资单位、工时和岗位背景的关系。",
     summary:
-      "LCA 的 full-time 字段帮助理解岗位安排，但公开数据仍需要结合 wage unit、hours、job title 和 worksite。不要只凭一个字段判断工作授权或身份结果。",
+      "LCA 的 full-time 字段帮助理解岗位安排，但公开数据仍需要结合 wage unit、hours、job title 和 工作地点。不要只凭一个字段判断工作授权或身份结果。",
     sourceContext:
-      "DOL OFLC LCA disclosure data 包含 full-time indicator、wage unit 和 worksite 等字段；USCIS H-1B 页面提供 petition 背景。",
+      "DOL OFLC LCA disclosure data 包含全职标记、工资单位和工作地点等字段；USCIS H-1B 页面提供申请背景。",
     checklistTitle: "看全职/兼职字段",
     checklist: [
       "确认 full-time indicator 是否存在。",
-      "一起查看 wage unit 和 offered wage。",
+      "一起查看 wage unit 和 offer 工资。",
       "比较同职位的工时与地点背景。",
-      "向雇主确认实际安排和 petition 材料。",
+      "向雇主确认实际安排和申请材料。",
     ],
     exampleTitle: "示例读法",
     example:
@@ -870,7 +870,7 @@ export const contentPages = [
       "询问公司是否有 H-1B dependent 或 willful violator 相关政策。",
       "确认岗位是否需要额外 recruitment 或 attestations。",
       "查看公司历史 LCA 记录规模和岗位类型。",
-      "让雇主 immigration team 给出正式说明。",
+      "让雇主移民事务负责人给出正式说明。",
     ],
     exampleTitle: "示例读法",
     example:
@@ -893,18 +893,18 @@ export const contentPages = [
     kind: "guide",
     category: "H-1B 数据解释",
     priority: 2,
-    title: "小公司 H-1B sponsor 风险怎么看",
+    title: "小公司 H-1B 担保风险怎么看",
     metaDescription:
-      "解释如何用官方公开数据和面试问题评估小公司 H-1B sponsor 背景，同时避免从低样本做过度结论。",
+      "解释如何用官方公开数据和面试问题评估小公司 H-1B 担保背景，同时避免从低样本做过度结论。",
     summary:
-      "小公司并不天然不能 sponsor，但公开样本往往更少，流程经验、律师资源、岗位稳定性和工资背景都需要问得更细。低样本时要多用问题清单，少用排名结论。",
+      "小公司并不天然不能担保，但公开样本往往更少，流程经验、律师资源、岗位稳定性和工资背景都需要问得更细。低样本时要多用问题清单，少用排名结论。",
     sourceContext:
-      "DOL LCA data 和 USCIS Employer Data Hub 可提供历史公开信号；USCIS H-1B 页面用于理解 petition 仍需要雇主提交。",
+      "DOL LCA data 和 USCIS Employer Data Hub 可提供历史公开信号；USCIS H-1B 页面用于理解申请仍需要雇主提交。",
     checklistTitle: "小公司核对清单",
     checklist: [
       "查是否有同 entity 的近年 LCA 或 USCIS 记录。",
       "问是否有固定 immigration counsel。",
-      "确认工资、worksite 和职位职责是否稳定。",
+      "确认工资、工作地点和职位职责是否稳定。",
       "问 RFE、denial 或裁员时的公司政策。",
     ],
     exampleTitle: "示例读法",
@@ -913,7 +913,7 @@ export const contentPages = [
     mistakes: [
       "把低样本等同高风险结论。",
       "只看公司规模，不看具体岗位和流程。",
-      "忽略 entity 名称和 payroll 主体。",
+      "忽略实体名称和工资单主体。",
     ],
     relatedPaths: [
       "/tools/h1b-company-sponsor-checker",
@@ -926,16 +926,16 @@ export const contentPages = [
     order: 23,
     path: "/guides/prevailing-wage-explained",
     kind: "guide",
-    category: "Prevailing Wage 和薪资",
+    category: "通行工资（Prevailing Wage）和薪资",
     priority: 1,
-    title: "Prevailing Wage 中文解释",
+    title: "通行工资（Prevailing Wage）中文解释",
     metaDescription:
-      "解释 prevailing wage 在 H-1B、PERM 和外劳认证流程中的作用，以及公开工资数据的使用边界。",
+      "解释通行工资（prevailing wage）在 H-1B、PERM 和外劳认证流程中的作用，以及公开工资数据的使用边界。",
     summary:
       "Prevailing wage 是把某职业、地区和要求放到工资背景里看的核心概念。它在 H-1B 和 PERM 场景中都重要，但正式判断取决于具体职位和官方流程。",
     sourceContext:
-      "DOL wage 页面、FLAG Wage Search 和 wage data 是 prevailing wage 背景的官方入口。",
-    checklistTitle: "理解 prevailing wage",
+      "DOL wage 页面、FLAG Wage Search 和 wage data 是通行工资（prevailing wage）背景的官方入口。",
+    checklistTitle: "理解通行工资（prevailing wage）",
     checklist: [
       "确认职业分类和地区。",
       "看 wage source、effective date 和 wage unit。",
@@ -944,7 +944,7 @@ export const contentPages = [
     ],
     exampleTitle: "示例读法",
     example:
-      "同一 SOC 在不同地区的 prevailing wage 可能不同，远程岗位还需要单独确认 worksite 口径。",
+      "同一 SOC 在不同地区的通行工资（prevailing wage）可能不同，远程岗位还需要单独确认工作地点口径。",
     mistakes: [
       "把 wage search 当作正式 PWD。",
       "忽略职责和经验要求。",
@@ -961,29 +961,29 @@ export const contentPages = [
     order: 24,
     path: "/guides/wage-level-1-2-3-4-explained",
     kind: "guide",
-    category: "Prevailing Wage 和薪资",
+    category: "通行工资（Prevailing Wage）和薪资",
     priority: 1,
-    title: "Wage Level 1/2/3/4 中文解释",
+    title: "Wage 等级 1/2/3/4 中文解释",
     metaDescription:
-      "解释 H-1B 和 prevailing wage 背景中 Level 1 到 Level 4 的常见理解方式、限制和求职应用。",
+      "解释 H-1B 和通行工资（prevailing wage）背景中 等级 1 到等级 4 的常见理解方式、限制和求职应用。",
     summary:
-      "Wage Level 1-4 是理解岗位要求和工资背景的常见入口。它不只是薪水高低，还和经验、职责、监督程度、技能要求等因素有关。",
+      "Wage 等级 1-4 是理解岗位要求和工资背景的常见入口。它不只是薪水高低，还和经验、职责、监督程度、技能要求等因素有关。",
     sourceContext:
-      "FLAG wage data 和 DOL wage 页面提供官方工资背景；DOL LCA records 展示雇主历史 wage level 或 wage 字段。",
-    checklistTitle: "看 wage level",
+      "FLAG wage data 和 DOL wage 页面提供官方工资背景；DOL LCA records 展示雇主历史工资等级（wage level）或工资字段。",
+    checklistTitle: "看工资等级（wage level）",
     checklist: [
       "先固定 SOC 和地区。",
-      "看岗位职责和经验要求是否支持对应 level。",
-      "比较 offered wage 与公开 level 数值。",
-      "把 level 作为沟通点，不作为个人合规判断。",
+      "看岗位职责和经验要求是否支持对应工资等级。",
+      "比较 offer 工资与公开工资等级数值。",
+      "把工资等级作为沟通点，不作为个人合规判断。",
     ],
     exampleTitle: "示例读法",
     example:
-      "Entry-level title 不总是 Level 1；如果岗位要求多年经验和独立负责复杂项目，level 背景要更谨慎核对。",
+      "Entry-level title 不总是 等级 1；如果岗位要求多年经验和独立负责复杂项目，工资等级背景要更谨慎核对。",
     mistakes: [
-      "用职位年限机械对应 level。",
+      "用职位年限机械对应工资等级。",
       "只看工资数字，不看岗位要求。",
-      "忽略地区和 wage year。",
+      "忽略地区和 工资年份。",
     ],
     relatedPaths: [
       "/tools/h1b-wage-level-checker",
@@ -996,20 +996,20 @@ export const contentPages = [
     order: 25,
     path: "/guides/h1b-salary-vs-prevailing-wage",
     kind: "guide",
-    category: "Prevailing Wage 和薪资",
+    category: "通行工资（Prevailing Wage）和薪资",
     priority: 2,
-    title: "H-1B 工资和 prevailing wage 的关系",
+    title: "H-1B 工资和通行工资（prevailing wage）的关系",
     metaDescription:
-      "解释 H-1B offered wage、prevailing wage、actual wage 和 LCA 公开记录之间的关系。",
+      "解释 H-1B offer 工资、通行工资（prevailing wage）、actual wage 和 LCA 公开记录之间的关系。",
     summary:
-      "H-1B 工资判断通常要同时看 offered wage、prevailing wage 和雇主内部同类岗位工资背景。公开 LCA 数据能展示历史样本，但不能完整呈现所有薪酬和法律判断。",
+      "H-1B 工资判断通常要同时看 offer 工资、通行工资（prevailing wage）和雇主内部同类岗位工资背景。公开 LCA 数据能展示历史样本，但不能完整呈现所有薪酬和法律判断。",
     sourceContext:
-      "DOL LCA disclosure data 展示历史 wage fields；DOL wage/FLAG 数据提供 prevailing wage 背景。",
+      "DOL LCA disclosure data 展示历史 wage fields；DOL wage/FLAG 数据提供通行工资（prevailing wage）背景。",
     checklistTitle: "比较工资时看",
     checklist: [
       "统一 wage unit 和 annualized 口径。",
-      "确认 worksite 和 SOC 是否一致。",
-      "区分 prevailing wage 与 actual offered wage。",
+      "确认工作地点和 SOC 是否一致。",
+      "区分通行工资（prevailing wage）与 actual offer 工资。",
       "注意奖金、股票和福利不一定反映在 LCA wage 字段。",
     ],
     exampleTitle: "示例读法",
@@ -1031,25 +1031,25 @@ export const contentPages = [
     order: 26,
     path: "/guides/h1b-wage-location-effect",
     kind: "guide",
-    category: "Prevailing Wage 和薪资",
+    category: "通行工资（Prevailing Wage）和薪资",
     priority: 2,
     title: "城市/地区如何影响 H-1B 工资要求",
     metaDescription:
-      "解释 worksite、metro area、州级数据和 remote/hybrid 安排如何影响 H-1B 工资背景查询。",
+      "解释 工作地点、metro area、州级数据和 remote/hybrid 安排如何影响 H-1B 工资背景查询。",
     summary:
-      "H-1B 工资背景高度依赖 worksite。相同职位在不同城市可能对应不同 wage data，远程或混合安排还需要确认 LCA 覆盖地点。",
+      "H-1B 工资背景高度依赖 工作地点。相同职位在不同城市可能对应不同 wage data，远程或混合安排还需要确认 LCA 覆盖地点。",
     sourceContext:
-      "DOL LCA records 包含 worksite；FLAG wage search 以职业和 area 查询 wage 背景。",
+      "DOL LCA records 包含 工作地点；FLAG wage search 以职业和 area 查询 wage 背景。",
     checklistTitle: "地点核对",
     checklist: [
       "确认实际工作地点和远程安排。",
       "查 metro、county 或 state 级别匹配。",
-      "避免用 headquarters 代替 worksite。",
-      "地点变化时询问是否需要 LCA 或 petition 更新。",
+      "避免用 headquarters 代替 工作地点。",
+      "地点变化时询问是否需要 LCA 或申请更新。",
     ],
     exampleTitle: "示例读法",
     example:
-      "Offer 写公司总部在 CA，但实际 worksite 在 TX，工资背景应围绕实际 worksite 问清。",
+      "Offer 写公司总部在 CA，但实际工作地点在 TX，工资背景应围绕实际工作地点问清。",
     mistakes: [
       "用公司总部查工资。",
       "忽略 relocation 后的 LCA 问题。",
@@ -1066,11 +1066,11 @@ export const contentPages = [
     order: 27,
     path: "/guides/h1b-salary-negotiation",
     kind: "guide",
-    category: "Prevailing Wage 和薪资",
+    category: "通行工资（Prevailing Wage）和薪资",
     priority: 2,
     title: "如何用公开 H-1B 工资数据辅助谈薪",
     metaDescription:
-      "提供用 LCA 工资样本、prevailing wage 和公司历史数据做谈薪准备的中文步骤和边界。",
+      "提供用 LCA 工资样本、通行工资（prevailing wage）和公司历史数据做谈薪准备的中文步骤和边界。",
     summary:
       "公开 H-1B 工资数据适合做背景研究和问题准备。谈薪时要把它和岗位级别、地点、市场薪酬、公司预算、总包结构一起看。",
     sourceContext:
@@ -1084,7 +1084,7 @@ export const contentPages = [
     ],
     exampleTitle: "示例读法",
     example:
-      "可以说“我看到公开 LCA 中类似岗位区间在 X 附近，想了解这个 level 的薪资带宽”，而不是声称公司必须匹配。",
+      "可以说“我看到公开 LCA 中类似岗位区间在 X 附近，想了解这个工资等级 的薪资带宽”，而不是声称公司必须匹配。",
     mistakes: [
       "拿单条最高记录谈薪。",
       "忽略 total compensation 结构。",
@@ -1101,20 +1101,20 @@ export const contentPages = [
     order: 28,
     path: "/guides/h1b-low-salary-warning-signs",
     kind: "guide",
-    category: "Prevailing Wage 和薪资",
+    category: "通行工资（Prevailing Wage）和薪资",
     priority: 2,
     title: "H-1B 工资偏低时该注意什么",
     metaDescription:
       "解释工资样本偏低时如何用官方 wage data、SOC、地点和岗位要求做谨慎核对。",
     summary:
-      "看到工资偏低时，先不要直接下结论。更好的做法是核对 SOC、地点、wage unit、岗位级别和 prevailing wage 背景，再把问题交给雇主或律师确认。",
+      "看到工资偏低时，先不要直接下结论。更好的做法是核对 SOC、地点、wage unit、岗位级别和通行工资（prevailing wage）背景，再把问题交给雇主或律师确认。",
     sourceContext:
       "DOL LCA data 和 FLAG wage search 可帮助判断公开工资背景位置，但正式合规判断不在页面完成。",
     checklistTitle: "偏低样本核对",
     checklist: [
       "统一 hourly/yearly 口径。",
       "确认是否 part-time 或特殊 wage unit。",
-      "检查 SOC 和 worksite 是否匹配。",
+      "检查 SOC 和工作地点是否匹配。",
       "比较同地区同类职位多个样本。",
     ],
     exampleTitle: "示例读法",
@@ -1136,27 +1136,27 @@ export const contentPages = [
     order: 29,
     path: "/guides/remote-work-h1b-wage",
     kind: "guide",
-    category: "Prevailing Wage 和薪资",
+    category: "通行工资（Prevailing Wage）和薪资",
     priority: 2,
-    title: "远程工作与 H-1B worksite/wage 风险",
+    title: "远程工作与 H-1B 工作地点/wage 风险",
     metaDescription:
-      "解释 remote/hybrid worksite、LCA 覆盖地点和 wage 背景之间的关系，以及求职者应问的问题。",
+      "解释 remote/hybrid 工作地点、LCA 覆盖地点和 wage 背景之间的关系，以及求职者应问的问题。",
     summary:
-      "远程工作会让 worksite 和 LCA 覆盖更复杂。公开数据能展示历史 worksite，但实际 remote/hybrid 安排需要雇主 immigration team 或律师确认。",
+      "远程工作会让工作地点和 LCA 覆盖更复杂。公开数据能展示历史工作地点，但实际远程/混合安排需要雇主移民事务负责人或律师确认。",
     sourceContext:
-      "DOL LCA data 包含 worksite 和 wage 字段；USCIS H-1B 页面提供 petition 背景。",
+      "DOL LCA data 包含工作地点和工资字段；USCIS H-1B 页面提供申请背景和远程安排核对边界。",
     checklistTitle: "远程岗位要问",
     checklist: [
-      "offer 中实际 worksite 是哪里。",
+      "offer 中实际工作地点是哪里。",
       "远程地点是否被 LCA 覆盖。",
       "搬家或跨州后谁负责更新流程。",
       "工资背景按哪个地区核对。",
     ],
     exampleTitle: "示例读法",
     example:
-      "公司在 NY，但你长期在 NC 远程工作，不能只看 NY 的 LCA 样本，需要确认实际 worksite 和 wage 背景。",
+      "公司在 NY，但你长期在 NC 远程工作，不能只看 NY 的 LCA 样本，需要确认实际工作地点和工资背景。",
     mistakes: [
-      "认为 remote 就不需要 worksite 核对。",
+      "认为远程工作就不需要核对工作地点。",
       "用办公室地点代替居住地工作安排。",
       "忽略 relocation 后的时间节点。",
     ],
@@ -1171,21 +1171,21 @@ export const contentPages = [
     order: 30,
     path: "/guides/soc-code-wage-level-case-study",
     kind: "guide",
-    category: "Prevailing Wage 和薪资",
+    category: "通行工资（Prevailing Wage）和薪资",
     priority: 2,
-    title: "SOC Code + Wage Level 案例解析",
+    title: "SOC Code + 工资等级 案例解析",
     metaDescription:
-      "用一个通用案例说明如何把 SOC code、worksite、wage year 和 wage level 放在一起看。",
+      "用一个通用案例说明如何把 SOC code、工作地点、工资年份和工资等级（wage level）放在一起看。",
     summary:
-      "SOC 和 wage level 要一起读。案例页用通用工程岗位示例展示如何从 title 到 SOC，再到地点和 wage level 背景，最后形成给雇主的问题清单。",
+      "SOC 和工资等级（wage level）要一起读。案例页用通用工程岗位示例展示如何从 title 到 SOC，再到地点和工资等级背景，最后形成给雇主的问题清单。",
     sourceContext:
-      "FLAG wage data 提供 SOC/地区/level 背景；DOL LCA data 展示历史工资样本。",
+      "FLAG wage data 提供 SOC/地区/工资等级背景；DOL LCA data 展示历史工资样本。",
     checklistTitle: "案例步骤",
     checklist: [
       "从 job description 提取核心职责。",
       "找最接近 SOC，并记录不确定点。",
-      "用 worksite 和 wage year 查询 level。",
-      "把结果和 offered wage、LCA 样本一起看。",
+      "用工作地点和工资年份查询工资等级。",
+      "把结果和 offer 工资、LCA 样本一起看。",
     ],
     exampleTitle: "通用案例",
     example:
@@ -1210,24 +1210,24 @@ export const contentPages = [
     priority: 1,
     title: "PERM 绿卡流程中文解释",
     metaDescription:
-      "用中文解释 PERM 在 employment-based green card 流程中的位置、雇主角色和公开数据边界。",
+      "用中文解释 PERM 在职业移民绿卡（employment-based green card）流程中的位置、雇主角色和公开数据边界。",
     summary:
-      "PERM 是雇主为特定 permanent job opportunity 走的劳工认证流程。它通常位于 I-140 之前，但 PERM 本身不是绿卡批准，也不是个人排期到达。",
+      "PERM 是雇主为特定永久职位机会（permanent job opportunity）走的劳工认证流程。它通常位于 I-140 之前，但 PERM 本身不是绿卡批准，也不是个人排期到达。",
     sourceContext:
-      "DOL FLAG PERM 页面解释劳工认证流程；USCIS employment-based green card 页面提供后续移民申请背景。",
+      "DOL FLAG PERM 页面解释劳工认证流程；USCIS 职业移民绿卡（employment-based green card）页面提供后续移民申请背景。",
     checklistTitle: "理解 PERM 的节点",
     checklist: [
-      "确认 employer 和 permanent job opportunity。",
-      "理解 prevailing wage / recruitment / ETA-9089。",
-      "区分 PERM certified、I-140 和 I-485。",
+      "确认 employer 和永久职位机会（permanent job opportunity）。",
+      "理解通行工资（prevailing wage）/ recruitment / ETA-9089。",
+      "区分 PERM 已认证、I-140 和 I-485。",
       "用公开 PERM data 看公司历史背景。",
     ],
     exampleTitle: "示例读法",
     example:
-      "公司有 certified PERM 记录，说明曾有劳工认证公开历史；仍需问当前岗位何时启动、职位要求如何设定。",
+      "公司有 已认证 PERM 记录，说明曾有劳工认证公开历史；仍需问当前岗位何时启动、职位要求如何设定。",
     mistakes: [
       "把 PERM 当作个人申请。",
-      "把 certified 当作绿卡完成。",
+      "把已认证当作绿卡完成。",
       "忽略岗位变化对 PERM 的影响。",
     ],
     relatedPaths: [
@@ -1245,21 +1245,21 @@ export const contentPages = [
     priority: 1,
     title: "PERM disclosure data 怎么看",
     metaDescription:
-      "解释 PERM disclosure data 的 employer、job title、status、priority date、wage 和 worksite 字段如何用于公司研究。",
+      "解释 PERM disclosure data 的雇主、职位名称、状态、优先日、工资和工作地点字段如何用于公司研究。",
     summary:
       "PERM disclosure data 是观察公司绿卡相关公开历史的重要来源。它适合看趋势、职位和地点，不适合推断个人身份结果或雇主未来承诺。",
     sourceContext:
       "DOL OFLC performance data 发布 PERM disclosure records；FLAG PERM 页面提供流程背景。",
     checklistTitle: "读 PERM data",
     checklist: [
-      "先看 employer、job title 和 worksite。",
-      "查看 case status 和 fiscal year。",
-      "关注 priority date、decision date 和 wage 字段。",
+      "先看 employer、job title 和 工作地点。",
+      "查看记录状态和财年。",
+      "关注 优先日、decision date 和 wage 字段。",
       "低样本岗位只做背景，不做排名。",
     ],
     exampleTitle: "示例读法",
     example:
-      "如果公司近年有多个 Data Scientist certified PERM，可以作为同类岗位绿卡流程经验信号，但仍需确认当前政策。",
+      "如果公司近年有多个 Data Scientist 已认证 PERM，可以作为同类岗位绿卡流程经验信号，但仍需确认当前政策。",
     mistakes: [
       "把 disclosure data 当作完整绿卡数据库。",
       "展示个人身份或不必要个人信息。",
@@ -1278,26 +1278,26 @@ export const contentPages = [
     kind: "guide",
     category: "PERM 和绿卡",
     priority: 2,
-    title: "PERM Certified 不等于绿卡获批",
+    title: "PERM 已认证不等于绿卡获批",
     metaDescription:
-      "解释 PERM certified 的含义、它与 I-140/I-485 的关系，以及为什么公开页面不应写成绿卡获批概率。",
+      "解释 PERM 已认证的含义、它与 I-140/I-485 的关系，以及为什么公开页面不应写成绿卡获批概率。",
     summary:
-      "PERM certified 是 DOL 劳工认证环节的一个结果，不是 USCIS 对移民 petition 或调整身份的批准。它是重要节点，但后面还有 I-140、排期和身份路径。",
+      "PERM 已认证是 DOL 劳工认证环节的一个结果，不是 USCIS 对移民申请或调整身份的批准。它是重要节点，但后面还有 I-140、排期和身份路径。",
     sourceContext:
-      "DOL PERM 来源用于 certified 状态；USCIS employment-based green card 和 I-140 页面用于后续节点背景。",
-    checklistTitle: "看到 certified 后",
+      "DOL PERM 来源用于认证状态；USCIS 职业移民绿卡（employment-based green card）和 I-140 页面用于后续节点背景。",
+    checklistTitle: "看到已认证后",
     checklist: [
-      "确认 certified 对应的 employer 和 job opportunity。",
-      "理解它仍不是 I-140 approval。",
-      "结合 priority date 和 Visa Bulletin 背景。",
+      "确认已认证记录对应的雇主和职位机会。",
+      "理解它仍不是 I-140 批准。",
+      "结合 优先日和 Visa Bulletin 背景。",
       "跳槽前单独问旧 PERM 和新岗位关系。",
     ],
     exampleTitle: "示例读法",
     example:
-      "一条 certified PERM 可说明劳工认证完成，但不能说明申请人已经提交或获批 I-485。",
+      "一条 已认证 PERM 可说明劳工认证完成，但不能说明申请人已经提交或获批 I-485。",
     mistakes: [
-      "把 certified 记录展示为绿卡成功案例。",
-      "用 certified 数除以 filed 数当作获批概率。",
+      "把已认证记录展示为绿卡成功案例。",
+      "用已认证数量除以提交数量当作获批概率。",
       "忽略 I-140 和排期。",
     ],
     relatedPaths: [
@@ -1324,13 +1324,13 @@ export const contentPages = [
     summary:
       "PWD 是 PERM 准备中的关键工资节点，围绕特定职位、地点和要求确定工资背景。公开 wage search 可做准备，但不是正式 PWD 结果。",
     sourceContext:
-      "FLAG PERM 页面和 DOL wage/FLAG wage data 提供 PERM 与 prevailing wage 背景。",
+      "FLAG PERM 页面和 DOL wage/FLAG wage data 提供 PERM 与通行工资（prevailing wage）背景。",
     checklistTitle: "PWD 前要确认",
     checklist: [
       "职位职责和最低要求是否稳定。",
-      "worksite 和 remote 安排是否清楚。",
+      "工作地点和远程安排是否清楚。",
       "SOC 与工资地区是否匹配。",
-      "PWD 结果如何影响 recruitment 和 filing 计划。",
+      "PWD 结果如何影响招聘流程和提交计划。",
     ],
     exampleTitle: "示例读法",
     example:
@@ -1355,17 +1355,17 @@ export const contentPages = [
     priority: 2,
     title: "PERM recruitment 中文解释",
     metaDescription:
-      "解释 PERM recruitment 的目的、雇主角色、岗位要求一致性和求职者应避免介入的边界。",
+      "解释 PERM 招聘流程的目的、雇主角色、岗位要求一致性和求职者应避免介入的边界。",
     summary:
-      "PERM recruitment 是雇主主导的劳工认证步骤，关注美国工人是否 able, willing, qualified, and available。求职者应理解节点，但不应自行操作招聘材料。",
+      "PERM 招聘流程是雇主主导的劳工认证步骤，关注美国工人是否 able, willing, qualified, and available。求职者应理解节点，但不应自行操作招聘材料。",
     sourceContext:
       "DOL FLAG PERM 页面提供 PERM 流程背景；OFLC disclosure data 展示最终公开记录。",
-    checklistTitle: "理解 recruitment",
+    checklistTitle: "理解招聘流程",
     checklist: [
-      "确认岗位要求在 PWD、recruitment 和 filing 中一致。",
+      "确认岗位要求在 PWD、招聘流程和提交材料中一致。",
       "招聘步骤由雇主和律师管理。",
       "避免自行改写广告或筛选标准。",
-      "记录 timeline 问题给 HR。",
+      "记录时间线问题给 HR。",
     ],
     exampleTitle: "示例读法",
     example:
@@ -1425,24 +1425,24 @@ export const contentPages = [
     priority: 2,
     title: "PERM 之后 I-140 是什么",
     metaDescription:
-      "解释 PERM certified 后的 I-140、priority date、Visa Bulletin 和后续身份节点的关系。",
+      "解释 PERM 已认证后的 I-140、优先日、Visa Bulletin 和后续身份节点的关系。",
     summary:
-      "PERM certified 后通常进入 I-140 immigrant petition 节点。I-140、priority date、Visa Bulletin 和 I-485/consular processing 是不同问题，需要分开核对。",
+      "PERM 已认证后通常进入 I-140 移民申请节点。I-140、优先日、Visa Bulletin 和 I-485/领馆程序（consular processing） 是不同问题，需要分开核对。",
     sourceContext:
-      "USCIS Form I-140 和 employment-based green card 页面提供 I-140 与 EB 绿卡背景；DOL PERM 来源提供前置节点。",
+      "USCIS Form I-140 和职业移民绿卡（employment-based green card）页面提供 I-140 与 EB 绿卡背景；DOL PERM 来源提供前置节点。",
     checklistTitle: "PERM 后要问",
     checklist: [
       "I-140 由谁准备和支付。",
       "是否 premium processing 以及公司政策。",
-      "priority date 如何记录和保留。",
+      "优先日 如何记录和保留。",
       "跳槽或职位变化时如何处理。",
     ],
     exampleTitle: "示例读法",
     example:
-      "PERM certified 后，下一步常见问题不是“绿卡到了吗”，而是 I-140 filing、priority date 和排期表如何配合。",
+      "PERM 已认证后，下一步常见问题不是“绿卡到了吗”，而是 I-140 提交、优先日和排期表如何配合。",
     mistakes: [
       "把 I-140 当作 I-485。",
-      "忽略 priority date 对中国 EB 排期的影响。",
+      "忽略 优先日 对中国 EB 排期的影响。",
       "没有保存雇主提供的关键通知副本。",
     ],
     relatedPaths: [
@@ -1465,11 +1465,11 @@ export const contentPages = [
       "判断公司绿卡支持背景时，应看 PERM 记录、职位相似度、年份连续性、H-1B 配套数据和公开数据丰富度。结论只能是信号，不是雇主承诺。",
     sourceContext:
       "DOL PERM disclosure data 是绿卡公司信号主来源；H-1B LCA 和 USCIS Employer Data Hub 可补充雇主职业移民流程经验。",
-    checklistTitle: "绿卡 sponsor 信号",
+    checklistTitle: "绿卡担保信号",
     checklist: [
-      "看近年 PERM certified 与 filed 记录。",
+      "看近年 PERM 已认证与已提交记录。",
       "比较目标岗位和历史岗位是否相似。",
-      "看 worksite 和工资背景是否接近。",
+      "看工作地点和工资背景是否接近。",
       "结合公司公开数据友好度信号和低样本提示。",
     ],
     exampleTitle: "示例读法",
@@ -1495,17 +1495,17 @@ export const contentPages = [
     priority: 2,
     title: "H-1B 到绿卡大致时间线",
     metaDescription:
-      "用中文梳理 H-1B 后常见 employment-based green card 节点：PERM、I-140、排期和 I-485。",
+      "用中文梳理 H-1B 后常见 职业移民绿卡（employment-based green card）节点：PERM、I-140、排期和 I-485。",
     summary:
-      "H-1B 到绿卡不是单一路径。常见 employment-based 路径会涉及雇主 PERM、I-140、Visa Bulletin 排期和调整身份/领馆程序等不同节点。",
+      "H-1B 到绿卡不是单一路径。常见 职业移民路径会涉及雇主 PERM、I-140、Visa Bulletin 排期和调整身份/领馆程序等不同节点。",
     sourceContext:
-      "USCIS employment-based green card、I-140、DOL PERM 和 DOS Visa Bulletin 页面共同构成官方背景。",
+      "USCIS 职业移民绿卡（employment-based green card）、I-140、DOL PERM 和 DOS Visa Bulletin 页面共同构成官方背景。",
     checklistTitle: "时间线节点",
     checklist: [
       "雇主内部绿卡启动政策。",
       "PERM PWD、recruitment 和 ETA-9089。",
-      "I-140 filing 和 priority date。",
-      "Visa Bulletin 与 USCIS filing chart。",
+      "I-140 提交和优先日。",
+      "Visa Bulletin 与 USCIS 当月 I-485 用表选择。",
     ],
     exampleTitle: "示例读法",
     example:
@@ -1537,14 +1537,14 @@ export const contentPages = [
     metaDescription:
       "解释 PERM 期间换雇主、换职位或换地点时需要核对的流程问题、公开数据边界和与雇主律师沟通的重点。",
     summary:
-      "PERM 绑定雇主和特定 permanent job opportunity。跳槽、换组或换地点时，需要逐项核对旧流程和新岗位关系，而不是只看是否已经 filed。",
+      "PERM 绑定雇主和特定永久职位机会（permanent job opportunity）。跳槽、换组或换地点时，需要逐项核对旧流程和新岗位关系，而不是只看是否已经提交（filed）。",
     sourceContext:
-      "DOL PERM 和 USCIS employment-based green card 来源用于理解 PERM、I-140 和后续节点；公开数据只提供历史背景。",
+      "DOL PERM 和 USCIS 职业移民绿卡（employment-based green card）来源用于理解 PERM、I-140 和后续节点；公开数据只提供历史背景。",
     checklistTitle: "跳槽前问题清单",
     checklist: [
       "旧 PERM 当前在哪个阶段。",
       "新雇主是否愿意重新规划 PERM。",
-      "priority date 和 I-140 状态如何处理。",
+      "优先日和 I-140 状态如何处理。",
       "H-1B transfer 与绿卡时间线如何衔接。",
     ],
     exampleTitle: "示例读法",
@@ -1570,21 +1570,21 @@ export const contentPages = [
     priority: 1,
     title: "Visa Bulletin 中文解释",
     metaDescription:
-      "解释 Visa Bulletin 的 employment-based 类别、chargeability area、Final Action Date 和 Dates for Filing。",
+      "解释 Visa Bulletin 的职业移民类别、出生地/Chargeability、最终裁定表（Final Action Date）和递件排期表（Dates for Filing）。",
     summary:
-      "Visa Bulletin 是每月查看移民签证名额和排期的重要官方来源。对中国大陆出生 EB 用户来说，需要同时看类别、出生地 chargeability 和两张不同表。",
+      "Visa Bulletin 是每月查看移民签证名额和排期的重要官方来源。对中国大陆出生 EB 用户来说，需要同时看类别、出生地/Chargeability 和两张不同表。",
     sourceContext:
-      "Department of State Visa Bulletin 发布排期；USCIS filing chart 页面说明调整身份当月可用哪张表。",
+      "Department of State Visa Bulletin 发布排期；USCIS I-485 用表页面说明调整身份当月可用哪张表。",
     checklistTitle: "读 Visa Bulletin",
     checklist: [
-      "确认月份和 employment-based 表。",
+      "确认月份和职业移民表。",
       "找到 China-mainland born 行。",
-      "区分 Final Action Date 与 Dates for Filing。",
-      "再核对 USCIS 当月 chart 选择。",
+      "区分最终裁定表（Final Action Date）与递件排期表（Dates for Filing）。",
+      "再核对 USCIS 当月 I-485 用表选择。",
     ],
     exampleTitle: "示例读法",
     example:
-      "EB-2 China 的 Final Action Date 和 Dates for Filing 可能不同；你的下一步问题取决于你看的是签证签发还是提交材料背景。",
+      "EB-2 中国的最终裁定表（Final Action Date）和递件排期表（Dates for Filing）可能不同；你的下一步问题取决于你看的是签证签发还是提交材料背景。",
     mistakes: [
       "只看一张表。",
       "把 worldwide 日期用于中国大陆出生。",
@@ -1603,25 +1603,26 @@ export const contentPages = [
     kind: "guide",
     category: "排期与中国 backlog",
     priority: 1,
-    title: "Final Action Date 和 Dates for Filing 区别",
+    title:
+      "最终裁定表（Final Action Date）和递件排期表（Dates for Filing）区别",
     metaDescription:
-      "用中文解释 Visa Bulletin 中 Final Action Date 与 Dates for Filing 的不同用途，以及 USCIS filing chart 的作用。",
+      "用中文解释 Visa Bulletin 中最终裁定表（Final Action Date）与递件排期表（Dates for Filing）的不同用途，以及 USCIS 当月 I-485 用表选择的作用。",
     summary:
-      "Final Action Date 和 Dates for Filing 是两张不同表。Dates for Filing 是否能用于 I-485，需要看 USCIS 当月 adjustment of status filing chart 选择。",
+      "最终裁定表（Final Action Date）和递件排期表（Dates for Filing）是两张不同表。递件排期表能否用于 I-485，需要看 USCIS 当月调整身份（adjustment of status）用表选择。",
     sourceContext:
-      "DOS Visa Bulletin 提供两张表；USCIS filing chart 页面决定调整身份申请当月使用哪张表。",
+      "DOS Visa Bulletin 提供两张表；USCIS I-485 用表页面决定调整身份申请当月使用哪张表。",
     checklistTitle: "选择表格时看",
     checklist: [
-      "先确定是 consular processing 还是 adjustment of status 背景。",
+      "先确定是领馆程序（consular processing）还是调整身份（adjustment of status）背景。",
       "看 DOS 当月两张表。",
-      "查 USCIS 当月 employment-based chart selection。",
-      "记录类别和 chargeability area。",
+      "查 USCIS 当月职业移民 I-485 用表选择。",
+      "记录类别和出生地/Chargeability。",
     ],
     exampleTitle: "示例读法",
     example:
-      "如果 USCIS 当月要求使用 Final Action Date，即使 Dates for Filing 看起来更靠前，也不能只按 DFF 做 I-485 计划。",
+      "如果 USCIS 当月要求使用最终裁定表（Final Action Date），即使递件排期表（Dates for Filing）看起来更靠前，也不能只按递件排期表做 I-485 计划。",
     mistakes: [
-      "把 Dates for Filing 自动用于 I-485。",
+      "把递件排期表（Dates for Filing）自动用于 I-485。",
       "混淆表格月份。",
       "只看 EB-2，不看自己的真实类别。",
     ],
@@ -1640,24 +1641,24 @@ export const contentPages = [
     priority: 2,
     title: "EB-2 中国大陆出生排期怎么看",
     metaDescription:
-      "解释 EB-2 China priority date、Final Action Date、Dates for Filing 和 PERM/I-140 节点如何一起理解。",
+      "解释 EB-2 中国 优先日、最终裁定表（Final Action Date）、递件排期表（Dates for Filing）和 PERM/I-140 节点如何一起理解。",
     summary:
-      "EB-2 China 用户通常需要把 PERM/I-140 priority date 和 Visa Bulletin 中国大陆出生 EB-2 行对照。页面只解释公开表格，不预测未来。",
+      "EB-2 中国 用户通常需要把 PERM/I-140 优先日和 Visa Bulletin 中国大陆出生 EB-2 行对照。页面只解释公开表格，不预测未来。",
     sourceContext:
-      "DOS Visa Bulletin 和 USCIS filing chart 是排期对照来源；USCIS employment-based green card 页面提供类别背景。",
-    checklistTitle: "EB-2 China 对照",
+      "DOS Visa Bulletin 和 USCIS 当月 I-485 用表选择是排期对照来源；USCIS 职业移民绿卡页面提供类别背景。",
+    checklistTitle: "EB-2 中国 对照",
     checklist: [
-      "确认 priority date 来源和类别。",
-      "看 EB-2 China 行的两张表。",
+      "确认 优先日 来源和类别。",
+      "看 EB-2 中国 行的两张表。",
       "核对 USCIS 当月使用表。",
-      "关注是否涉及 downgrade 或跨类别策略时咨询律师。",
+      "关注是否涉及降级（downgrade）或跨类别策略时咨询律师。",
     ],
     exampleTitle: "示例读法",
     example:
-      "EB-2 priority date 早于 DFF 但晚于 FAD 时，可能适合关注 filing chart；实际下一步仍取决于 USCIS 当月选择。",
+      "EB-2 优先日早于递件排期表但晚于最终裁定表时，可能适合关注 USCIS 当月 I-485 用表选择；实际下一步仍取决于 USCIS 当月选择。",
     mistakes: [
       "把 EB-3 日期套到 EB-2。",
-      "忽略出生地 chargeability。",
+      "忽略出生地/Chargeability。",
       "用排期工具替代法律策略。",
     ],
     relatedPaths: [
@@ -1679,25 +1680,25 @@ export const contentPages = [
     priority: 2,
     title: "EB-3 中国大陆出生排期怎么看",
     metaDescription:
-      "解释 EB-3 China priority date、Final Action Date、Dates for Filing 和类别切换讨论中的数据边界。",
+      "解释 EB-3 中国优先日、最终裁定表（Final Action Date）、递件排期表（Dates for Filing）和类别切换讨论中的数据边界。",
     summary:
-      "EB-3 China 排期需要按中国大陆出生和 EB-3 行查看。它可能和 EB-2 不同，但不能只凭当月日期决定个人 downgrade 或 filing 策略。",
+      "EB-3 中国排期需要按中国大陆出生和 EB-3 行查看。它可能和 EB-2 不同，但不能只凭当月日期决定个人降级（downgrade）或递交策略。",
     sourceContext:
-      "DOS Visa Bulletin 提供 EB-3 China dates；USCIS filing chart 决定当月调整身份可用表。",
-    checklistTitle: "EB-3 China 对照",
+      "DOS Visa Bulletin 提供 EB-3 中国日期；USCIS 当月 I-485 用表选择决定当月调整身份可用表。",
+    checklistTitle: "EB-3 中国对照",
     checklist: [
       "确认你看的类别是 EB-3。",
-      "分别看 FAD 和 DFF。",
-      "核对 USCIS employment-based chart selection。",
+      "分别看最终裁定表和递件排期表。",
+      "核对 USCIS 职业移民 I-485 用表选择。",
       "如果涉及 EB-2/EB-3 策略，交给律师评估。",
     ],
     exampleTitle: "示例读法",
     example:
-      "某月 EB-3 DFF 比 EB-2 靠前，只能说明该月公开表格关系，不能单独决定 downgrade。",
+      "某月 EB-3 递件排期表比 EB-2 靠前，只能说明该月公开表格关系，不能单独决定降级策略。",
     mistakes: [
       "把 EB-3 前进当作长期趋势。",
-      "忽略 USCIS chart。",
-      "用他人类别套自己的 priority date。",
+      "忽略 USCIS 当月 I-485 用表。",
+      "用他人类别套自己的优先日。",
     ],
     relatedPaths: [
       "/tools/eb2-eb3-china-priority-date-calculator",
@@ -1716,25 +1717,25 @@ export const contentPages = [
     kind: "guide",
     category: "排期与中国 backlog",
     priority: 2,
-    title: "EB-2 / EB-3 中国排期与 downgrade 基础",
+    title: "EB-2 / EB-3 中国排期与降级基础",
     metaDescription:
-      "用中文解释 EB-2 和 EB-3 中国排期对照、downgrade 讨论的公开数据基础和法律边界。",
+      "用中文解释 EB-2 和 EB-3 中国排期对照、降级（downgrade）讨论的公开数据基础和法律边界。",
     summary:
-      "EB-2/EB-3 downgrade 讨论通常从排期差异开始，但真正策略涉及 I-140、职位类别、雇主、身份和律师判断。本页只解释公开数据如何准备问题。",
+      "EB-2/EB-3 降级讨论通常从排期差异开始，但真正策略涉及 I-140、职位类别、雇主、身份和律师判断。本页只解释公开数据如何准备问题。",
     sourceContext:
-      "DOS Visa Bulletin 和 USCIS filing chart 提供排期背景；USCIS I-140 和 employment-based green card 页面提供 petition 背景。",
-    checklistTitle: "准备 downgrade 问题",
+      "DOS Visa Bulletin 和 USCIS 当月 I-485 用表选择提供排期背景；USCIS I-140 和职业移民绿卡页面提供申请背景。",
+    checklistTitle: "准备降级问题",
     checklist: [
-      "比较 EB-2 与 EB-3 China 的 FAD 和 DFF。",
-      "确认 USCIS 当月 chart。",
-      "整理已有 I-140、priority date 和雇主政策。",
+      "比较 EB-2 与 EB-3 中国的最终裁定表和递件排期表。",
+      "确认 USCIS 当月 I-485 用表。",
+      "整理已有 I-140、优先日和雇主政策。",
       "让律师评估是否适合个人路径。",
     ],
     exampleTitle: "示例读法",
     example:
-      "如果 EB-3 DFF 短期更靠前，可以记录为咨询点；不能只因一个月差异就决定 filing。",
+      "如果 EB-3 递件排期表短期更靠前，可以记录为咨询点；不能只因一个月差异就决定递交策略。",
     mistakes: [
-      "把 downgrade 当作单纯表格选择。",
+      "把降级当作单纯表格选择。",
       "忽略 I-140 和岗位类别。",
       "用社交平台经验替代官方表和律师意见。",
     ],
@@ -1751,27 +1752,27 @@ export const contentPages = [
     kind: "guide",
     category: "排期与中国 backlog",
     priority: 2,
-    title: "USCIS 当月 filing chart 怎么看",
+    title: "USCIS 当月 I-485 用表怎么看",
     metaDescription:
-      "解释 USCIS Adjustment of Status Filing Charts 页面如何决定当月 I-485 使用 Final Action Date 还是 Dates for Filing。",
+      "解释 USCIS Adjustment of Status Filing Charts 页面如何决定当月 I-485 使用最终裁定表（Final Action Date）还是递件排期表（Dates for Filing）。",
     summary:
-      "USCIS filing chart 页面是排期判断中经常被忽略的一步。对 adjustment of status 用户，不能只看 DOS Visa Bulletin，还要看 USCIS 当月 employment-based chart 选择。",
+      "USCIS I-485 用表页面是排期判断中经常被忽略的一步。对调整身份（adjustment of status）用户，不能只看 DOS Visa Bulletin，还要看 USCIS 当月职业移民 I-485 用表选择。",
     sourceContext:
-      "USCIS filing chart 页面是官方调整身份 chart selection 来源；DOS Visa Bulletin 提供对应两张表。",
-    checklistTitle: "查 filing chart",
+      "USCIS I-485 用表页面是官方调整身份用表选择来源；DOS Visa Bulletin 提供对应两张表。",
+    checklistTitle: "查 I-485 用表选择",
     checklist: [
-      "打开 USCIS filing chart 页面。",
-      "找到当月 employment-based preference categories。",
-      "记录 Final Action Date 或 Dates for Filing。",
+      "打开 USCIS I-485 用表页面。",
+      "找到当月职业移民类别（employment-based preference categories）。",
+      "记录最终裁定表（Final Action Date）或递件排期表（Dates for Filing）。",
       "再回到 Visa Bulletin 对照自己的类别。",
     ],
     exampleTitle: "示例读法",
     example:
-      "如果 USCIS 当月 employment-based 使用 Dates for Filing，才可以继续用 DFF 做公开表格层面的 I-485 准备判断。",
+      "如果 USCIS 当月职业移民使用递件排期表（Dates for Filing），才可以继续用递件排期表做公开表格层面的 I-485 准备判断。",
     mistakes: [
-      "只看 family-based chart。",
-      "忘记每月 chart selection 会变。",
-      "把 USCIS chart 当作个人资格结论。",
+      "只看亲属移民用表。",
+      "忘记每月用表选择会变。",
+      "把 USCIS 用表选择当作个人资格结论。",
     ],
     relatedPaths: [
       "/guides/final-action-date-vs-dates-for-filing",
@@ -1786,19 +1787,19 @@ export const contentPages = [
     kind: "guide",
     category: "求职与公司判断",
     priority: 1,
-    title: "找工作时如何判断公司 sponsor 能力",
+    title: "找工作时如何判断公司担保能力",
     metaDescription:
-      "用 H-1B、PERM、工资和排期公开数据建立公司 sponsor 背景研究清单，避免把信号当作承诺。",
+      "用 H-1B、PERM、工资和排期公开数据建立公司担保背景研究清单，避免把信号当作承诺。",
     summary:
-      "判断公司 sponsor 背景时，不要只问“办不办”。更实用的是看公开 H-1B/PERM 历史、职位相似度、地点、工资背景、流程团队和公司政策。",
+      "判断公司担保背景时，不要只问“办不办”。更实用的是看公开 H-1B/PERM 历史、职位相似度、地点、工资背景、流程团队和公司政策。",
     sourceContext:
       "DOL LCA、PERM、FLAG wage data 和 USCIS Employer Data Hub 提供官方公开数据背景；它们共同构成信号，不构成雇主承诺。",
     checklistTitle: "公司判断清单",
     checklist: [
       "查 H-1B 和 PERM 历史记录。",
       "比较目标岗位和历史岗位是否相似。",
-      "问 sponsor 时间、律师、费用和 RFE 政策。",
-      "看工资和 worksite 是否合理。",
+      "问担保启动时间、律师、费用和 RFE 政策。",
+      "看工资和工作地点是否合理。",
     ],
     exampleTitle: "示例读法",
     example:
@@ -1823,25 +1824,25 @@ export const contentPages = [
     priority: 3,
     title: "面试时如何问 H-1B / 绿卡政策",
     metaDescription:
-      "提供面试和 offer 阶段可问 recruiter、HR 和 immigration team 的 H-1B/PERM 问题清单。",
+      "提供面试和 offer 阶段可问招聘方、HR 和移民事务负责人的 H-1B/PERM 问题清单。",
     summary:
       "问移民政策时要具体、礼貌、可执行。与其问“公司办不办”，不如问当前岗位 legal entity、H-1B transfer 流程、绿卡启动时间和律师沟通方式。",
     sourceContext:
       "官方 H-1B、PERM 和 wage 来源帮助你准备问题和背景材料，但公司政策、时间线和支持范围仍需要公司正式确认。",
     checklistTitle: "可直接改写的问题",
     checklist: [
-      "这个岗位由哪个 legal entity 雇佣并提交 petition？",
+      "这个岗位由哪个 legal entity 雇佣并提交 申请？",
       "H-1B transfer 通常在 offer 后哪个节点启动？",
       "绿卡 PERM 通常何时评估，是否有等待期？",
-      "remote/hybrid worksite 和工资背景如何处理？",
+      "远程/混合工作地点和工资背景如何处理？",
     ],
     exampleTitle: "示例问法",
     example:
       "可以说“我看到公开数据里公司有类似岗位记录，想确认这个 team 的 H-1B transfer 和 PERM policy 是否一致”。",
     mistakes: [
-      "只问 yes/no sponsor。",
+      "只问是否担保。",
       "过早分享敏感个人信息。",
-      "把 recruiter 口头答复当作最终法律确认。",
+      "把招聘方口头答复当作最终法律确认。",
     ],
     relatedPaths: [
       "/guides/how-to-choose-h1b-sponsor-company",
@@ -1860,19 +1861,19 @@ export const contentPages = [
     metaDescription:
       "用中文解释 H-1B worker 遇到 termination 后常见的宽限期和下一步选项背景，避免个案化建议。",
     summary:
-      "H-1B 裁员后常见问题包括 grace period、transfer、change of status、离境和新雇主 filing。公开页面只能提供一般背景，个人时间线需要律师确认。",
+      "H-1B 裁员后常见问题包括宽限期、换雇主、change of status、离境和新雇主提交。公开页面只能提供一般背景，个人时间线需要律师确认。",
     sourceContext:
-      "USCIS Options for Nonimmigrant Workers Following Termination 页面是官方背景来源；H-1B 页面提供 status 和 petition 背景。",
+      "USCIS Options for Nonimmigrant Workers Following Termination 页面是官方背景来源；H-1B 页面提供身份状态和申请背景。",
     checklistTitle: "裁员后先整理",
     checklist: [
-      "记录 last day、payroll 和 notice 文件。",
+      "记录最后工作日、工资单和通知文件。",
       "整理 I-94、approval notice 和 passport 信息给律师。",
       "评估 H-1B transfer、change of status 或离境选项。",
       "避免在公开工具输入敏感身份信息。",
     ],
     exampleTitle: "示例读法",
     example:
-      "如果新雇主愿意快速提交 transfer，仍需要律师核对 filing timing、start date 和个人 status 事实。",
+      "如果新雇主愿意快速提交换雇主申请，仍需要律师核对提交时点、开始日期和个人身份状态事实。",
     mistakes: [
       "把 60 天当作任何情况下都完整可用。",
       "只看职位机会，不看 status 时间线。",

@@ -3,7 +3,7 @@ export const siteConfig = {
   chineseName: "华人职业移民雷达",
   tagline: "查公司、查工资、查 PERM、查排期",
   description:
-    "面向海外华人的 H-1B、PERM、Prevailing Wage 和中国职业移民排期公开数据决策支持网站。",
+    "面向海外华人的 H-1B、PERM、通行工资（Prevailing Wage）和中国职业移民排期公开数据决策支持网站。",
   url: process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000",
   contactEmail: process.env.NEXT_PUBLIC_CONTACT_EMAIL ?? "hello@example.com",
   shortDisclaimer: "公开数据仅供参考，不代表个案结果。",
@@ -89,8 +89,7 @@ export const publicRoutes = [
     path: "/perm",
     label: "PERM",
     title: "PERM / 绿卡公司数据库",
-    description:
-      "查询公司 PERM 劳工认证公开记录，理解绿卡 sponsor 历史信号和限制。",
+    description: "查询公司 PERM 劳工认证公开记录，理解绿卡担保历史信号和限制。",
     section: "perm",
     nav: true,
     sitemapGroup: "data-directory",
@@ -121,10 +120,10 @@ export const publicRoutes = [
   },
   {
     path: "/tools/h1b-wage-level-checker",
-    label: "H-1B 工资 Level",
-    title: "H-1B 工资 Level 中文判断工具",
+    label: "H-1B 工资等级",
+    title: "H-1B 工资等级中文判断工具",
     description:
-      "按 SOC、worksite、offered wage 和 wage year 对照 DOL/FLAG prevailing wage level 公开数据。",
+      "按 SOC、工作地点、offer 工资和工资年份对照 DOL/FLAG 通行工资等级（prevailing wage level）公开数据。",
     section: "tools",
     nav: false,
     sitemapGroup: "tools",
@@ -136,7 +135,7 @@ export const publicRoutes = [
     label: "EB 优先日排期计算器",
     title: "中国 EB-2 / EB-3 优先日排期计算器",
     description:
-      "按职业移民类别、priority date、Visa Bulletin 月份和 chart type 对照中国大陆出生 EB 排期公开数据。",
+      "按职业移民类别、优先日（priority date）、Visa Bulletin 月份和排期表类型对照中国大陆出生 EB 排期公开数据。",
     section: "tools",
     nav: false,
     sitemapGroup: "tools",
@@ -157,10 +156,10 @@ export const publicRoutes = [
   },
   {
     path: "/tools/h1b-transfer-risk-checklist",
-    label: "H-1B Transfer 风险清单",
-    title: "H-1B Transfer 风险清单",
+    label: "H-1B 换雇主风险清单",
+    title: "H-1B 换雇主风险清单",
     description:
-      "用通用教育性场景核对 H-1B 换雇主前应问 HR、律师和新雇主 immigration team 的问题。",
+      "用通用教育性场景核对 H-1B 换雇主前应问 HR、律师和新雇主移民事务负责人的问题。",
     section: "tools",
     nav: false,
     sitemapGroup: "tools",
@@ -208,7 +207,7 @@ export const publicRoutes = [
     label: "H-1B 数据谈薪",
     title: "用 H-1B 数据做谈薪参考",
     description:
-      "把公开 H-1B 工资、SOC、worksite 和 prevailing wage 背景整理成谈薪问题清单。",
+      "把公开 H-1B 工资、SOC、工作地点和通行工资（prevailing wage）背景整理成谈薪问题清单。",
     section: "tools",
     nav: false,
     sitemapGroup: "tools",
@@ -220,7 +219,7 @@ export const publicRoutes = [
     label: "排期提醒清单",
     title: "中国职业移民排期提醒清单",
     description:
-      "按 EB 类别和 USCIS filing chart 选择生成每月排期更新时该检查的事项。",
+      "按 EB 类别和 USCIS 当月 I-485 用表选择生成每月排期更新时该检查的事项。",
     section: "tools",
     nav: false,
     sitemapGroup: "tools",
@@ -232,7 +231,7 @@ export const publicRoutes = [
     label: "指南",
     title: "职业移民中文指南",
     description:
-      "38 篇解释 LCA、PERM、Prevailing Wage、Visa Bulletin 和求职决策的中文指南目录。",
+      "38 篇解释 LCA、PERM、通行工资（Prevailing Wage）、Visa Bulletin 和求职决策的中文指南目录。",
     section: "guides",
     nav: true,
     sitemapGroup: "guides",
@@ -244,7 +243,7 @@ export const publicRoutes = [
     label: "排期",
     title: "中国职业移民排期",
     description:
-      "面向中国大陆出生申请人的 EB-1、EB-2、EB-3 Visa Bulletin 和 USCIS filing chart 解读入口。",
+      "面向中国大陆出生申请人的 EB-1、EB-2、EB-3 Visa Bulletin 和 USCIS 当月 I-485 用表解读入口。",
     section: "visa-bulletin",
     nav: true,
     sitemapGroup: "visa-bulletin",
@@ -257,7 +256,7 @@ export const publicRoutes = [
     label: "月度排期页",
     title: "中国职业移民月度排期",
     description:
-      "按月份查看中国大陆出生 EB-1、EB-2、EB-3 Final Action Dates、Dates for Filing 和 USCIS filing chart 选择。",
+      "按月份查看中国大陆出生 EB-1、EB-2、EB-3 最终裁定表、递件排期表和 USCIS 当月 I-485 用表选择。",
     section: "visa-bulletin",
     nav: false,
     sitemapGroup: "visa-bulletin",
@@ -358,7 +357,7 @@ export const publicRoutes = [
   {
     path: "/methodology/wage",
     label: "工资方法",
-    title: "Prevailing Wage / 工资数据方法说明",
+    title: "通行工资（Prevailing Wage）/ 工资数据方法说明",
     description:
       "解释本站如何使用 DOL/FLAG wage data 和 OFLC wage records 呈现 H-1B 工资背景。",
     section: "methodology",
@@ -372,7 +371,7 @@ export const publicRoutes = [
     label: "排期方法",
     title: "Visa Bulletin / 排期方法说明",
     description:
-      "解释本站如何使用 DOS Visa Bulletin 和 USCIS filing chart 页面呈现中国职业移民排期。",
+      "解释本站如何使用 DOS Visa Bulletin 和 USCIS 当月 I-485 用表页面呈现中国职业移民排期。",
     section: "methodology",
     nav: false,
     sitemapGroup: "compliance",

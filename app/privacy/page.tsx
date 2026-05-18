@@ -32,7 +32,7 @@ export default function PrivacyPage() {
           />
           <PrivacySection
             title="敏感信息"
-            text="请不要提交护照号、A-Number、I-94、完整住址、雇佣合同、移民 receipt number 或其他敏感个人文件。需要法律判断时请咨询专业人士。"
+            text="请不要提交护照号、A-Number、I-94、完整住址、雇佣合同、移民收据号（receipt number）或其他敏感个人文件。需要法律判断时请咨询专业人士。"
           />
           <PrivacySection
             title="纠错表单"
@@ -48,8 +48,8 @@ export default function PrivacyPage() {
           <h2 className="text-lg font-semibold">联系</h2>
           <p className="mt-3 text-sm leading-7 text-[var(--muted)]">
             隐私或纠错请求可先发送至 {siteConfig.contactEmail}
-            。请不要通过邮件或表单发送证件号码、receipt
-            number、完整住址、雇佣合同或个人案情细节。
+            。请不要通过邮件或表单发送证件号码、收据号（receipt
+            number）、完整住址、雇佣合同或个人案情细节。
           </p>
         </section>
 

@@ -195,7 +195,7 @@ describe("M22 content pages", () => {
 
     expect(guideHtml).toContain("Visa Bulletin 中文解释");
     expect(guideHtml).toContain("USCIS Adjustment of Status Filing Charts");
-    expect(toolHtml).toContain("Prevailing Wage 中文查询入口");
+    expect(toolHtml).toContain("通行工资（Prevailing Wage）中文查询入口");
     expect(toolHtml).toContain("FLAG Wage Search");
   });
 });

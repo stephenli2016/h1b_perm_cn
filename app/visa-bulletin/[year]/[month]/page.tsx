@@ -54,7 +54,7 @@ export async function generateMetadata({
   if (getRuntimeDataMode() === "postgres" && monthKey) {
     return buildSeoMetadata({
       title: `${monthKey} 中国职业移民排期 EB-1 / EB-2 / EB-3`,
-      description: `查看 ${monthKey} 中国大陆出生 EB-1、EB-2、EB-3 的 Final Action Dates、Dates for Filing 与 USCIS filing chart 公开数据。`,
+      description: `查看 ${monthKey} 中国大陆出生 EB-1、EB-2、EB-3 的最终裁定表、递件排期表与 USCIS 当月 I-485 用表公开数据。`,
       path: `/visa-bulletin/${year}/${month}`,
       pageType: "data",
     });
@@ -72,7 +72,7 @@ export async function generateMetadata({
 
   return buildSeoMetadata({
     title: `${result.data.month.monthKey} 中国职业移民排期 EB-1 / EB-2 / EB-3`,
-    description: `查看 ${result.data.month.monthKey} 中国大陆出生 EB-1、EB-2、EB-3 的 Final Action Dates、Dates for Filing 与 USCIS filing chart 公开数据。`,
+    description: `查看 ${result.data.month.monthKey} 中国大陆出生 EB-1、EB-2、EB-3 的最终裁定表、递件排期表与 USCIS 当月 I-485 用表公开数据。`,
     path: `/visa-bulletin/${year}/${month}`,
     pageType: "data",
   });
@@ -107,12 +107,12 @@ export default async function VisaBulletinMonthPage({
     },
     {
       key: "final-action",
-      header: "Final Action Date",
+      header: "最终裁定表（Final Action Date）",
       render: (row) => formatVisaCutoff(row.finalAction),
     },
     {
       key: "dates-for-filing",
-      header: "Dates for Filing",
+      header: "递件排期表（Dates for Filing）",
       render: (row) => formatVisaCutoff(row.datesForFiling),
     },
     {
@@ -141,11 +141,11 @@ export default async function VisaBulletinMonthPage({
         { label: payload.month.monthKey },
       ]}
       canonicalPath={`/visa-bulletin/${year}/${month}`}
-      description={`${payload.month.monthKey} 中国大陆出生 EB-1、EB-2、EB-3 的 Visa Bulletin 官方来源数据快照，以及 USCIS 当月职业移民 filing chart 选择。`}
+      description={`${payload.month.monthKey} 中国大陆出生 EB-1、EB-2、EB-3 的 Visa Bulletin 官方来源数据快照，以及 USCIS 当月职业移民 I-485 用表选择。`}
       eyebrow="Visa Bulletin 月度页"
       structuredData={buildDatasetJsonLd({
         name: `${payload.month.monthKey} 中国职业移民排期`,
-        description: `${payload.month.monthKey} 中国大陆出生 EB-1、EB-2、EB-3 的 Visa Bulletin 官方来源数据快照，以及 USCIS 当月职业移民 filing chart 选择。`,
+        description: `${payload.month.monthKey} 中国大陆出生 EB-1、EB-2、EB-3 的 Visa Bulletin 官方来源数据快照，以及 USCIS 当月职业移民 I-485 用表选择。`,
         path: `/visa-bulletin/${year}/${month}`,
         dateModified: payload.month.publishedAt,
         sources: [
@@ -159,15 +159,15 @@ export default async function VisaBulletinMonthPage({
         <section className="grid gap-4 md:grid-cols-3">
           <MetricCard label="月份" value={payload.month.monthKey} />
           <MetricCard
-            description="该字段来自 USCIS Adjustment of Status filing chart 官方页面。"
-            label="USCIS filing chart"
+            description="该字段来自 USCIS Adjustment of Status Filing Charts 官方页面。"
+            label="USCIS 当月 I-485 用表"
             value={chartTypeLabelZh(payload.month.uscisFilingChart)}
           />
           <MetricCard label="来源发布时间" value={payload.month.publishedAt} />
         </section>
 
         <DataTable
-          caption={`${payload.month.monthKey} China EB visa bulletin rows`}
+          caption={`${payload.month.monthKey} 中国大陆出生 EB 排期表`}
           columns={tableColumns}
           emptyDescription="当前月份没有可展示的排期行。"
           emptyTitle="暂无排期数据"
@@ -177,18 +177,18 @@ export default async function VisaBulletinMonthPage({
 
         <section className="grid gap-4 md:grid-cols-2">
           <article className="rounded-lg border border-[var(--line)] bg-white p-5 shadow-sm">
-            <h2 className="text-lg font-semibold">本月 filing chart 提醒</h2>
+            <h2 className="text-lg font-semibold">本月 I-485 用表提醒</h2>
             <p className="mt-3 text-sm leading-6 text-[var(--muted)]">
               USCIS 官方页面显示本月职业移民调整身份对照{" "}
               {chartTypeLabelZh(payload.month.uscisFilingChart)}。这只说明 USCIS
-              当月公开 chart 选择，不代表任何个人一定可以提交 I-485。
+              当月公开用表选择，不代表任何个人一定可以提交 I-485。
             </p>
           </article>
           <article className="rounded-lg border border-[var(--line)] bg-white p-5 shadow-sm">
             <h2 className="text-lg font-semibold">用优先日计算</h2>
             <p className="mt-3 text-sm leading-6 text-[var(--muted)]">
-              可以把 priority
-              date、类别和本月排期表带入工具页，查看公开日期对照结果。
+              可以把优先日（priority
+              date）、类别和本月排期表带入工具页，查看公开日期对照结果。
             </p>
             <Link
               className="mt-4 inline-flex text-sm font-semibold text-[var(--accent-strong)] underline-offset-4 hover:underline"
@@ -200,7 +200,7 @@ export default async function VisaBulletinMonthPage({
         </section>
 
         <SourceNote
-          latestDataLabel={`本页使用 ${payload.month.monthKey} Department of State Visa Bulletin 与 USCIS filing chart 官方来源数据快照，来源发布日期 ${payload.month.publishedAt}。`}
+          latestDataLabel={`本页使用 ${payload.month.monthKey} Department of State Visa Bulletin 与 USCIS 当月 I-485 用表官方来源数据快照，来源发布日期 ${payload.month.publishedAt}。`}
           names={[
             "U.S. Department of State Visa Bulletin",
             "USCIS Adjustment of Status filing chart",

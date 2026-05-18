@@ -1,5 +1,11 @@
 import { renderToStaticMarkup } from "react-dom/server";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
+
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({
+    push: vi.fn(),
+  }),
+}));
 
 import CompanyImmigrationScorePage from "@/app/tools/company-immigration-score/page";
 import H1BTransferRiskChecklistPage from "@/app/tools/h1b-transfer-risk-checklist/page";
@@ -102,8 +108,18 @@ describe("M12 UI components", () => {
       <DataTable
         caption="测试数据表"
         columns={columns}
+        emptyAction={<a href="/companies">查看全部</a>}
         getRowKey={(row) => row.label}
         rows={[{ label: "A", value: 1 }]}
+      />,
+    );
+    const emptyTableHtml = renderToStaticMarkup(
+      <DataTable
+        caption="空数据表"
+        columns={columns}
+        emptyAction={<a href="/companies">清除筛选</a>}
+        getRowKey={(row) => row.label}
+        rows={[]}
       />,
     );
 
@@ -113,6 +129,8 @@ describe("M12 UI components", () => {
       '<caption class="sr-only">测试数据表</caption>',
     );
     expect(tableHtml).toContain('scope="col"');
+    expect(emptyTableHtml).toContain("暂无数据");
+    expect(emptyTableHtml).toContain("清除筛选");
   });
 
   it("renders empty, loading, and error states with clear semantics", () => {
@@ -121,12 +139,17 @@ describe("M12 UI components", () => {
     );
     const loadingHtml = renderToStaticMarkup(<LoadingState />);
     const errorHtml = renderToStaticMarkup(
-      <ErrorState description="请稍后重试" title="加载失败" />,
+      <ErrorState
+        action={<a href="/sources">查看数据来源</a>}
+        description="请稍后重试"
+        title="加载失败"
+      />,
     );
 
     expect(emptyHtml).toContain("暂无数据");
     expect(loadingHtml).toContain('aria-busy="true"');
     expect(errorHtml).toContain('role="alert"');
+    expect(errorHtml).toContain("查看数据来源");
   });
 
   it("renders disclaimer and related-link blocks in Chinese", () => {
@@ -199,17 +222,40 @@ describe("M12 UI components", () => {
 
     expect(html).toContain("Brightline Health");
     expect(html).toContain("暂无 H-1B LCA 记录");
-    expect(html).toContain("PERM timeline 与状态");
+    expect(html).toContain("PERM 时间线与状态");
     expect(html).toContain("建议这样读这个公司页");
+    expect(html).toContain("可以直接问雇主的问题");
+    expect(html).toContain("这个岗位是否会启动 H-1B/LCA");
+    expect(html).toContain("这个岗位的 PERM 职位、地点、启动时间");
     expect(html).toContain("下一步可以查看");
     expect(html).toContain("跳槽后 PERM 重办时间线估算器");
-    expect(html).toContain("页面质量状态");
+    expect(html).toContain("资料完整度");
     expect(html).toContain("公开数据友好度信号");
     expect(html).toContain("查看方法说明");
     expect(html).toContain('type="application/ld+json"');
     expect(html).toContain("FAQPage");
-    expect(html).toContain("PERM Certified 是否等于绿卡获批");
+    expect(html).toContain("PERM 已认证是否等于绿卡获批");
     expect(html).not.toContain("M15");
+  });
+
+  it("renders H-1B company pages with employer-ready questions", () => {
+    const result = publicQueryRepository.getCompanyProfileBySlug({
+      slug: "acme-analytics",
+    });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) {
+      throw new Error(result.error.messageZh);
+    }
+
+    const html = renderToStaticMarkup(
+      <CompanyProfile mode="h1b" profile={result.data} />,
+    );
+
+    expect(html).toContain("可以直接问雇主的问题");
+    expect(html).toContain("我的 offer 上的雇主法定实体");
+    expect(html).toContain("这个岗位的职位、SOC、工作地点和近年 H-1B/LCA 记录");
+    expect(html).toContain("H-1B 工资等级中文判断工具");
   });
 
   it("renders the company immigration signal methodology page", async () => {
@@ -234,8 +280,8 @@ describe("M12 UI components", () => {
       }),
     );
 
-    expect(html).toContain("H-1B Transfer 风险清单");
-    expect(html).toContain("Cap-exempt");
+    expect(html).toContain("H-1B 换雇主风险清单");
+    expect(html).toContain("免抽签雇主");
     expect(html).toContain("不收集敏感信息");
     expect(html).toContain("/h1b");
     expect(html).not.toContain('name="receiptNumber"');
@@ -255,7 +301,7 @@ describe("M12 UI components", () => {
     );
 
     expect(html).toContain("跳槽后 PERM 重办时间线估算器");
-    expect(html).toContain("ETA-9089 / PERM filing");
+    expect(html).toContain("ETA-9089 / PERM 申请");
     expect(html).toContain("不收集敏感信息");
     expect(html).toContain("/perm");
     expect(html).not.toContain('name="priorityDate"');

@@ -83,10 +83,10 @@ export function evaluateCompanyIndexability(
             : "Does not meet initial data threshold: needs at least 10 recent LCA records, 3 recent PERM records, or 3 USCIS Employer Data Hub rows.",
       noindexReasonZh:
         mode === "perm"
-          ? "未达到 PERM 公司页索引阈值：近 5 年至少需要 3 条 PERM 记录。"
+          ? "近 5 年 PERM 记录少于 3 条，暂不作为重点公开页面。"
           : mode === "h1b"
-            ? "未达到 H-1B 公司页索引阈值：近 5 年至少需要 10 条 LCA 记录，或 3 条 USCIS Employer Data Hub 记录。"
-            : "未达到公司页索引阈值：近 5 年至少需要 10 条 LCA、3 条 PERM，或 3 条 USCIS Employer Data Hub 记录。",
+            ? "近 5 年 H-1B/LCA 记录少于 10 条，且 USCIS Employer Data Hub 记录少于 3 条，暂不作为重点公开页面。"
+            : "近 5 年 H-1B/LCA、PERM 或 USCIS Employer Data Hub 记录不足，暂不作为重点公开页面。",
     };
   }
 
@@ -98,7 +98,7 @@ export function evaluateCompanyIndexability(
       noindexReason:
         "Has enough volume signal but no unique visible table or chart.",
       noindexReasonZh:
-        "虽然有数量信号，但缺少该公司独有的可见表格或图表，因此暂不索引。",
+        "虽然有数量信号，但缺少该公司独有的可见表格或图表，暂不作为重点公开页面。",
     };
   }
 
@@ -110,7 +110,7 @@ export function evaluateCompanyIndexability(
       noindexReason:
         "Has enough volume signal but not enough job-title and location detail for an indexable company page.",
       noindexReasonZh:
-        "虽然有数量信号，但职位或地点维度不足，暂不作为可索引公司页。",
+        "虽然有数量信号，但职位或地点维度不足，暂不作为重点公开页面。",
     };
   }
 
@@ -122,7 +122,7 @@ export function evaluateCompanyIndexability(
       noindexReason:
         "Has enough volume signal but lacks source names or latest data date.",
       noindexReasonZh:
-        "虽然有数量信号，但缺少数据来源或最新数据日期，暂不索引。",
+        "虽然有数量信号，但缺少数据来源或最新数据日期，暂不作为重点公开页面。",
     };
   }
 
@@ -134,7 +134,7 @@ export function evaluateCompanyIndexability(
       noindexReason:
         "Has enough volume signal but lacks useful internal links.",
       noindexReasonZh:
-        "虽然有数量信号，但缺少相关公司、职位或地点内链，暂不索引。",
+        "虽然有数量信号，但缺少相关公司、职位或地点入口，暂不作为重点公开页面。",
     };
   }
 
@@ -148,7 +148,8 @@ export function evaluateCompanyIndexability(
       qualityScore,
       noindexReason:
         "Has enough volume signal but lacks enough visible Chinese explanation.",
-      noindexReasonZh: "虽然有数量信号，但页面中文解释内容不足，暂不索引。",
+      noindexReasonZh:
+        "虽然有数量信号，但页面中文解释内容不足，暂不作为重点公开页面。",
     };
   }
 
@@ -173,7 +174,7 @@ export function getCompanyPageSeo(
       matchedThresholds: [],
       qualityScore: 0,
       noindexReason: "No company-page metrics are available.",
-      noindexReasonZh: "当前没有公司页质量评分数据，暂不索引。",
+      noindexReasonZh: "当前没有公司页质量评分数据，暂不作为重点公开页面。",
     };
   }
 

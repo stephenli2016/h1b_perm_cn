@@ -22,8 +22,8 @@ const everifyOptions = [
 
 const trainingOptions = [
   { value: "not-started", label: "还没讨论 I-983" },
-  { value: "manager-ready", label: "manager 愿意配合" },
-  { value: "hr-ready", label: "HR/immigration team 已说明流程" },
+  { value: "manager-ready", label: "直属经理愿意配合" },
+  { value: "hr-ready", label: "HR/移民事务负责人已说明流程" },
 ] as const;
 
 const futureOptions = [
@@ -193,7 +193,7 @@ function buildChecklist(
       items: [
         everify === "confirmed"
           ? "记录 HR 确认 E-Verify 的方式和对应雇主实体。"
-          : "向 HR 明确确认雇主实体是否 E-Verify，以及你的 payroll entity 是否一致。",
+          : "向 HR 明确确认雇主实体是否 E-Verify，以及你的工资单雇主是否一致。",
         "确认职位与 STEM degree 的关联如何体现在 training plan 中。",
         "确认是否有合适 supervisor 能定期评估和签署相关材料。",
       ],
@@ -215,7 +215,7 @@ function buildChecklist(
       items: [
         future === "h1b-perm"
           ? "同时询问 H-1B registration、PERM 启动时间和雇主内部政策。"
-          : "至少确认公司是否支持 H-1B registration 和后续 petition。",
+          : "至少确认公司是否支持 H-1B 注册和后续申请。",
         "用公司页查看相似职位、地点是否有公开 H-1B/PERM 历史。",
         "把公开数据当作准备问题的背景，不当作雇主未来承诺。",
       ],

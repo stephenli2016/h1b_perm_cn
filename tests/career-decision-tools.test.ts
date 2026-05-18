@@ -27,7 +27,7 @@ describe("M21 career decision tools", () => {
     expect(result.privacyNoteZh).toContain("不要求输入");
     expect(
       result.checklistSections.some((section) =>
-        section.items.some((item) => item.includes("cap registration")),
+        section.items.some((item) => item.includes("抽签注册")),
       ),
     ).toBe(true);
     expect(JSON.stringify(result)).not.toMatch(forbiddenAdviceClaims);
@@ -50,7 +50,7 @@ describe("M21 career decision tools", () => {
       "companyDataFocus",
     ]);
     expect(result.timelineSteps.map((step) => step.title)).toContain(
-      "ETA-9089 / PERM filing",
+      "ETA-9089 / PERM 申请",
     );
     expect(JSON.stringify(result)).not.toMatch(forbiddenAdviceClaims);
   });

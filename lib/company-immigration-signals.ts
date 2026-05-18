@@ -92,7 +92,7 @@ export const COMPANY_IMMIGRATION_SIGNAL_DIMENSIONS: readonly DimensionDefinition
       labelZh: "跨年重复记录",
       maxScore: 16,
       descriptionZh:
-        "公开记录是否跨越多个 fiscal years，以及是否同时存在 H-1B 与 PERM 两类历史活动。",
+        "公开记录是否跨越多个财年，以及是否同时存在 H-1B 与 PERM 两类历史活动。",
     },
     {
       key: "data_consistency",
@@ -105,7 +105,7 @@ export const COMPANY_IMMIGRATION_SIGNAL_DIMENSIONS: readonly DimensionDefinition
       labelZh: "职位/地点覆盖",
       maxScore: 16,
       descriptionZh:
-        "公开记录是否覆盖多个职位、SOC 或 worksite location，用于判断页面是否有足够可比较背景。",
+        "公开记录是否覆盖多个职位、SOC 或工作地点，用于判断页面是否有足够可比较背景。",
     },
     {
       key: "wage_context",
@@ -164,7 +164,7 @@ export function calculateCompanyImmigrationSignal(
     lowSample: {
       flagged: lowSampleFlagged,
       messageZh: lowSampleFlagged
-        ? `近 5 个 fiscal years 只有 ${filingRecordCount} 条 H-1B/PERM 公开记录、${totalPublicRecordCount} 条相关公开记录。样本太少，只能说明公开数据覆盖有限，不能推断雇主政策或个案结果。`
+        ? `近 5 个财年只有 ${filingRecordCount} 条 H-1B/PERM 公开记录、${totalPublicRecordCount} 条相关公开记录。样本太少，只能说明公开数据覆盖有限，不能推断雇主政策或个案结果。`
         : undefined,
     },
     dimensions,
@@ -191,11 +191,11 @@ function buildRecentLcaActivityDimension(
     score,
     evidenceZh: [
       `近 5 年 LCA 记录：${h1bRecords.length} 条`,
-      `Certified LCA：${certifiedCount} 条`,
+      `已认证 LCA：${certifiedCount} 条`,
       `USCIS Employer Data Hub 行：${uscisRecords.length} 条`,
     ],
     explanationZh:
-      "LCA 与 USCIS Employer Data Hub 只能说明公开记录中有 H-1B 相关活动，不代表 petition 批准或未来 sponsor 承诺。",
+      "LCA 与 USCIS Employer Data Hub 只能说明公开记录中有 H-1B 相关活动，不代表申请批准或未来担保承诺。",
   });
 }
 
@@ -213,10 +213,10 @@ function buildPermActivityDimension(
     score,
     evidenceZh: [
       `近 5 年 PERM 记录：${permRecords.length} 条`,
-      `Certified PERM：${certifiedCount} 条`,
+      `已认证 PERM：${certifiedCount} 条`,
     ],
     explanationZh:
-      "PERM certification 是劳工认证公开记录，不等于 I-140、I-485 或绿卡最终获批。",
+      "PERM 劳工认证是公开记录，不等于 I-140、I-485 或绿卡最终获批。",
   });
 }
 
@@ -312,7 +312,7 @@ function buildJobLocationDiversityDimension(
     evidenceZh: [
       `职位名称：${jobTitleCount} 类`,
       `SOC code：${socCount} 类`,
-      `Worksite/location：${locationCount} 个`,
+      `工作地点：${locationCount} 个`,
     ],
     explanationZh:
       "职位和地点维度越丰富，页面越适合做公开数据比较；维度少时应避免强结论。",
@@ -347,7 +347,7 @@ function buildWageContextDimension(
       `可对照 PWD 官方来源背景：${matchedPwdContextCount} 条`,
     ],
     explanationZh:
-      "工资上下文只说明公开工资字段是否足够做背景对照，不判断工资、职位或 petition 是否合规。",
+      "工资上下文只说明公开工资字段是否足够做背景对照，不判断工资、职位或申请是否合规。",
   });
 }
 

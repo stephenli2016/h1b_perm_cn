@@ -64,7 +64,7 @@ export default async function PermRestartTimelineEstimatorPage({
         { label: "跳槽后 PERM 重办时间线估算器" },
       ]}
       canonicalPath="/tools/perm-restart-timeline-estimator"
-      description="选择一个通用场景，查看 PERM 相关节点的相对顺序。页面不要求输入 priority date、I-140 receipt、工资、身份日期或雇主名称。"
+      description="选择一个通用场景，查看 PERM 相关节点的相对顺序。页面不要求输入优先日（priority date）、I-140 收据号、工资、身份日期或雇主名称。"
       eyebrow="PERM 工具"
       structuredData={buildWebApplicationJsonLd({
         title: "跳槽后 PERM 重办时间线估算器",
@@ -116,6 +116,23 @@ export default async function PermRestartTimelineEstimatorPage({
           </p>
         </section>
 
+        <section className="rounded-lg border border-[var(--line)] bg-white p-5 shadow-sm">
+          <h2 className="text-lg font-semibold">结果怎么读</h2>
+          <ul className="mt-4 space-y-3 text-sm leading-6 text-[var(--muted)]">
+            <li>
+              “重启判断口径”只是教育性流程提示，不等于你的旧 PERM
+              一定可用或一定失效。
+            </li>
+            <li>
+              时间线展示的是常见顺序，不计算真实日期；实际进度取决于雇主、岗位、招聘和律师策略。
+            </li>
+            <li>
+              如果已经有 PERM 或 I-140，优先把优先日、I-140
+              状态和新岗位关系整理给律师核对。
+            </li>
+          </ul>
+        </section>
+
         <section className="space-y-4">
           {result.timelineSteps.map((step) => (
             <article
@@ -149,10 +166,10 @@ export default async function PermRestartTimelineEstimatorPage({
           <article className="rounded-lg border border-[var(--line)] bg-white p-5 shadow-sm">
             <h2 className="text-lg font-semibold">常见误区</h2>
             <ul className="mt-4 space-y-3 text-sm leading-6 text-[var(--muted)]">
-              <li>PERM certified 不等于 I-140 或绿卡已经批准。</li>
+              <li>PERM 已认证不等于 I-140 或绿卡已经批准。</li>
               <li>
-                新雇主的 PERM 通常围绕新雇主和新的 permanent job opportunity
-                重新规划。
+                新雇主的 PERM 通常围绕新雇主和新的永久职位机会（permanent job
+                opportunity）重新规划。
               </li>
               <li>
                 公司有 PERM
@@ -163,9 +180,13 @@ export default async function PermRestartTimelineEstimatorPage({
           <article className="rounded-lg border border-[var(--line)] bg-white p-5 shadow-sm">
             <h2 className="text-lg font-semibold">适合问 HR / 律师的问题</h2>
             <ul className="mt-4 space-y-3 text-sm leading-6 text-[var(--muted)]">
-              <li>新岗位是否是新的 permanent job opportunity？</li>
-              <li>现有 PERM、I-140 和 priority date 在跳槽计划中如何处理？</li>
-              <li>雇主是否已有类似职位、地点和 PERM filing 的公开历史？</li>
+              <li>
+                新岗位是否是新的永久职位机会（permanent job opportunity）？
+              </li>
+              <li>
+                现有 PERM、I-140 和优先日（priority date）在跳槽计划中如何处理？
+              </li>
+              <li>雇主是否已有类似职位、地点和 PERM 申请的公开历史？</li>
             </ul>
           </article>
         </section>

@@ -98,7 +98,7 @@ export const h1bTransferScenarios = [
   },
   {
     value: "cap-exempt-to-cap-subject",
-    labelZh: "Cap-exempt 转 cap-subject 雇主",
+    labelZh: "免抽签雇主转需抽签雇主（cap-exempt → cap-subject）",
   },
   {
     value: "material-change",
@@ -112,11 +112,11 @@ export const h1bTransferScenarios = [
 export const h1bTransferStartTimings = [
   {
     value: "after-filing",
-    labelZh: "想在新 petition properly filed 后开始",
+    labelZh: "想在新申请正式提交后开始",
   },
   {
     value: "after-approval",
-    labelZh: "想等 approval 后再开始",
+    labelZh: "想等批准（approval）后再开始",
   },
   {
     value: "not-sure",
@@ -152,7 +152,7 @@ export const permStages = [
   },
   {
     value: "pwd-or-recruitment",
-    labelZh: "PWD / recruitment 阶段",
+    labelZh: "通行工资或招聘步骤（PWD / recruitment）阶段",
   },
   {
     value: "filed-pending",
@@ -160,7 +160,7 @@ export const permStages = [
   },
   {
     value: "certified-or-i140",
-    labelZh: "PERM certified 或 I-140 阶段",
+    labelZh: "PERM 已认证或 I-140 阶段",
   },
 ] as const satisfies readonly {
   value: PermStage;
@@ -228,7 +228,7 @@ export function buildH1BTransferChecklist(
     reviewIntensity,
     reviewLabelZh: reviewIntensityLabelZh(reviewIntensity),
     summaryZh:
-      "这个清单把 H-1B transfer 常见核对点拆成雇主、petition、LCA/worksite、开始节点和公开数据背景。它不收集你的身份日期、receipt number、工资或雇主名称。",
+      "这个清单把 H-1B 换雇主常见核对点拆成雇主、申请、LCA/工作地点、开始节点和公开数据背景。它不收集你的身份日期、收据号、工资或雇主名称。",
     checklistSections: [
       buildH1BPetitionSection(normalized),
       buildH1BWorksiteSection(normalized),
@@ -236,7 +236,7 @@ export function buildH1BTransferChecklist(
       buildH1BCompanyDataSection(normalized.companyDataFocus),
     ],
     privacyNoteZh:
-      "本工具只使用通用场景选项，不要求输入 I-94、receipt number、工资、护照、家庭成员或具体雇主名称。",
+      "本工具只使用通用场景选项，不要求输入 I-94、收据号（receipt number）、工资、护照、家庭成员或具体雇主名称。",
     interpretationNoteZh:
       "清单只用于准备和提问，不判断你是否可以开始工作、是否会获批，或是否满足任何个人身份要求。",
     relatedLinks: companyDataLinks(normalized.companyDataFocus),
@@ -257,10 +257,10 @@ export function buildPermRestartTimeline(
     restartSignal,
     restartLabelZh: restartSignalLabelZh(restartSignal),
     summaryZh:
-      "这个估算器只展示 PERM 相关流程节点的相对顺序，帮助你和雇主或律师沟通。它不计算真实日期，也不要求输入个人 priority date、receipt number 或身份信息。",
+      "这个估算器只展示 PERM 相关流程节点的相对顺序，帮助你和雇主或律师沟通。它不计算真实日期，也不要求输入个人优先日（priority date）、收据号（receipt number）或身份信息。",
     timelineSteps: buildPermTimelineSteps(normalized),
     privacyNoteZh:
-      "本工具只使用通用场景选项，不收集 priority date、I-140 receipt、工资、家庭信息、身份日期或具体雇主名称。",
+      "本工具只使用通用场景选项，不收集优先日（priority date）、I-140 收据号、工资、家庭信息、身份日期或具体雇主名称。",
     interpretationNoteZh:
       "PERM 是雇主和具体职位机会相关的劳工认证流程。此页面不判断现有 PERM 是否可继续使用，也不提供换工作法律建议。",
     relatedLinks: companyDataLinks(normalized.companyDataFocus),
@@ -308,20 +308,20 @@ function buildH1BPetitionSection(
   input: Required<H1BTransferChecklistInput>,
 ): ChecklistSection {
   const items = [
-    "确认新雇主是否会由合适的 petitioning employer 提交 Form I-129，而不是只停留在口头 offer。",
-    "确认职位、SOC/职责、工资、worksite 和 requested start date 是否与 petition / LCA 材料一致。",
-    "保留 offer、job description、filing confirmation、receipt notice 和 approval notice 的副本，供律师或 HR 核对。",
+    "确认新雇主是否会由合适的申请雇主提交 Form I-129，而不是只停留在口头 offer。",
+    "确认职位、SOC/职责、工资、工作地点和预计开始日期是否与申请 / LCA 材料一致。",
+    "保留 offer、职位说明、提交确认、收据通知和批准通知的副本，供律师或 HR 核对。",
   ];
 
   if (input.scenario === "cap-exempt-to-cap-subject") {
     items.push(
-      "如果从 cap-exempt 雇主转向 cap-subject 雇主，把 cap registration、selection 和 cap-subject petition 问题单独列出来。",
+      "如果从免抽签雇主（cap-exempt）转向需抽签雇主（cap-subject），把抽签注册、抽中结果和需抽签 H-1B 申请问题单独列出来。",
     );
   }
 
   return {
-    title: "Petition 核对",
-    description: "先确认新雇主和 filing 路径，而不是只看职位名称。",
+    title: "申请核对",
+    description: "先确认新雇主和提交路径，而不是只看职位名称。",
     items,
   };
 }
@@ -330,20 +330,20 @@ function buildH1BWorksiteSection(
   input: Required<H1BTransferChecklistInput>,
 ): ChecklistSection {
   const items = [
-    "核对实际 worksite、远程/混合安排和 LCA 覆盖地点是否一致。",
-    "核对工资口径是否不低于同类岗位工资或适用 prevailing wage 背景；这一步需要雇主/律师做正式判断。",
+    "核对实际工作地点、远程/混合安排和 LCA 覆盖地点是否一致。",
+    "核对工资口径是否不低于同类岗位工资或适用通行工资（prevailing wage）背景；这一步需要雇主/律师做正式判断。",
     "用公司页公开 LCA 样本看该雇主是否有类似职位和地点历史记录，但不要把历史记录当成承诺。",
   ];
 
   if (input.scenario === "material-change") {
     items.push(
-      "如果职位职责、地点、工资或工作条件明显变化，把是否需要 amended/new petition 作为律师核对点。",
+      "如果职位职责、地点、工资或工作条件明显变化，把是否需要修正或新申请作为律师核对点。",
     );
   }
 
   return {
-    title: "LCA / worksite / wage 核对",
-    description: "H-1B transfer 不只是换公司名，也要看实际工作条件。",
+    title: "LCA / 工作地点 / 工资核对",
+    description: "H-1B 换雇主不只是换公司名，也要看实际工作条件。",
     items,
   };
 }
@@ -352,19 +352,19 @@ function buildH1BStartTimingSection(
   input: Required<H1BTransferChecklistInput>,
 ): ChecklistSection {
   const items = [
-    "USCIS 公开说明中提到，符合 portability 条件的 H-1B worker 通常可在新雇主 properly files non-frivolous Form I-129 后，或 petition requested start date 较晚者开始。",
-    "把“filed”“receipt issued”“approved”三个节点分开问清楚；不同雇主政策可能更保守。",
-    "不要仅凭口头说法决定开始日期；让雇主 immigration team 或律师确认个人适用性。",
+    "USCIS 公开说明中提到，符合 portability 条件的 H-1B worker 通常可在新雇主正式提交 non-frivolous Form I-129 后，或申请中的预计开始日期较晚者开始。",
+    "把“已提交（filed）”“收到收据（receipt issued）”“已批准（approved）”三个节点分开问清楚；不同雇主政策可能更保守。",
+    "不要仅凭口头说法决定开始日期；让雇主移民事务负责人或律师确认个人适用性。",
   ];
 
   if (input.startTiming === "after-approval") {
     items.push(
-      "如果计划等 approval 后开始，确认 payroll、notice period 和旧雇主结束日期如何衔接。",
+      "如果计划等批准后开始，确认工资单、离职通知期和旧雇主结束日期如何衔接。",
     );
   }
   if (input.scenario === "near-expiry-or-gap") {
     items.push(
-      "如果 I-94、authorized stay 或就业授权日期接近结束，把 grace period、timely filing 和离职日期作为高优先级问题。",
+      "如果 I-94、合法停留或就业授权日期接近结束，把宽限期、及时提交和离职日期作为高优先级问题。",
     );
   }
 
@@ -380,7 +380,7 @@ function buildH1BCompanyDataSection(focus: CompanyDataFocus): ChecklistSection {
     focus === "h1b"
       ? "优先查看 H-1B/LCA 历史记录。"
       : focus === "perm"
-        ? "如果 transfer 同时影响绿卡规划，也查看 PERM 历史记录。"
+        ? "如果换雇主同时影响绿卡规划，也查看 PERM 历史记录。"
         : "同时查看 H-1B/LCA 与 PERM 历史记录。";
 
   return {
@@ -388,7 +388,7 @@ function buildH1BCompanyDataSection(focus: CompanyDataFocus): ChecklistSection {
     description: "公开数据可以帮助准备问题，但不能替代雇主政策或律师判断。",
     items: [
       focusText,
-      "查看该公司近年 LCA 职位、worksite 和工资字段是否与你关心的岗位有可比背景。",
+      "查看该公司近年 LCA 职位、工作地点和工资字段是否与你关心的岗位有可比背景。",
       "查看公司页的公开数据友好度信号，判断公开记录是否足够丰富；低样本时避免强结论。",
       "把公开数据当作面试和 HR 沟通前的准备材料，不当作是否接受 offer 的唯一依据。",
     ],
@@ -400,9 +400,9 @@ function buildPermTimelineSteps(
 ): TimelineStep[] {
   const restartText =
     input.scenario === "new-employer"
-      ? "新雇主通常需要围绕自己的 permanent job opportunity 重新评估 PERM 路径。"
+      ? "新雇主通常需要围绕自己的永久职位机会（permanent job opportunity）重新评估 PERM 路径。"
       : input.scenario === "same-employer-new-role"
-        ? "同雇主但职位或地点变化时，需要核对原 PERM 是否仍对应同一个 job opportunity。"
+        ? "同雇主但职位或地点变化时，需要核对原 PERM 是否仍对应同一个永久职位机会。"
         : "职位基本相似时也应核对岗位职责、地点、工资和组织架构是否仍匹配。";
 
   return [
@@ -411,50 +411,50 @@ function buildPermTimelineSteps(
       title: "确认雇主与永久职位机会",
       description: restartText,
       checkpoints: [
-        "确认 sponsoring employer、job title、职责、地点和最低要求是否已稳定。",
+        "确认担保雇主、职位名称、职责、地点和最低要求是否已稳定。",
         "把旧 PERM、旧职位和新职位差异整理成给律师的问题清单。",
       ],
     },
     {
       step: 2,
-      title: "Prevailing wage / PWD 背景",
+      title: "通行工资 / PWD 背景",
       description:
-        "PERM 通常需要围绕职位和地区确认 prevailing wage 背景，正式判断由雇主和律师处理。",
+        "PERM 通常需要围绕职位和地区确认通行工资（prevailing wage）背景，正式判断由雇主和律师处理。",
       checkpoints: [
-        "用公开 PWD / wage 工具做背景了解，不把它当作正式 wage determination。",
-        "如果岗位地点或职责变化明显，把工资和 minimum requirements 单独核对。",
+        "用公开 PWD / 工资工具做背景了解，不把它当作正式工资决定（wage determination）。",
+        "如果岗位地点或职责变化明显，把工资和最低要求（minimum requirements）单独核对。",
       ],
     },
     {
       step: 3,
-      title: "Recruitment 准备",
+      title: "招聘步骤（recruitment）准备",
       description:
-        "DOL PERM 流程关注是否有足够 U.S. workers able, willing, qualified, and available。",
+        "DOL PERM 流程关注是否有足够符合条件并可用的美国工人（able, willing, qualified, and available U.S. workers）。",
       checkpoints: [
         "确认招聘步骤、广告、岗位要求和时间线由雇主/律师统一管理。",
-        "不要自行改写招聘材料或岗位要求；把问题交给雇主 immigration team。",
+        "不要自行改写招聘材料或岗位要求；把问题交给雇主移民事务负责人。",
       ],
     },
     {
       step: 4,
-      title: "ETA-9089 / PERM filing",
+      title: "ETA-9089 / PERM 申请",
       description:
-        "PERM filing 是雇主提交给 DOL 的劳工认证申请，不等于 I-140 或绿卡批准。",
+        "PERM 申请是雇主提交给 DOL 的劳工认证申请，不等于 I-140 或绿卡批准。",
       checkpoints: [
-        "确认 filing 是否已发生、是否仍 pending、是否有 audit 或 supervised recruitment 背景。",
-        "如果准备跳槽，不要把 pending PERM 当作可自动转移的资产。",
+        "确认是否已经提交、是否仍在等待、是否有审计（audit）或监督招聘（supervised recruitment）背景。",
+        "如果准备跳槽，不要把等待中的 PERM 当作可自动转移的资产。",
       ],
     },
     {
       step: 5,
-      title: "PERM certified 后的后续节点",
+      title: "PERM 已认证后的后续节点",
       description:
-        "PERM certified 之后通常还涉及 I-140、priority date、排期和身份路径等不同问题。",
+        "PERM 已认证之后通常还涉及 I-140、优先日（priority date）、排期和身份路径等不同问题。",
       checkpoints: [
         input.stage === "certified-or-i140"
-          ? "如果已有 certified PERM 或 I-140，和律师核对 priority date、I-140 状态和新工作计划的关系。"
-          : "如果尚未到 certified 阶段，把后续 I-140 和排期问题作为背景准备。",
-        "用 Visa Bulletin 工具理解公开排期，不把它当作个人 filing 结论。",
+          ? "如果已有已认证 PERM 或 I-140，和律师核对优先日（priority date）、I-140 状态和新工作计划的关系。"
+          : "如果尚未到 PERM 已认证阶段，把后续 I-140 和排期问题作为背景准备。",
+        "用 Visa Bulletin 工具理解公开排期，不把它当作个人申请结论。",
       ],
     },
   ];

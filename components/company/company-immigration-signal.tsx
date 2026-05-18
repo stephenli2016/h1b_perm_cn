@@ -66,7 +66,7 @@ export function CompanyImmigrationSignalPanel({
 
       <section className="grid gap-4 md:grid-cols-3">
         <MetricCard
-          description="这个数字衡量公开数据覆盖与可解释程度，不是批准率或 sponsor 承诺。"
+          description="这个数字衡量公开数据覆盖与可解释程度，不是批准率或担保承诺。"
           label="综合信号"
           trend={signal.lowSample.flagged ? "低样本" : "公开数据"}
           trendTone={signal.lowSample.flagged ? "warning" : "positive"}
@@ -81,12 +81,12 @@ export function CompanyImmigrationSignalPanel({
         <MetricCard
           description={
             signal.lowSample.messageZh ??
-            "样本量达到当前公开信号展示阈值，但仍不代表个案结果。"
+            "样本量达到当前公开信号展示标准，但仍不代表个案结果。"
           }
           label="样本提示"
           trend={signal.lowSample.flagged ? "谨慎" : "可比较"}
           trendTone={signal.lowSample.flagged ? "warning" : "positive"}
-          value={signal.lowSample.flagged ? "低样本" : "已达展示阈值"}
+          value={signal.lowSample.flagged ? "低样本" : "样本较足"}
         />
       </section>
 

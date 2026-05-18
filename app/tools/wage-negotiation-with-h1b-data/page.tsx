@@ -23,13 +23,13 @@ const roleOptions = [
 const locationOptions = [
   { value: "same-city", label: "同城市比较" },
   { value: "new-city", label: "换城市或远程安排" },
-  { value: "unknown", label: "worksite 还不确定" },
+  { value: "unknown", label: "工作地点还不确定" },
 ] as const;
 
 const salaryOptions = [
   { value: "below-market", label: "担心 offer 偏低" },
   { value: "near-market", label: "想确认是否合理" },
-  { value: "competing-offer", label: "有 competing offer" },
+  { value: "competing-offer", label: "有竞品 offer（competing offer）" },
 ] as const;
 
 export async function generateMetadata({
@@ -40,7 +40,7 @@ export async function generateMetadata({
   return buildSeoMetadata({
     title: hasQuery ? "H-1B 数据谈薪清单结果" : "用 H-1B 数据做谈薪参考",
     description:
-      "把公开 H-1B 工资、SOC、worksite 和 prevailing wage 背景整理成谈薪问题清单。",
+      "把公开 H-1B 工资、SOC、工作地点和通行工资（prevailing wage）背景整理成谈薪问题清单。",
     path: "/tools/wage-negotiation-with-h1b-data",
     index: !hasQuery,
     pageType: "tool",
@@ -64,12 +64,12 @@ export default async function WageNegotiationWithH1BDataPage({
         { label: "H-1B 数据谈薪" },
       ]}
       canonicalPath="/tools/wage-negotiation-with-h1b-data"
-      description="把公开 H-1B 工资、SOC、worksite 和 prevailing wage 背景整理成谈薪问题清单。"
+      description="把公开 H-1B 工资、SOC、工作地点和通行工资（prevailing wage）背景整理成谈薪问题清单。"
       eyebrow="工资工具"
       structuredData={buildWebApplicationJsonLd({
         title: "用 H-1B 数据做谈薪参考",
         description:
-          "把公开 H-1B 工资、SOC、worksite 和 prevailing wage 背景整理成谈薪问题清单。",
+          "把公开 H-1B 工资、SOC、工作地点和通行工资（prevailing wage）背景整理成谈薪问题清单。",
         path: "/tools/wage-negotiation-with-h1b-data",
         dateModified: "2026-05-17",
       })}
@@ -139,10 +139,10 @@ export default async function WageNegotiationWithH1BDataPage({
         <RelatedLinks
           items={[
             {
-              title: "H-1B 工资 Level 中文判断工具",
+              title: "H-1B 工资等级中文判断工具",
               href: "/tools/h1b-wage-level-checker",
-              description: "输入 SOC、地点和工资，先看 prevailing wage 背景。",
-              meta: "工资 level",
+              description: "输入 SOC、地点和工资，先看通行工资背景。",
+              meta: "工资等级",
             },
             {
               title: "H-1B 公司数据库",
@@ -151,7 +151,7 @@ export default async function WageNegotiationWithH1BDataPage({
               meta: "数据入口",
             },
             {
-              title: "H-1B 工资和 prevailing wage 的关系",
+              title: "H-1B 工资和通行工资的关系",
               href: "/guides/h1b-salary-vs-prevailing-wage",
               description: "先理解为什么公开工资不能直接等于 offer 建议。",
               meta: "指南",
@@ -161,7 +161,7 @@ export default async function WageNegotiationWithH1BDataPage({
         />
 
         <SourceNote
-          latestDataLabel="本页不保存工资输入；公开工资和 prevailing wage 只能作为背景，不是谈薪建议或合规结论。"
+          latestDataLabel="本页不保存工资输入；公开工资和通行工资（prevailing wage）只能作为背景，不是谈薪建议或合规结论。"
           names={[
             "DOL OFLC LCA / H-1B disclosure data",
             "FLAG Wage Data",
@@ -196,7 +196,7 @@ function buildNegotiationPlan(
           ? "优先比较 Software Developer、Data Scientist、Machine Learning 等相近 SOC 和 title。"
           : "优先比较和实际职责相近的 SOC，不要只用中文职位名判断。",
         location === "new-city"
-          ? "如果换城市或远程，明确 offer 使用的 worksite 和 LCA 地点口径。"
+          ? "如果换城市或远程，明确 offer 使用的工作地点和 LCA 地点口径。"
           : "尽量使用同 city/state 或同 metro area 的公开工资背景。",
         "把样本年份和数据来源日期记下来，避免拿不同年份直接比较。",
       ],
@@ -206,12 +206,12 @@ function buildNegotiationPlan(
       description: "公开数据更适合帮你问问题，而不是直接给出一个应该要的数字。",
       items: [
         salary === "below-market"
-          ? "如果担心偏低，询问是否有 salary band、leveling、equity 或 sign-on 调整空间。"
-          : "询问 offer 对应的 level、职责范围和未来 review 节点。",
+          ? "如果担心偏低，询问是否有薪资带宽、职级、股权或签字费调整空间。"
+          : "询问 offer 对应的职级、职责范围和未来复核节点。",
         salary === "competing-offer"
-          ? "用 competing offer 时，仍要把地点、现金、股权和身份支持分开讨论。"
+          ? "使用竞品 offer 时，仍要把地点、现金、股权和身份支持分开讨论。"
           : "不要把 H-1B 公开工资当作公司当前薪资政策。",
-        "如果涉及 H-1B filing，工资、职责和 worksite 也需要和雇主/律师口径一致。",
+        "如果涉及 H-1B 申请，工资、职责和工作地点也需要和雇主/律师口径一致。",
       ],
     },
     {
@@ -220,7 +220,7 @@ function buildNegotiationPlan(
       items: [
         "Prevailing wage 是公开工资背景，不等于公司必须给出的唯一工资。",
         "LCA 工资字段可能受岗位、地点、雇佣安排和数据录入影响。",
-        "不要要求或接受任何隐瞒 worksite、职责或工资事实的建议。",
+        "不要要求或接受任何隐瞒工作地点、职责或工资事实的建议。",
       ],
     },
   ];

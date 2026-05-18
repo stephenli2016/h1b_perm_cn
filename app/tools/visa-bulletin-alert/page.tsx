@@ -21,14 +21,14 @@ const categoryOptions = [
 ] as const;
 
 const chartOptions = [
-  { value: "final-action", label: "Final Action Dates" },
-  { value: "filing", label: "Dates for Filing" },
+  { value: "final-action", label: "最终裁定表（Final Action Dates）" },
+  { value: "filing", label: "递件排期表（Dates for Filing）" },
 ] as const;
 
 const positionOptions = [
-  { value: "before-cutoff", label: "优先日早于当前 cutoff" },
-  { value: "near-cutoff", label: "优先日接近 cutoff" },
-  { value: "after-cutoff", label: "优先日晚于当前 cutoff" },
+  { value: "before-cutoff", label: "优先日早于当前截止日期" },
+  { value: "near-cutoff", label: "优先日接近截止日期" },
+  { value: "after-cutoff", label: "优先日晚于当前截止日期" },
   { value: "unknown", label: "还没确认优先日或类别" },
 ] as const;
 
@@ -40,7 +40,7 @@ export async function generateMetadata({
   return buildSeoMetadata({
     title: hasQuery ? "排期每月核对清单结果" : "中国职业移民排期提醒清单",
     description:
-      "按 EB 类别、Visa Bulletin 图表和 priority date 位置生成每月排期更新核对清单。",
+      "按 EB 类别、Visa Bulletin 排期表和优先日（priority date）位置生成每月排期更新核对清单。",
     path: "/tools/visa-bulletin-alert",
     index: !hasQuery,
     pageType: "tool",
@@ -64,12 +64,12 @@ export default async function VisaBulletinAlertPage({
         { label: "排期提醒清单" },
       ]}
       canonicalPath="/tools/visa-bulletin-alert"
-      description="用每月 Visa Bulletin 和 USCIS filing chart 选择，生成中国 EB 类别排期更新时应核对的问题。"
+      description="用每月 Visa Bulletin 和 USCIS 当月 I-485 用表选择，生成中国 EB 类别排期更新时应核对的问题。"
       eyebrow="排期工具"
       structuredData={buildWebApplicationJsonLd({
         title: "中国职业移民排期提醒清单",
         description:
-          "按 EB 类别、Visa Bulletin 图表和 priority date 位置生成每月排期更新核对清单。",
+          "按 EB 类别、Visa Bulletin 排期表和优先日（priority date）位置生成每月排期更新核对清单。",
         path: "/tools/visa-bulletin-alert",
         dateModified: "2026-05-17",
       })}
@@ -111,7 +111,7 @@ export default async function VisaBulletinAlertPage({
 
         <section className="grid gap-4 md:grid-cols-3">
           <MetricCard label="类别" value={category.label} />
-          <MetricCard label="图表" value={chart.label} />
+          <MetricCard label="排期表" value={chart.label} />
           <MetricCard label="位置" value={position.label} />
         </section>
 
@@ -147,14 +147,15 @@ export default async function VisaBulletinAlertPage({
             {
               title: "中国 EB-2 / EB-3 优先日排期计算器",
               href: "/tools/eb2-eb3-china-priority-date-calculator",
-              description: "用具体 priority date 对照指定月份和图表。",
+              description:
+                "用具体优先日（priority date）对照指定月份和排期表。",
               meta: "计算器",
             },
             {
               title: "Visa Bulletin 方法说明",
               href: "/methodology/visa-bulletin",
               description:
-                "理解 DOS Visa Bulletin 与 USCIS filing chart 的差异。",
+                "理解 DOS Visa Bulletin 与 USCIS 当月 I-485 用表的差异。",
               meta: "方法",
             },
           ]}
@@ -187,33 +188,35 @@ function buildChecklist(
 ) {
   const categoryLabel = category.toUpperCase().replace("EB", "EB-");
   const chartLabel =
-    chart === "filing" ? "Dates for Filing" : "Final Action Dates";
+    chart === "filing"
+      ? "递件排期表（Dates for Filing）"
+      : "最终裁定表（Final Action Dates）";
 
   return [
     {
       title: "每月先看官方表格",
       description:
-        "Visa Bulletin 每月更新，AOS 是否可用 Dates for Filing 还要看 USCIS 当月选择。",
+        "Visa Bulletin 每月更新，境内调整身份是否可用递件排期表还要看 USCIS 当月选择。",
       items: [
-        `确认 ${categoryLabel} China-mainland born 在 ${chartLabel} 中的 cutoff date。`,
-        "如果你在美国境内准备 AOS，单独核对 USCIS 当月是否允许使用 Dates for Filing。",
-        "如果是境外 consular processing，不要直接套用 AOS filing chart 选择。",
+        `确认 ${categoryLabel} 中国大陆出生在 ${chartLabel} 中的截止日期（cutoff date）。`,
+        "如果你在美国境内准备调整身份（AOS），单独核对 USCIS 当月是否允许使用递件排期表。",
+        "如果是境外领馆程序（consular processing），不要直接套用调整身份（AOS）用表选择。",
       ],
     },
     {
       title: "再看优先日位置",
       description:
-        "同一个 cutoff 对不同 priority date 的意义不同，接近 cutoff 时尤其要谨慎。",
+        "同一个截止日期对不同优先日（priority date）的意义不同，接近截止日期时尤其要谨慎。",
       items: [
         position === "before-cutoff"
-          ? "优先日早于 cutoff 时，继续核对身份、基础 petition 和材料窗口。"
-          : "如果优先日尚未早于 cutoff，不要把排期前进等同于已经可以递交。",
+          ? "优先日早于当前日期线时，继续核对身份、基础申请和材料窗口。"
+          : "如果优先日尚未早于截止日期，不要把排期前进等同于已经可以递交。",
         position === "near-cutoff"
-          ? "接近 cutoff 时，重点关注下月是否可能停滞或倒退，并保留材料更新时间。"
+          ? "接近截止日期时，重点关注下月是否可能停滞或倒退，并保留材料更新时间。"
           : "保持每月记录，但不要从单月变化推断长期趋势。",
         position === "unknown"
-          ? "先确认 priority date、chargeability 和 EB 类别，再使用排期页面。"
-          : "把本月 cutoff、上月 cutoff 和你的 priority date 放在同一张记录里。",
+          ? "先确认优先日（priority date）、出生地/Chargeability 和 EB 类别，再使用排期页面。"
+          : "把本月截止日期、上月截止日期和你的优先日放在同一张记录里。",
       ],
     },
     {

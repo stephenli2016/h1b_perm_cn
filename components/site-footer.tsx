@@ -11,7 +11,7 @@ const footerQuickLinks = [
   {
     href: "/tools/h1b-wage-level-checker",
     label: "查工资",
-    description: "用 prevailing wage 背景理解工资",
+    description: "用通行工资背景理解工资",
   },
   {
     href: "/visa-bulletin",

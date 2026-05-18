@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 
 import { PageShell } from "@/components/page-shell";
 import { DirectoryFilterForm } from "@/components/search/directory-filter-form";
@@ -18,6 +19,7 @@ import { getRuntimePublicQueryRepository } from "@/lib/db/runtime-public-query-r
 import {
   activeFilterCount,
   combinedStatusLabels,
+  getCleanDirectoryRedirectHref,
   parseDirectorySearchParams,
   type RawSearchParams,
 } from "@/lib/directory-search";
@@ -38,7 +40,7 @@ export async function generateMetadata({
   return buildSeoMetadata({
     title: filterCount > 0 ? "公司目录搜索结果" : "H-1B / PERM 公司目录",
     description:
-      "搜索公司 H-1B、PERM、职位、地点和公开数据覆盖情况，用中文理解雇主 sponsor 历史信号。",
+      "搜索公司 H-1B、PERM、职位、地点和公开数据覆盖情况，用中文理解雇主担保历史信号。",
     path: "/companies",
     index: filterCount === 0,
     pageType: "data",
@@ -73,7 +75,7 @@ const companyColumns: DataTableColumn<PublicCompanyDirectoryResult>[] = [
   },
   {
     key: "records",
-    header: "匹配记录",
+    header: "近 5 年记录",
     render: (row) => (
       <div>
         <p className="font-medium">{row.matchedRecordCount} 条</p>
@@ -85,8 +87,8 @@ const companyColumns: DataTableColumn<PublicCompanyDirectoryResult>[] = [
   },
   {
     key: "latest-year",
-    header: "最新 FY",
-    render: (row) => `FY${row.latestFiscalYear}`,
+    header: "最新年份",
+    render: (row) => `${row.latestFiscalYear} 财年`,
   },
   {
     key: "top-job",
@@ -100,14 +102,12 @@ const companyColumns: DataTableColumn<PublicCompanyDirectoryResult>[] = [
   },
   {
     key: "indexing",
-    header: "页面索引",
+    header: "资料完整度",
     render: (row) =>
       row.indexable ? (
-        <span className="font-medium text-[var(--accent-strong)]">
-          达到阈值
-        </span>
+        <span className="font-medium text-[var(--accent-strong)]">较完整</span>
       ) : (
-        <span className="text-[var(--muted)]">noindex</span>
+        <span className="text-[var(--muted)]">样本较少</span>
       ),
   },
 ];
@@ -115,9 +115,21 @@ const companyColumns: DataTableColumn<PublicCompanyDirectoryResult>[] = [
 export default async function CompaniesPage({
   searchParams,
 }: CompaniesPageProps) {
+  const rawSearchParams = await searchParams;
+  const parsed = parseDirectorySearchParams(rawSearchParams);
+  const cleanHref = getCleanDirectoryRedirectHref(
+    "/companies",
+    rawSearchParams,
+    parsed.values,
+    "combined",
+  );
+
+  if (cleanHref) {
+    redirect(cleanHref);
+  }
+
   await waitForRuntimeDataRequestBoundary();
 
-  const parsed = parseDirectorySearchParams(await searchParams);
   const filterCount = activeFilterCount(parsed.values);
   const result =
     getRuntimeDataMode() === "postgres"
@@ -161,8 +173,7 @@ export default async function CompaniesPage({
           <article className="rounded-lg border border-[var(--line)] bg-white p-5 shadow-sm">
             <h2 className="text-base font-semibold">没有记录怎么理解</h2>
             <p className="mt-3 text-sm leading-6 text-[var(--muted)]">
-              没有公开记录不等于一定不能
-              sponsor，只说明当前数据覆盖下没有找到可展示样本。
+              没有公开记录不等于一定不能担保，只说明当前数据覆盖下没有找到可展示样本。
             </p>
           </article>
         </section>
@@ -188,11 +199,11 @@ export default async function CompaniesPage({
               <MetricCard
                 description={
                   filterCount > 0
-                    ? "筛选结果页不收录，避免把参数组合提交给搜索引擎。"
-                    : "公司目录入口页已开放索引；具体公司页按质量阈值判断。"
+                    ? "筛选后的结果页不单独收录，避免生成大量重复页面。"
+                    : "目录入口可被收录；具体公司页按资料完整度判断。"
                 }
-                label="页面收录"
-                value={filterCount > 0 ? "筛选页 noindex" : "入口页 index"}
+                label="公开展示"
+                value={filterCount > 0 ? "结果页不单独收录" : "目录入口可收录"}
               />
               <MetricCard
                 description="来自官方公开数据导入；展示当前数据库覆盖的最新日期。"
@@ -204,6 +215,16 @@ export default async function CompaniesPage({
             <DataTable
               caption="公司目录搜索结果"
               columns={companyColumns}
+              emptyAction={
+                <Link
+                  className="font-semibold text-[var(--accent-strong)] underline-offset-4 hover:underline"
+                  href={filterCount > 0 ? "/companies" : "/sources"}
+                >
+                  {filterCount > 0
+                    ? "清除筛选，查看全部公司"
+                    : "查看数据来源与覆盖"}
+                </Link>
+              }
               emptyDescription="当前筛选条件没有匹配公司。可以减少筛选条件或回到全部公司。"
               emptyTitle="没有找到公司"
               getRowKey={(row) => row.employer.id}
@@ -220,13 +241,29 @@ export default async function CompaniesPage({
               <p>
                 这里的公司匹配来自 H-1B LCA 和 PERM
                 公开记录的聚合。记录数量、职位和地点分布可以作为历史活动信号，但不能直接推出雇主当前招聘政策、未来
-                sponsor 承诺或个案结果。公司页是否 index
-                仍会按数据量和质量阈值单独判断。
+                担保承诺或个案结果。公司页是否适合公开收录
+                仍会按数据量和资料完整度单独判断。
               </p>
             </InterpretationPanel>
           </>
         ) : (
           <ErrorState
+            action={
+              <div className="flex flex-wrap gap-3">
+                <Link
+                  className="rounded-md bg-white px-4 py-2 text-sm font-semibold text-red-900 ring-1 ring-red-200 hover:bg-red-100"
+                  href="/companies"
+                >
+                  回到公司目录
+                </Link>
+                <Link
+                  className="rounded-md bg-white px-4 py-2 text-sm font-semibold text-red-900 ring-1 ring-red-200 hover:bg-red-100"
+                  href="/corrections"
+                >
+                  提交纠错线索
+                </Link>
+              </div>
+            }
             description={result.error.hintZh ?? result.error.messageZh}
             title={result.error.messageZh}
           />
@@ -235,7 +272,7 @@ export default async function CompaniesPage({
         <SourceNote
           latestDataLabel={
             result.ok
-              ? `当前官方公开数据最新日期：${result.data.latestDataDate ?? "暂无来源日期"}。筛选结果页默认 noindex，入口页和合格公司页可被收录。`
+              ? `当前官方公开数据最新日期：${result.data.latestDataDate ?? "暂无来源日期"}。筛选后的结果页不单独收录，目录入口和资料较完整的公司页可被收录。`
               : undefined
           }
           names={[

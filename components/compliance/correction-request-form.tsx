@@ -79,7 +79,7 @@ export function CorrectionRequestForm() {
             className="min-h-36 rounded-md border border-[var(--line)] px-3 py-2 text-sm font-normal leading-6"
             maxLength={2000}
             name="description"
-            placeholder="请描述需要复核的字段、归并问题或隐私风险。不要提交证件号码、完整住址、receipt number、雇佣合同或个人案情细节。"
+            placeholder="请描述需要复核的字段、归并问题或隐私风险。不要提交证件号码、完整住址、收据号（receipt number）、雇佣合同或个人案情细节。"
             required
           />
         </label>

@@ -29,9 +29,9 @@ export async function generateMetadata({
   const hasQuery = hasSubmittedSearchParams(await searchParams);
 
   return buildSeoMetadata({
-    title: hasQuery ? "H-1B Transfer 风险清单结果" : "H-1B Transfer 风险清单",
+    title: hasQuery ? "H-1B 换雇主风险清单结果" : "H-1B 换雇主风险清单",
     description:
-      "用通用场景核对 H-1B 换雇主前需要问 HR、律师和新雇主 immigration team 的问题，并连接公司 H-1B/PERM 公开数据。",
+      "用通用场景核对 H-1B 换雇主前需要问 HR、律师和新雇主移民事务负责人的问题，并连接公司 H-1B/PERM 公开数据。",
     path: "/tools/h1b-transfer-risk-checklist",
     index: !hasQuery,
     pageType: "tool",
@@ -62,19 +62,19 @@ export default async function H1BTransferRiskChecklistPage({
       breadcrumbs={[
         { href: "/", label: "首页" },
         { href: "/tools", label: "工具" },
-        { label: "H-1B Transfer 风险清单" },
+        { label: "H-1B 换雇主风险清单" },
       ]}
       canonicalPath="/tools/h1b-transfer-risk-checklist"
-      description="选择一个通用场景，生成 H-1B transfer 前的核对清单。页面不要求输入身份日期、receipt number、工资或雇主名称。"
+      description="选择一个通用场景，生成 H-1B 换雇主（transfer）前的核对清单。页面不要求输入身份日期、收据号（receipt number）、工资或雇主名称。"
       eyebrow="H-1B 工具"
       structuredData={buildWebApplicationJsonLd({
-        title: "H-1B Transfer 风险清单",
+        title: "H-1B 换雇主风险清单",
         description:
-          "用通用场景核对 H-1B 换雇主前需要问 HR、律师和新雇主 immigration team 的问题，并连接公司 H-1B/PERM 公开数据。",
+          "用通用场景核对 H-1B 换雇主前需要问 HR、律师和新雇主移民事务负责人的问题，并连接公司 H-1B/PERM 公开数据。",
         path: "/tools/h1b-transfer-risk-checklist",
         dateModified: "2026-05-16",
       })}
-      title="H-1B Transfer 风险清单"
+      title="H-1B 换雇主风险清单"
     >
       <div className="space-y-6">
         <TransferScenarioForm values={result.input} />
@@ -117,6 +117,22 @@ export default async function H1BTransferRiskChecklistPage({
           </p>
         </section>
 
+        <section className="rounded-lg border border-[var(--line)] bg-white p-5 shadow-sm">
+          <h2 className="text-lg font-semibold">结果怎么读</h2>
+          <ul className="mt-4 space-y-3 text-sm leading-6 text-[var(--muted)]">
+            <li>
+              “核对强度”只是提醒你该准备多少问题，不是系统给出的法律风险等级。
+            </li>
+            <li>
+              每一项都适合转成给
+              HR、招聘方或律师的问题；不要把清单勾完当作可以开始工作的结论。
+            </li>
+            <li>
+              公司公开数据只能说明历史记录背景，最终仍要看新雇主政策、申请材料和个人身份事实。
+            </li>
+          </ul>
+        </section>
+
         <section className="grid gap-4 lg:grid-cols-2">
           {result.checklistSections.map((section) => (
             <article
@@ -142,14 +158,13 @@ export default async function H1BTransferRiskChecklistPage({
           <article className="rounded-lg border border-[var(--line)] bg-white p-5 shadow-sm">
             <h2 className="text-lg font-semibold">常见误区</h2>
             <ul className="mt-4 space-y-3 text-sm leading-6 text-[var(--muted)]">
-              <li>有 LCA 历史记录，不等于新岗位会自动 filed 或 approved。</li>
+              <li>有 LCA 历史记录，不等于新岗位会自动提交或获批。</li>
               <li>
-                Transfer
-                不是只看公司名，还要核对职位、worksite、工资和开始日期。
+                H-1B
+                换雇主不是只看公司名，还要核对职位、工作地点、工资和开始日期。
               </li>
               <li>
-                公开数据只能帮你准备问题，不能替代雇主 immigration team
-                或律师确认。
+                公开数据只能帮你准备问题，不能替代雇主移民事务负责人或律师确认。
               </li>
             </ul>
           </article>
@@ -157,10 +172,9 @@ export default async function H1BTransferRiskChecklistPage({
             <h2 className="text-lg font-semibold">适合问 HR / 律师的问题</h2>
             <ul className="mt-4 space-y-3 text-sm leading-6 text-[var(--muted)]">
               <li>谁会提交 Form I-129，预计 requested start date 是什么？</li>
-              <li>实际 worksite、远程安排和 LCA 覆盖范围如何处理？</li>
+              <li>实际工作地点、远程安排和 LCA 覆盖范围如何处理？</li>
               <li>
-                如果 petition 被 RFE、denied 或需要 amended
-                filing，雇主政策是什么？
+                如果申请收到 RFE、未通过或需要提交修正申请，雇主政策是什么？
               </li>
             </ul>
           </article>

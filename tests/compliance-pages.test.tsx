@@ -42,7 +42,7 @@ describe("M24 legal, source, and correction workflow pages", () => {
     expect(sourceHtml).toContain("如何核验一页数据");
     expect(sourceHtml).toContain("不会作为数据输入的来源");
     expect(methodologyHtml).toContain("LCA 是劳动条件申请");
-    expect(methodologyHtml).toContain("信号不是 sponsor 成功率");
+    expect(methodologyHtml).toContain("信号不是担保成功率");
     expect(methodologyHtml).toContain("USCIS 当月 Adjustment of Status");
   });
 

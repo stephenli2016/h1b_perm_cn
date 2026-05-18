@@ -23,7 +23,9 @@ export default function NotFoundPage() {
         <section className="rounded-lg border border-[var(--line)] bg-white p-5 shadow-sm">
           <h2 className="text-lg font-semibold">可能发生了什么</h2>
           <ul className="mt-4 grid gap-3 text-sm leading-6 text-[var(--muted)] md:grid-cols-3">
-            <li>公司名称或 slug 不存在，或还没有进入公开展示范围。</li>
+            <li>
+              公司名称或网址里的公司标识不存在，或还没有进入公开展示范围。
+            </li>
             <li>页面参数太细，系统把它作为搜索结果而不是固定页面。</li>
             <li>旧链接对应的数据页已经调整到新的公司、工具或指南入口。</li>
           </ul>
@@ -41,7 +43,7 @@ export default function NotFoundPage() {
             title="查看工具"
           />
           <NotFoundLink
-            description="先读 LCA、PERM、prevailing wage 和 Visa Bulletin 背景。"
+            description="先读 LCA、PERM、通行工资和 Visa Bulletin 背景。"
             href="/guides"
             title="浏览指南"
           />

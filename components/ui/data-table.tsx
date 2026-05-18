@@ -16,6 +16,7 @@ type DataTableProps<Row> = {
   getRowKey: (row: Row, index: number) => string;
   emptyTitle?: string;
   emptyDescription?: string;
+  emptyAction?: ReactNode;
 };
 
 export function DataTable<Row>({
@@ -25,10 +26,12 @@ export function DataTable<Row>({
   getRowKey,
   emptyTitle = "暂无数据",
   emptyDescription = "当前数据中没有符合条件的记录。",
+  emptyAction,
 }: DataTableProps<Row>) {
   if (rows.length === 0) {
     return (
       <EmptyState
+        action={emptyAction}
         description={emptyDescription}
         title={emptyTitle}
         tone="muted"

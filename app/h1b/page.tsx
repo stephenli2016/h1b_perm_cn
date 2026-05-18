@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 
 import { PageShell } from "@/components/page-shell";
 import { DirectoryFilterForm } from "@/components/search/directory-filter-form";
@@ -18,6 +19,7 @@ import { getRuntimePublicQueryRepository } from "@/lib/db/runtime-public-query-r
 import {
   activeFilterCount,
   formatCurrency,
+  getCleanDirectoryRedirectHref,
   h1bStatusLabels,
   parseDirectorySearchParams,
   statusLabel,
@@ -68,7 +70,7 @@ const h1bColumns: DataTableColumn<PublicDisclosureRecordRow>[] = [
     header: "年份 / 状态",
     render: (row) => (
       <div>
-        <p className="font-medium">FY{row.fiscalYear}</p>
+        <p className="font-medium">{row.fiscalYear} 财年</p>
         <p className="mt-1 text-xs text-[var(--muted)]">
           {statusLabel(row.caseStatus, h1bStatusLabels)}
         </p>
@@ -89,7 +91,7 @@ const h1bColumns: DataTableColumn<PublicDisclosureRecordRow>[] = [
   },
   {
     key: "location",
-    header: "Worksite",
+    header: "工作地点",
     render: (row) => `${row.city}, ${row.state}`,
   },
   {
@@ -100,15 +102,27 @@ const h1bColumns: DataTableColumn<PublicDisclosureRecordRow>[] = [
   },
   {
     key: "decision",
-    header: "Decision date",
+    header: "决定日期",
     render: (row) => row.decisionDate,
   },
 ];
 
 export default async function H1BPage({ searchParams }: H1BPageProps) {
+  const rawSearchParams = await searchParams;
+  const parsed = parseDirectorySearchParams(rawSearchParams);
+  const cleanHref = getCleanDirectoryRedirectHref(
+    "/h1b",
+    rawSearchParams,
+    parsed.values,
+    "h1b",
+  );
+
+  if (cleanHref) {
+    redirect(cleanHref);
+  }
+
   await waitForRuntimeDataRequestBoundary();
 
-  const parsed = parseDirectorySearchParams(await searchParams);
   const filterCount = activeFilterCount(parsed.values);
   const result =
     getRuntimeDataMode() === "postgres"
@@ -139,22 +153,21 @@ export default async function H1BPage({ searchParams }: H1BPageProps) {
           <article className="rounded-lg border border-[var(--line)] bg-white p-5 shadow-sm">
             <h2 className="text-base font-semibold">LCA 不是批准结果</h2>
             <p className="mt-3 text-sm leading-6 text-[var(--muted)]">
-              Certified LCA 只说明劳工条件申请记录，不等于 H-1B petition
-              approved，也不代表雇主实际录用。
+              已认证的 LCA 只说明劳工条件申请记录，不等于 H-1B
+              申请获批，也不代表雇主实际录用。
             </p>
           </article>
           <article className="rounded-lg border border-[var(--line)] bg-white p-5 shadow-sm">
             <h2 className="text-base font-semibold">重点看相似岗位</h2>
             <p className="mt-3 text-sm leading-6 text-[var(--muted)]">
-              同一个雇主的不同职位和 worksite 差别很大。请结合 SOC、地点、工资和
-              fiscal year。
+              同一个雇主的不同职位和工作地点差别很大。请结合
+              SOC、地点、工资和年份。
             </p>
           </article>
           <article className="rounded-lg border border-[var(--line)] bg-white p-5 shadow-sm">
             <h2 className="text-base font-semibold">用于准备问题</h2>
             <p className="mt-3 text-sm leading-6 text-[var(--muted)]">
-              页面最适合帮你准备要问 recruiter、HR 或 immigration team
-              的具体问题。
+              页面最适合帮你准备要问招聘方、HR 或公司移民团队的具体问题。
             </p>
           </article>
         </section>
@@ -180,11 +193,11 @@ export default async function H1BPage({ searchParams }: H1BPageProps) {
               <MetricCard
                 description={
                   filterCount > 0
-                    ? "筛选结果页不收录，避免参数组合造成低价值页面。"
-                    : "H-1B 入口页已开放索引；公司页按数据质量阈值判断。"
+                    ? "筛选后的结果页不单独收录，避免生成大量重复页面。"
+                    : "H-1B 入口可被收录；公司页按资料完整度判断。"
                 }
-                label="页面收录"
-                value={filterCount > 0 ? "筛选页 noindex" : "入口页 index"}
+                label="公开展示"
+                value={filterCount > 0 ? "结果页不单独收录" : "入口可收录"}
               />
               <MetricCard
                 description="来自官方公开数据导入；展示当前数据库覆盖的最新日期。"
@@ -196,6 +209,16 @@ export default async function H1BPage({ searchParams }: H1BPageProps) {
             <DataTable
               caption="H-1B LCA 搜索结果"
               columns={h1bColumns}
+              emptyAction={
+                <Link
+                  className="font-semibold text-[var(--accent-strong)] underline-offset-4 hover:underline"
+                  href={filterCount > 0 ? "/h1b" : "/sources"}
+                >
+                  {filterCount > 0
+                    ? "清除筛选，查看全部 H-1B 记录"
+                    : "查看数据来源与覆盖"}
+                </Link>
+              }
               emptyDescription="当前筛选条件没有匹配的 H-1B LCA 公开记录样本。可以减少筛选条件或回到全部记录。"
               emptyTitle="没有找到 H-1B 记录"
               getRowKey={(row) => row.id}
@@ -210,16 +233,30 @@ export default async function H1BPage({ searchParams }: H1BPageProps) {
 
             <InterpretationPanel title="如何解读 H-1B 搜索结果">
               <p>
-                LCA 是劳工条件申请记录，Certified LCA
-                只表示该劳工条件申请在公开数据中显示为 certified，不等于 H-1B
-                petition 批准、雇主实际录用或未来 sponsor
-                承诺。工资字段使用公开记录中的年化展示，仍需结合
-                SOC、worksite、职位职责和当年 prevailing wage 理解。
+                LCA 是劳工条件申请记录，已认证的 LCA 不等于 H-1B
+                申请批准、雇主实际录用或未来担保承诺。工资字段使用公开记录中的年化展示，仍需结合
+                SOC、工作地点、职位职责和当年通行工资（prevailing wage）理解。
               </p>
             </InterpretationPanel>
           </>
         ) : (
           <ErrorState
+            action={
+              <div className="flex flex-wrap gap-3">
+                <Link
+                  className="rounded-md bg-white px-4 py-2 text-sm font-semibold text-red-900 ring-1 ring-red-200 hover:bg-red-100"
+                  href="/h1b"
+                >
+                  回到 H-1B 数据入口
+                </Link>
+                <Link
+                  className="rounded-md bg-white px-4 py-2 text-sm font-semibold text-red-900 ring-1 ring-red-200 hover:bg-red-100"
+                  href="/sources"
+                >
+                  查看数据来源
+                </Link>
+              </div>
+            }
             description={result.error.hintZh ?? result.error.messageZh}
             title={result.error.messageZh}
           />
@@ -228,7 +265,7 @@ export default async function H1BPage({ searchParams }: H1BPageProps) {
         <SourceNote
           latestDataLabel={
             result.ok
-              ? `当前官方公开数据最新日期：${result.data.latestDataDate ?? "暂无来源日期"}。筛选结果页默认 noindex，入口页和合格公司页可被收录。`
+              ? `当前官方公开数据最新日期：${result.data.latestDataDate ?? "暂无来源日期"}。筛选后的结果页不单独收录，入口和资料较完整的公司页可被收录。`
               : undefined
           }
           names={[

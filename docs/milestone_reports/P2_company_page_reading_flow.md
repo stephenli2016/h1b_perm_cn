@@ -6,24 +6,25 @@ Completed locally. P2 changes are not committed yet.
 
 ## Built
 
-- Added a “建议这样读这个公司页” section to company pages so users understand the intended reading order:
-  - confirm employer entity and alias mapping
-  - compare similar roles, SOC, worksite, and fiscal years
-  - turn public data into questions for HR, recruiter, immigration team, or counsel
-- Added mode-specific “下一步可以查看” links:
-  - H-1B company pages link to wage level and H-1B data salary negotiation tools.
-  - PERM company pages link to PERM restart timeline and EB priority date tools.
-  - Both modes link back to company directory and correction request flow.
-- Replaced public-facing internal SEO wording:
-  - `页面索引状态` became `页面质量状态`.
-  - Removed the visible `M15` reference from company page copy.
-  - Source notes now explain whether the page reached public inclusion quality thresholds without exposing milestone language.
-- Added regression coverage for the company page reading guide, next-step links, page-quality wording, and absence of `M15`.
+- Strengthened company pages around user decision flow:
+  - kept “先看结论” as the first page-level reading anchor
+  - added “可以直接问雇主的问题” so users can turn public data into concrete HR/recruiter/immigration-team questions
+  - generated H-1B, PERM, employer-entity, and wage/SOC questions from the company profile payload
+- Replaced remaining user-facing SEO/index phrasing in company page hero copy with practical reading guidance:
+  - H-1B pages now explain that records help prepare employer/lawyer questions
+  - PERM pages now explain the same while preserving the PERM/I-140/I-485 boundary
+- Made low-data company pages easier to interpret:
+  - “资料完整度” now describes which data dimensions are sparse instead of exposing internal quality-gate wording
+  - missing H-1B wage samples now explain that missing samples are not a compliance conclusion and link to the wage-level tool
+- Added regression coverage for the new company-page question checklist across H-1B and PERM examples.
 
 ## Files changed
 
+- `app/h1b/company/[slug]/page.tsx`
+- `app/perm/company/[slug]/page.tsx`
 - `components/company/company-profile.tsx`
 - `tests/ui-components.test.tsx`
+- `docs/milestone_reports/P2_company_page_reading_flow.md`
 
 ## Validation
 
@@ -34,42 +35,44 @@ Completed locally. P2 changes are not committed yet.
 - Command: `pnpm typecheck`
 - Result: pass
 - Command: `pnpm test`
-- Result: pass, 21 files / 132 tests
+- Result: pass, 21 files / 136 tests
 - Command: `pnpm seo:audit`
-- Result: pass, 4 files / 29 tests
+- Result: pass, 4 files / 30 tests
 - Command: `pnpm build`
-- Result: pass, 80 static pages generated
+- Result: pass, 79 static pages generated
 
 ## Screenshots / local URLs
 
-- Browser-verified local production server at `http://127.0.0.1:3000`.
-- Verified `/perm/company/22nd-century-technologies`:
-  - canonical `https://h1b-perm-cn.vercel.app/perm/company/22nd-century-technologies`
-  - `index, follow`
-  - contains `建议这样读这个公司页`, `下一步可以查看`, `跳槽后 PERM 重办时间线估算器`, and `页面质量状态`
-  - does not contain `M15` or `页面索引状态`
-- Verified `/h1b/company/22nd-century-technologies`:
-  - canonical `https://h1b-perm-cn.vercel.app/h1b/company/22nd-century-technologies`
-  - `index, follow`
-  - contains `建议这样读这个公司页`, `下一步可以查看`, `H-1B 工资 Level 中文判断工具`, and `页面质量状态`
-  - does not contain `M15` or `页面索引状态`
+- Browser-verified local fixture server at `http://localhost:3001`.
+- Verified `/h1b/company/acme-analytics`:
+  - contains `先看结论`
+  - contains `可以直接问雇主的问题`
+  - contains `我的 offer 上的雇主法定实体`
+  - contains `这个岗位的职位、SOC、工作地点和近年 H-1B/LCA 记录`
+  - contains `H-1B 工资等级中文判断工具`
+- Verified `/perm/company/brightline-health`:
+  - contains `先看结论`
+  - contains `可以直接问雇主的问题`
+  - contains `这个岗位是否会启动 H-1B/LCA`
+  - contains `这个岗位的 PERM 职位、地点、启动时间`
+  - contains `跳槽后 PERM 重办时间线估算器`
 
 ## Decisions made without owner input
 
-- Treated P2 as a company-page reading-flow and data-interpretation polish pass.
-- Kept the page server-rendered and reused existing `RelatedLinks` / `MetricCard` UI rather than adding new client-side interactions.
-- Used mode-specific next-step links so H-1B and PERM pages lead users to different practical follow-up tools.
+- Treated P2 as the company-page reading-flow pass after the P1 terminology/user-copy cleanup.
+- Kept everything server-rendered and reusable from the existing company profile payload.
+- Used question cards instead of adding interactive filters, because the immediate user problem is interpretation and next action, not table manipulation.
 
 ## Known limitations
 
 - P2 is complete locally but not committed, pushed, or deployed.
-- Company pages still rely on existing table layout; deeper table filtering/sorting would be a separate enhancement.
+- Browser verification used local fixture slugs so the checks are deterministic. Production company slugs depend on the current Supabase data.
+- Company tables still use the existing table layout; deeper filtering/sorting remains a later enhancement.
 
 ## Owner action needed
 
 - Confirm whether P2 is accepted.
-- Confirm whether to commit P2 before entering P3.
 
 ## Recommended next milestone
 
-P3 — Continue the final priority bucket after owner confirmation.
+P3 — Continue the next priority bucket after owner confirmation.

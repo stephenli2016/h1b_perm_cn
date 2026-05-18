@@ -24,7 +24,7 @@ const toolJourneys = [
   {
     title: "谈 offer 和工资",
     description:
-      "把公开工资、SOC、worksite 和 prevailing wage 变成可沟通的问题清单。",
+      "把公开工资、SOC、工作地点和通行工资（prevailing wage）变成可沟通的问题清单。",
     paths: [
       "/tools/h1b-wage-level-checker",
       "/tools/wage-negotiation-with-h1b-data",
@@ -44,7 +44,7 @@ const toolJourneys = [
   {
     title: "看 PERM 和排期",
     description:
-      "理解跳槽后 PERM 节点、priority date、Visa Bulletin 和 filing chart。",
+      "理解跳槽后 PERM 节点、优先日、Visa Bulletin 和 USCIS 当月 I-485 用表。",
     paths: [
       "/tools/perm-restart-timeline-estimator",
       "/tools/eb2-eb3-china-priority-date-calculator",
@@ -79,7 +79,7 @@ export default function ToolsPage() {
             value={`${tools.length} 个`}
           />
           <MetricCard
-            description="工具只做公开数据和通用规则解释，不要求提交证件号、receipt number 或完整个人案情。"
+            description="工具只做公开数据和通用规则解释，不要求提交证件号、收据号（receipt number）或完整个人案情。"
             label="隐私边界"
             value="不收敏感身份信息"
           />
@@ -136,7 +136,7 @@ export default function ToolsPage() {
             <h2 className="text-xl font-semibold">全部工具</h2>
             <p className="mt-2 text-sm leading-6 text-[var(--muted)]">
               所有工具页面都保留来源说明、相关数据入口和免责声明。带查询参数的结果页会保持
-              noindex，避免把个人化组合提交给搜索引擎。
+              不单独收录，避免把个人化组合提交给搜索引擎。
             </p>
           </div>
           <div className="grid gap-4 md:grid-cols-2">

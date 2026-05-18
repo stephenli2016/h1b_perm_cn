@@ -67,7 +67,7 @@ export function ContentArticle({ page }: ContentArticleProps) {
           <p className="mt-3 text-sm leading-7 text-[var(--muted)]">
             把这页当作面试、offer
             沟通或公司背景调查前的准备材料：先弄清楚官方数据能说明什么，再整理要问
-            HR、recruiter、immigration team
+            HR、招聘方、公司移民事务负责人
             或律师的问题。页面不会要求你输入敏感身份信息，也不会给出个案法律结论。
           </p>
         </section>

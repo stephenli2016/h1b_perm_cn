@@ -1,4 +1,10 @@
 import type { PublicDirectorySearchInput } from "@/lib/db/public-query-repository";
+import {
+  type DisclosureStatusDataset,
+  normalizeCaseStatusForAllowed,
+  normalizeCaseStatusForDataset,
+  normalizeStateCode,
+} from "@/lib/directory-filter-normalization";
 
 export type RawSearchParams = Record<string, string | string[] | undefined>;
 
@@ -13,24 +19,36 @@ export type DirectorySearchValues = {
 };
 
 export const h1bStatusLabels: Record<string, string> = {
-  CERTIFIED: "Certified LCA",
-  WITHDRAWN: "Withdrawn LCA",
-  DENIED: "Denied LCA",
+  CERTIFIED: "已认证",
+  CERTIFIED_WITHDRAWN: "已撤回",
+  CERTIFIEDWITHDRAWN: "已撤回",
+  "CERTIFIED-WITHDRAWN": "已撤回",
+  "CERTIFIED_-_WITHDRAWN": "已撤回",
+  WITHDRAWN: "已撤回",
+  DENIED: "未通过",
 };
 
 export const permStatusLabels: Record<string, string> = {
-  Certified: "Certified PERM",
-  Denied: "Denied PERM",
-  Withdrawn: "Withdrawn PERM",
+  Certified: "已认证",
+  "Certified - Expired": "已认证",
+  "Certified-Expired": "已认证",
+  Denied: "未通过",
+  Withdrawn: "已撤回",
 };
 
 export const combinedStatusLabels: Record<string, string> = {
-  CERTIFIED: "Certified",
-  Certified: "Certified",
-  DENIED: "Denied",
-  Denied: "Denied",
-  WITHDRAWN: "Withdrawn",
-  Withdrawn: "Withdrawn",
+  CERTIFIED: "已认证",
+  Certified: "已认证",
+  "Certified - Expired": "已认证",
+  "Certified-Expired": "已认证",
+  DENIED: "未通过",
+  Denied: "未通过",
+  CERTIFIED_WITHDRAWN: "已撤回",
+  CERTIFIEDWITHDRAWN: "已撤回",
+  "CERTIFIED-WITHDRAWN": "已撤回",
+  "CERTIFIED_-_WITHDRAWN": "已撤回",
+  WITHDRAWN: "已撤回",
+  Withdrawn: "已撤回",
 };
 
 export function parseDirectorySearchParams(
@@ -77,7 +95,9 @@ export function statusLabel(
   status: string,
   labels: Record<string, string> = combinedStatusLabels,
 ) {
-  return labels[status] ?? status;
+  const normalized = normalizeCaseStatusForAllowed(status, Object.keys(labels));
+
+  return labels[normalized ?? status] ?? labels[status] ?? status;
 }
 
 export function activeFilterCount(values: DirectorySearchValues) {
@@ -100,4 +120,76 @@ function firstValue(value: string | string[] | undefined) {
 
 function parseOptionalNumber(value: string | undefined) {
   return value === undefined ? undefined : Number(value);
+}
+
+const directorySearchKeys = [
+  "employer",
+  "fiscalYear",
+  "caseStatus",
+  "state",
+  "city",
+  "jobOrSoc",
+  "page",
+] as const;
+
+export function getCleanDirectoryRedirectHref(
+  basePath: string,
+  rawParams: RawSearchParams | undefined,
+  values: DirectorySearchValues,
+  statusDataset: DisclosureStatusDataset = "combined",
+) {
+  const rawQuery = new URLSearchParams();
+  let hasKnownParam = false;
+
+  for (const key of directorySearchKeys) {
+    const rawValue = Array.isArray(rawParams?.[key])
+      ? rawParams?.[key]?.[0]
+      : rawParams?.[key];
+
+    if (rawValue !== undefined) {
+      hasKnownParam = true;
+      rawQuery.set(key, rawValue);
+    }
+  }
+
+  if (!hasKnownParam) {
+    return undefined;
+  }
+
+  const cleanQuery = buildDirectoryQuery(values, statusDataset);
+
+  if (rawQuery.toString() === cleanQuery) {
+    return undefined;
+  }
+
+  return cleanQuery ? `${basePath}?${cleanQuery}` : basePath;
+}
+
+function buildDirectoryQuery(
+  values: DirectorySearchValues,
+  statusDataset: DisclosureStatusDataset,
+) {
+  const params = new URLSearchParams();
+
+  for (const key of directorySearchKeys) {
+    const rawValue = values[key];
+    const value =
+      key === "state"
+        ? normalizeStateCode(rawValue)
+        : key === "caseStatus"
+          ? normalizeCaseStatusForDataset(rawValue, statusDataset)
+          : rawValue;
+
+    if (!value) {
+      continue;
+    }
+
+    if (key === "page" && Number(value) <= 1) {
+      continue;
+    }
+
+    params.set(key, value.trim());
+  }
+
+  return params.toString();
 }

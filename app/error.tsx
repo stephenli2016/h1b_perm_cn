@@ -18,7 +18,7 @@ export default function ErrorPage({ error, reset }: ErrorPageProps) {
         </p>
         {error.digest ? (
           <p className="mt-4 text-xs text-[var(--muted)]">
-            Error digest: {error.digest}
+            错误参考码：{error.digest}
           </p>
         ) : null}
         <div className="mt-6 flex flex-wrap gap-3">
@@ -34,6 +34,18 @@ export default function ErrorPage({ error, reset }: ErrorPageProps) {
             href="/"
           >
             回到首页
+          </Link>
+          <Link
+            className="rounded-md border border-[var(--line)] bg-white px-5 py-3 text-sm font-semibold"
+            href="/sources"
+          >
+            查看数据来源
+          </Link>
+          <Link
+            className="rounded-md border border-[var(--line)] bg-white px-5 py-3 text-sm font-semibold"
+            href="/corrections"
+          >
+            提交纠错
           </Link>
         </div>
       </section>

@@ -63,7 +63,8 @@ export default function DisclaimerPage() {
         <section className="rounded-lg border border-[var(--line)] bg-white p-6 shadow-sm">
           <h2 className="text-lg font-semibold">数据页如何阅读</h2>
           <p className="mt-3 text-sm leading-7 text-[var(--muted)]">
-            LCA、PERM、USCIS Employer Data Hub、Prevailing Wage 和 Visa Bulletin
+            LCA、PERM、USCIS Employer Data Hub、通行工资（Prevailing Wage）和
+            Visa Bulletin
             记录应被理解为官方公开数据信号。它们可能有延迟、字段缺失、雇主名称差异和样本不足问题。每个数据页都应同时查看来源、覆盖期、样本量、低样本提示和纠错入口。
           </p>
         </section>
@@ -71,8 +72,11 @@ export default function DisclaimerPage() {
         <section className="rounded-lg border border-[var(--line)] bg-white p-6 shadow-sm">
           <h2 className="text-lg font-semibold">做决定前请另外确认</h2>
           <ul className="mt-4 grid gap-3 text-sm leading-6 text-[var(--muted)] md:grid-cols-2">
-            <li>雇主当前政策、具体岗位实体、worksite 和内部审批流程。</li>
-            <li>个人身份、priority date、类别、chargeability 和案件节点。</li>
+            <li>雇主当前政策、具体岗位实体、工作地点和内部审批流程。</li>
+            <li>
+              个人身份、优先日（priority date）、类别、出生地/Chargeability
+              和案件节点。
+            </li>
             <li>律师对岗位职责、工资、材料窗口和风险的具体判断。</li>
             <li>官方来源是否已有更新，或页面是否需要通过纠错流程复核。</li>
           </ul>

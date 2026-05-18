@@ -23,15 +23,15 @@ const stageOptions = [
 
 const employerOptions = [
   { value: "not-started", label: "还没和雇主谈 H-1B" },
-  { value: "hr-conversation", label: "已和 HR/recruiter 初步沟通" },
-  { value: "immigration-team", label: "公司 immigration team 已介入" },
+  { value: "hr-conversation", label: "已和 HR/招聘方初步沟通" },
+  { value: "immigration-team", label: "公司移民事务负责人已介入" },
 ] as const;
 
 const capOptions = [
-  { value: "before-registration", label: "还没到 registration season" },
-  { value: "registered", label: "已提交 H-1B registration" },
-  { value: "selected", label: "已被 selected，准备 petition" },
-  { value: "not-selected", label: "本轮未 selected" },
+  { value: "before-registration", label: "还没到注册季" },
+  { value: "registered", label: "已提交 H-1B 注册" },
+  { value: "selected", label: "已被抽中，准备申请" },
+  { value: "not-selected", label: "本轮未被抽中" },
 ] as const;
 
 export async function generateMetadata({
@@ -66,7 +66,7 @@ export default async function OptToH1BTimelinePage({
         { label: "OPT 到 H-1B 时间线" },
       ]}
       canonicalPath="/tools/opt-to-h1b-timeline"
-      description="用通用选项整理 OPT、STEM OPT、H-1B registration、petition 和 cap-gap 相关核对点。"
+      description="用通用选项整理 OPT、STEM OPT、H-1B 注册、申请和 cap-gap 相关核对点。"
       eyebrow="F-1 / H-1B 工具"
       structuredData={buildWebApplicationJsonLd({
         title: "OPT 到 H-1B 时间线规划器",
@@ -158,7 +158,7 @@ export default async function OptToH1BTimelinePage({
               meta: "STEM OPT",
             },
             {
-              title: "H-1B Transfer 风险清单",
+              title: "H-1B 换雇主风险清单",
               href: "/tools/h1b-transfer-risk-checklist",
               description: "已有 H-1B 后换雇主时使用。",
               meta: "后续路径",
@@ -211,9 +211,9 @@ function buildTimeline(
         "越早确认公司内部负责人、律师、预算和职位口径，越不容易错过 cap season。",
       items: [
         employer === "not-started"
-          ? "尽快问 recruiter 或 HR：公司是否支持 H-1B registration 和后续 petition。"
-          : "确认 HR、manager、immigration team 和外部律师之间的责任分工。",
-        "确认岗位 title、SOC、worksite、工资和预计 start date 是否已经清楚。",
+          ? "尽快问招聘方或 HR：公司是否支持 H-1B 注册和后续申请。"
+          : "确认 HR、直属经理、公司移民事务负责人和外部律师之间的责任分工。",
+        "确认岗位名称、SOC、工作地点、工资和预计开始日期是否已经清楚。",
         "用公司页查看相似职位和地点是否有 H-1B 公开历史，但不要把历史记录当作承诺。",
       ],
     },
@@ -223,10 +223,10 @@ function buildTimeline(
         "H-1B cap 结果有不确定性，OPT/STEM OPT 时间线要和备选方案一起看。",
       items: [
         cap === "selected"
-          ? "如果已 selected，确认 Form I-129、LCA、support letter 和 filing window。"
-          : "如果还未 selected，准备没有抽中时的 STEM OPT、继续学习、境外工作或其他合规选项讨论。",
+          ? "如果已被抽中，确认 Form I-129、LCA、支持信和提交窗口。"
+          : "如果还未被抽中，准备没有抽中时的 STEM OPT、继续学习、境外工作或其他合规选项讨论。",
         cap === "not-selected"
-          ? "本轮未 selected 时，重点核对 STEM OPT 剩余时间和下一轮 cap season。"
+          ? "本轮未被抽中时，重点核对 STEM OPT 剩余时间和下一轮抽签季。"
           : "不要等到 EAD 临近结束才第一次讨论备选路径。",
         "涉及 cap-gap、身份空档或跨境安排时，尽早找律师确认。",
       ],

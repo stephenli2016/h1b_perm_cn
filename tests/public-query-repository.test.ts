@@ -144,6 +144,11 @@ describe("public query repository", () => {
       "TX",
       "WA",
     ]);
+    expect(result.data.availableFilters.caseStatuses).toEqual([
+      "CERTIFIED",
+      "WITHDRAWN",
+      "DENIED",
+    ]);
     expect(result.data.seo.noindex).toBe(true);
   });
 
@@ -267,10 +272,15 @@ describe("public query repository", () => {
 
   it("rejects invalid directory filters with friendly errors", () => {
     const repo = createPublicQueryRepository({ cacheEnabled: false });
-    const invalidState = repo.searchH1BRecords({ state: "Washington" });
+    const washington = repo.searchH1BRecords({ state: "Washington" });
+    const invalidState = repo.searchH1BRecords({ state: "Atlantis" });
     const invalidStatus = repo.searchPermRecords({ caseStatus: "APPROVED" });
     const invalidPage = repo.searchCompanyDirectory({ page: 0 });
 
+    expect(washington.ok).toBe(true);
+    if (washington.ok) {
+      expect(washington.data.filters.state).toBe("WA");
+    }
     expect(invalidState).toMatchObject({
       ok: false,
       error: {

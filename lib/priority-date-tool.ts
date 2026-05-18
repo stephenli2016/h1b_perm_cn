@@ -83,8 +83,8 @@ export function priorityDateValuesWithDefaults(
 
 export function chartTypeLabelZh(chartType: VisaBulletinDate["chartType"]) {
   return chartType === "final_action"
-    ? "Final Action Dates"
-    : "Dates for Filing";
+    ? "最终裁定表（Final Action Dates）"
+    : "递件排期表（Dates for Filing）";
 }
 
 export function chargeabilityAreaLabelZh(
@@ -106,10 +106,10 @@ export function formatVisaCutoff(
     return "暂无";
   }
   if (date.cutoffStatus === "current") {
-    return "Current / 无排期";
+    return "无排期（Current）";
   }
   if (date.cutoffStatus === "unavailable") {
-    return "Unavailable / 暂不可用";
+    return "暂不可用（Unavailable）";
   }
 
   return date.cutoffDate ?? date.rawValue;
@@ -123,9 +123,9 @@ export function priorityDateResultLabel(
     string
   > = {
     current: "所选表格下排期已到",
-    current_all: "所选表格显示 Current",
+    current_all: "所选表格显示无排期（Current）",
     not_current: "所选表格下尚未到",
-    unavailable: "所选表格显示 Unavailable",
+    unavailable: "所选表格显示暂不可用（Unavailable）",
   };
 
   return labels[status];

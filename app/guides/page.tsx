@@ -16,7 +16,7 @@ export const metadata: Metadata = buildRouteSeoMetadata("/guides");
 
 const guideCategories: ContentCategory[] = [
   "H-1B 数据解释",
-  "Prevailing Wage 和薪资",
+  "通行工资（Prevailing Wage）和薪资",
   "PERM 和绿卡",
   "排期与中国 backlog",
   "求职与公司判断",
@@ -44,7 +44,7 @@ const guideJourneys = [
   },
   {
     title: "准备面试或 offer 沟通",
-    description: "把公司公开记录、工资背景和 recruiter 问题组织成可执行清单。",
+    description: "把公司公开记录、工资背景和招聘方问题组织成可执行清单。",
     paths: [
       "/guides/how-to-choose-h1b-sponsor-company",
       "/guides/questions-to-ask-recruiter-about-h1b-green-card",
@@ -53,8 +53,7 @@ const guideJourneys = [
   },
   {
     title: "开始看 PERM / 绿卡",
-    description:
-      "理解 PERM certified、PWD、I-140 和换工作时需要重新规划的节点。",
+    description: "理解 PERM 已认证、PWD、I-140 和换工作时需要重新规划的节点。",
     paths: [
       "/guides/perm-explained-chinese",
       "/guides/perm-certified-meaning",
@@ -64,7 +63,7 @@ const guideJourneys = [
   {
     title: "看中国 EB 排期",
     description:
-      "区分 Final Action Dates、Dates for Filing、EB-2/EB-3 中国和 USCIS filing chart。",
+      "区分最终裁定表、递件排期表、EB-2/EB-3 中国和 USCIS 当月 I-485 用表。",
     paths: [
       "/guides/visa-bulletin-explained-chinese",
       "/guides/final-action-date-vs-dates-for-filing",
@@ -89,7 +88,7 @@ export default function GuidesPage() {
       structuredData={buildWebPageJsonLd({
         title: "职业移民中文指南",
         description:
-          "38 篇解释 LCA、PERM、Prevailing Wage、Visa Bulletin 和求职决策的中文指南目录。",
+          "38 篇解释 LCA、PERM、通行工资（Prevailing Wage）、Visa Bulletin 和求职决策的中文指南目录。",
         path: "/guides",
         pageType: "CollectionPage",
       })}
@@ -217,7 +216,7 @@ function categoryId(category: ContentCategory) {
   const ids: Record<ContentCategory, string> = {
     "H-1B 数据解释": "h1b-data",
     "PERM 和绿卡": "perm-green-card",
-    "Prevailing Wage 和薪资": "wage",
+    "通行工资（Prevailing Wage）和薪资": "wage",
     "排期与中国 backlog": "visa-bulletin",
     求职与公司判断: "job-search",
     核心工具: "tools",

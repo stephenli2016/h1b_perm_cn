@@ -37,11 +37,9 @@ export async function generateMetadata({
   const hasQuery = hasSubmittedSearchParams(await searchParams);
 
   return buildSeoMetadata({
-    title: hasQuery
-      ? "H-1B 工资 Level 查询结果"
-      : "H-1B 工资 Level 中文判断工具",
+    title: hasQuery ? "H-1B 工资等级查询结果" : "H-1B 工资等级中文判断工具",
     description:
-      "输入 SOC 或职位、worksite、offered wage 和 wage year，对照 DOL/FLAG prevailing wage level 公开数据，并查看相关 H-1B 工资样本。",
+      "输入 SOC 或职位、工作地点、offer 工资和工资年份，对照 DOL/FLAG 通行工资等级（prevailing wage level）公开数据，并查看相关 H-1B 工资样本。",
     path: "/tools/h1b-wage-level-checker",
     index: !hasQuery,
     pageType: "tool",
@@ -51,8 +49,8 @@ export async function generateMetadata({
 const wageLevelColumns: DataTableColumn<PublicWageLevelRow>[] = [
   {
     key: "level",
-    header: "Level",
-    render: (row) => `Level ${row.level}`,
+    header: "工资等级",
+    render: (row) => `等级 ${row.level}`,
   },
   {
     key: "amount",
@@ -111,19 +109,19 @@ export default async function H1BWageLevelCheckerPage({
       breadcrumbs={[
         { href: "/", label: "首页" },
         { href: "/tools", label: "工具" },
-        { label: "H-1B 工资 Level" },
+        { label: "H-1B 工资等级" },
       ]}
       canonicalPath="/tools/h1b-wage-level-checker"
-      description="输入 SOC 或英文职位关键词、worksite、工资和年份，把 offer wage 与 DOL/FLAG prevailing wage level 公开数值做近似对照。输出只解释公开数据位置，不判断个案是否合规。"
+      description="输入 SOC 或英文职位关键词、工作地点、工资和年份，把 offer 工资与 DOL/FLAG 通行工资等级（prevailing wage level）公开数值做近似对照。输出只解释公开数据位置，不判断个案是否合规。"
       eyebrow="H-1B 工具"
       structuredData={buildWebApplicationJsonLd({
-        title: "H-1B 工资 Level 中文判断工具",
+        title: "H-1B 工资等级中文判断工具",
         description:
-          "输入 SOC 或职位、worksite、offered wage 和 wage year，对照 DOL/FLAG prevailing wage level 公开数据，并查看相关 H-1B 工资样本。",
+          "输入 SOC 或职位、工作地点、offer 工资和工资年份，对照 DOL/FLAG 通行工资等级（prevailing wage level）公开数据，并查看相关 H-1B 工资样本。",
         path: "/tools/h1b-wage-level-checker",
         dateModified: "2026-05-16",
       })}
-      title="H-1B 工资 Level 中文判断工具"
+      title="H-1B 工资等级中文判断工具"
     >
       <div className="space-y-6">
         <WageLevelForm values={formValues} />
@@ -136,6 +134,22 @@ export default async function H1BWageLevelCheckerPage({
           />
         ) : (
           <ErrorState
+            action={
+              <div className="flex flex-wrap gap-3">
+                <Link
+                  className="rounded-md bg-white px-4 py-2 text-sm font-semibold text-red-900 ring-1 ring-red-200 hover:bg-red-100"
+                  href="/tools/h1b-wage-level-checker"
+                >
+                  重新开始
+                </Link>
+                <Link
+                  className="rounded-md bg-white px-4 py-2 text-sm font-semibold text-red-900 ring-1 ring-red-200 hover:bg-red-100"
+                  href="/sources"
+                >
+                  查看数据来源
+                </Link>
+              </div>
+            }
             description={result.error.hintZh ?? result.error.messageZh}
             title={result.error.messageZh}
           />
@@ -143,16 +157,16 @@ export default async function H1BWageLevelCheckerPage({
 
         <section className="grid gap-4 lg:grid-cols-[1fr_1fr]">
           <article className="rounded-lg border border-[var(--line)] bg-white p-5 shadow-sm">
-            <h2 className="text-lg font-semibold">如何使用这个结果</h2>
+            <h2 className="text-lg font-semibold">结果怎么读</h2>
             <ol className="mt-4 list-decimal space-y-3 pl-5 text-sm leading-6 text-[var(--muted)]">
               <li>
                 先确认 SOC code 是否接近岗位职责；职位名称相同不代表 SOC
                 一定相同。
               </li>
-              <li>用实际 worksite 所在城市/州和对应 wage year 对照。</li>
+              <li>用实际工作地点所在城市/州和对应工资年份对照。</li>
               <li>如果只匹配到州级或 metro area，按较弱信号处理。</li>
               <li>
-                把结果作为和雇主、律师沟通前的公开数据准备，不作为 filing 决策。
+                把结果作为和雇主、律师沟通前的公开数据准备，不作为申请决策。
               </li>
             </ol>
           </article>
@@ -160,14 +174,15 @@ export default async function H1BWageLevelCheckerPage({
           <article className="rounded-lg border border-[var(--line)] bg-white p-5 shadow-sm">
             <h2 className="text-lg font-semibold">常见误区</h2>
             <ul className="mt-4 space-y-3 text-sm leading-6 text-[var(--muted)]">
-              <li>工资高于某个 level，不等于 H-1B 一定合规或一定批准。</li>
+              <li>工资高于某个工资等级，不等于 H-1B 一定合规或一定批准。</li>
               <li>
-                LCA 上的 wage level 与职位职责、经验要求、地点和正式 prevailing
-                wage 判断有关。
+                LCA 上的工资等级（wage
+                level）与职位职责、经验要求、地点和正式通行工资（prevailing
+                wage）判断有关。
               </li>
               <li>
-                公开 H-1B 工资样本是历史记录，不代表当前岗位 offer 或未来
-                sponsor 承诺。
+                公开 H-1B 工资样本是历史记录，不代表当前岗位 offer
+                或未来担保承诺。
               </li>
             </ul>
           </article>
@@ -177,7 +192,7 @@ export default async function H1BWageLevelCheckerPage({
           latestDataLabel={
             result.ok
               ? `当前相关来源最新日期：${result.data.latestDataDate ?? "暂无来源日期"}。本页使用官方来源或本地官方来源数据快照，不使用竞争网站数据。`
-              : "本页使用 DOL/FLAG prevailing wage 与 DOL OFLC LCA 官方来源；当前查询未能匹配到可展示记录。"
+              : "本页使用 DOL/FLAG 通行工资（prevailing wage）与 DOL OFLC LCA 官方来源；当前查询未能匹配到可展示记录。"
           }
           names={
             result.ok && result.data.sourceNames.length > 0
@@ -228,7 +243,7 @@ export default async function H1BWageLevelCheckerPage({
             {
               title: "职业移民中文指南",
               href: "/guides",
-              description: "后续会发布 wage level、LCA、PERM 和排期解释页。",
+              description: "阅读工资等级、LCA、PERM 和排期解释页。",
               meta: "学习",
             },
             {
@@ -296,7 +311,7 @@ function WageLevelForm({
           />
         </label>
         <label className="grid gap-2 text-sm font-medium">
-          <span>Offered wage</span>
+          <span>Offer 工资</span>
           <input
             className="rounded-md border border-[var(--line)] px-3 py-2"
             defaultValue={values.offeredWage}
@@ -312,12 +327,12 @@ function WageLevelForm({
             defaultValue={values.wageUnit}
             name="wageUnit"
           >
-            <option value="Year">Year / 年薪</option>
-            <option value="Hour">Hour / 时薪</option>
+            <option value="Year">年薪（Year）</option>
+            <option value="Hour">时薪（Hour）</option>
           </select>
         </label>
         <label className="grid gap-2 text-sm font-medium">
-          <span>Wage year</span>
+          <span>工资年份</span>
           <input
             className="rounded-md border border-[var(--line)] px-3 py-2"
             defaultValue={values.wageYear}
@@ -332,7 +347,7 @@ function WageLevelForm({
           className="rounded-md bg-[var(--accent)] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[var(--accent-strong)]"
           type="submit"
         >
-          对照 wage level
+          对照工资等级
         </button>
         <Link
           className="text-sm font-semibold text-[var(--accent-strong)] underline-offset-4 hover:underline"
@@ -388,8 +403,25 @@ function WageLevelResult({
             <MetricCard
               description={`${matchScopeLabel(payload.matchScope)}；${wageRecord.areaName}`}
               label="匹配范围"
-              value={`Wage year ${wageRecord.effectiveYear}`}
+              value={`${wageRecord.effectiveYear} 工资年份`}
             />
+          </section>
+
+          <section className="rounded-lg border border-[var(--line)] bg-white p-5 shadow-sm">
+            <h3 className="text-lg font-semibold">结果怎么读</h3>
+            <ul className="mt-4 space-y-3 text-sm leading-6 text-[var(--muted)]">
+              <li>
+                先看“近似区间”：它只说明输入工资落在公开通行工资等级表的大致位置。
+              </li>
+              <li>
+                再核对
+                SOC、城市/州和工资年份；匹配越粗，越适合当作背景而不是结论。
+              </li>
+              <li>
+                相关 H-1B
+                公司样本只展示历史公开记录，不能替代雇主或律师对岗位职责和正式工资口径的判断。
+              </li>
+            </ul>
           </section>
 
           <section className="space-y-4">
@@ -413,7 +445,7 @@ function WageLevelResult({
                   </p>
                 ) : (
                   <p className="mt-2 text-[var(--muted)]">
-                    与 wage table 使用相同单位：
+                    与官方工资表使用相同单位：
                     {formatWageAmount(
                       comparison.offeredWageForComparison,
                       comparison.offeredWageUnitForComparison,
@@ -422,7 +454,7 @@ function WageLevelResult({
                 )}
               </div>
               <DataTable
-                caption="Prevailing wage level table"
+                caption="通行工资等级官方表"
                 columns={wageLevelColumns.map((column) =>
                   column.key === "amount"
                     ? {
@@ -438,8 +470,7 @@ function WageLevelResult({
             </div>
             {payload.lookupStatus === "fallback" ? (
               <p className="mt-4 rounded-md bg-amber-50 p-3 text-sm leading-6 text-[var(--warning)]">
-                未找到精确城市记录，当前结果使用州级
-                fallback。请把它当作较弱信号。
+                未找到精确城市记录，当前结果使用州级数据补充。请把它当作较弱信号。
               </p>
             ) : null}
           </section>
@@ -448,7 +479,7 @@ function WageLevelResult({
 
       <section className="grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
         <DataTable
-          caption="Related H-1B companies"
+          caption="相关 H-1B 公司"
           columns={relatedCompanyColumns}
           emptyDescription="当前数据中没有足够的同 SOC H-1B LCA 样本。"
           emptyTitle="暂无相关公司样本"

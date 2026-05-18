@@ -22,7 +22,7 @@ const focusAreas = [
   },
   {
     title: "查工资",
-    body: "把 SOC、worksite、公开 LCA 工资和 prevailing wage 放到一起看，准备 offer 和谈薪问题。",
+    body: "把 SOC、工作地点、公开 LCA 工资和通行工资（prevailing wage）放到一起看，准备 offer 和谈薪问题。",
     href: "/tools/h1b-wage-level-checker",
     cta: "打开工资工具",
   },
@@ -34,7 +34,7 @@ const focusAreas = [
   },
   {
     title: "查排期",
-    body: "对照 Visa Bulletin 和 USCIS filing chart，理解中国大陆出生 EB-1、EB-2、EB-3 的公开排期表。",
+    body: "对照 Visa Bulletin 和 USCIS 当月 I-485 用表，理解中国大陆出生 EB-1、EB-2、EB-3 的公开排期表。",
     href: "/visa-bulletin",
     cta: "查看排期",
   },
@@ -54,13 +54,14 @@ const trustSignals = [
   {
     label: "隐私边界",
     value: "不收集敏感案情",
-    description: "工具页尽量使用通用选项，不要求 receipt number 或证件信息。",
+    description:
+      "工具页尽量使用通用选项，不要求收据号（receipt number）或证件信息。",
   },
 ];
 
 const commonTasks = [
   {
-    title: "我要投一家公司，先看 sponsor 历史",
+    title: "我要投一家公司，先看担保历史",
     href: "/tools/h1b-company-sponsor-checker",
     description: "从公司名、职位、地点和近年记录开始，整理面试前的问题。",
     meta: "求职前",
@@ -74,13 +75,13 @@ const commonTasks = [
   {
     title: "我在谈 offer，想看工资背景",
     href: "/tools/wage-negotiation-with-h1b-data",
-    description: "把 H-1B 工资样本和 prevailing wage 背景变成沟通清单。",
+    description: "把 H-1B 工资样本和通行工资背景变成沟通清单。",
     meta: "薪资",
   },
   {
     title: "我在看 EB-2/EB-3 中国排期",
     href: "/tools/eb2-eb3-china-priority-date-calculator",
-    description: "对照月份、类别和 chart type，理解公开日期表含义。",
+    description: "对照月份、类别和排期表类型，理解公开日期表含义。",
     meta: "排期",
   },
 ];
@@ -118,8 +119,7 @@ export default function Home() {
             </Link>
           </div>
           <p className="mt-5 max-w-2xl text-sm leading-6 text-[var(--muted)]">
-            本站不判断个案是否会批准，不承诺任何公司一定
-            sponsor；它帮你把公开记录变成更好的问题清单。
+            本站不判断个案是否会批准，不承诺任何公司一定担保；它帮你把公开记录变成更好的问题清单。
           </p>
         </div>
 

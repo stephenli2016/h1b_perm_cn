@@ -41,6 +41,13 @@ import {
   getCompanyPageSeo,
   type CompanyPageMode,
 } from "@/lib/seo/company-quality";
+import {
+  normalizeCaseStatusForAllowed,
+  normalizeCaseStatusForDataset,
+  normalizeCaseStatusOptions,
+  normalizeStateCode,
+  normalizeStateOptions,
+} from "@/lib/directory-filter-normalization";
 
 const DEFAULT_CACHE_TTL_MS = 5 * 60 * 1000;
 const SLUG_PATTERN = /^[a-z0-9](?:[a-z0-9-]{0,78}[a-z0-9])?$/;
@@ -568,9 +575,9 @@ export function createPublicQueryRepository(
     if (!SLUG_PATTERN.test(normalizedSlug)) {
       return failure(
         "invalid_input",
-        "公司 slug 格式无效。",
+        "公司网址格式无效。",
         "slug",
-        "slug 只能包含小写英文字母、数字和连字符，且不能包含路径符号。",
+        "公司网址标识只能包含小写英文字母、数字和连字符，且不能包含路径符号。",
       );
     }
 
@@ -636,11 +643,11 @@ export function createPublicQueryRepository(
           filters: normalized.data.filters,
           pagination: paginated.pagination,
           records: paginated.items,
-          availableFilters: getDirectoryFilterOptions(allRows),
+          availableFilters: getDirectoryFilterOptions(allRows, "h1b"),
           sourceNames: sourceInfo.sourceNames,
           latestDataDate: sourceInfo.latestDataDate,
           interpretationNoteZh:
-            "LCA 是 H-1B 流程中的劳工条件申请记录，不等于 H-1B petition 批准，也不代表雇主实际录用或未来承诺。",
+            "LCA 是 H-1B 流程中的劳工条件申请记录，不等于 H-1B 申请批准，也不代表雇主实际录用或未来承诺。",
           seo: noindexDirectorySeo(normalized.data.filters),
         });
       });
@@ -678,7 +685,7 @@ export function createPublicQueryRepository(
           filters: normalized.data.filters,
           pagination: paginated.pagination,
           records: paginated.items,
-          availableFilters: getDirectoryFilterOptions(allRows),
+          availableFilters: getDirectoryFilterOptions(allRows, "perm"),
           sourceNames: sourceInfo.sourceNames,
           latestDataDate: sourceInfo.latestDataDate,
           interpretationNoteZh:
@@ -691,10 +698,7 @@ export function createPublicQueryRepository(
     searchCompanyDirectory(
       input: PublicDirectorySearchInput = {},
     ): PublicQueryResult<PublicCompanyDirectoryPayload> {
-      const normalized = normalizeDirectoryInput(input, [
-        ...H1B_STATUSES,
-        ...PERM_STATUSES,
-      ]);
+      const normalized = normalizeDirectoryInput(input, H1B_STATUSES);
 
       if (!normalized.ok) {
         return normalized;
@@ -774,11 +778,11 @@ export function createPublicQueryRepository(
           filters: normalized.data.filters,
           pagination: paginated.pagination,
           results: paginated.items,
-          availableFilters: getDirectoryFilterOptions(allRows),
+          availableFilters: getDirectoryFilterOptions(allRows, "combined"),
           sourceNames: sourceInfo.sourceNames,
           latestDataDate: sourceInfo.latestDataDate,
           interpretationNoteZh:
-            "公司目录把 H-1B LCA 与 PERM 公开记录作为雇主信号合并展示，不代表个案批准、实际招聘或未来 sponsor 承诺。",
+            "公司目录把 H-1B LCA 与 PERM 公开记录作为雇主信号合并展示，不代表个案批准、实际招聘或未来担保承诺。",
           seo: noindexDirectorySeo(normalized.data.filters),
         });
       });
@@ -895,7 +899,7 @@ export function createPublicQueryRepository(
           sourceNames: sourceInfo.sourceNames,
           latestDataDate: sourceInfo.latestDataDate,
           interpretationNoteZh:
-            "公司页把 H-1B LCA、PERM 和 USCIS Employer Data Hub 公开记录作为历史活动信号展示，不代表个案批准、实际录用、未来 sponsor 承诺或法律意见。",
+            "公司页把 H-1B LCA、PERM 和 USCIS Employer Data Hub 公开记录作为历史活动信号展示，不代表个案批准、实际录用、未来担保承诺或法律意见。",
           seo: {
             indexable: indexability?.indexable ?? false,
             noindex: !(indexability?.indexable ?? false),
@@ -965,7 +969,7 @@ export function createPublicQueryRepository(
                 sourceNames: profile.data.sourceNames,
                 latestDataDate: profile.data.latestDataDate,
                 interpretationNoteZh:
-                  "LCA 和 USCIS Employer Data Hub 是公开数据信号，不代表个案批准、实际录用或未来 sponsor 承诺。",
+                  "LCA 和 USCIS Employer Data Hub 是公开数据信号，不代表个案批准、实际录用或未来担保承诺。",
               })
             : failure(
                 profile.error.code,
@@ -990,7 +994,7 @@ export function createPublicQueryRepository(
           sourceNames: summary.sourceNames,
           latestDataDate: summary.latestDataDate,
           interpretationNoteZh:
-            "LCA 和 USCIS Employer Data Hub 是公开数据信号，不代表个案批准、实际录用或未来 sponsor 承诺。",
+            "LCA 和 USCIS Employer Data Hub 是公开数据信号，不代表个案批准、实际录用或未来担保承诺。",
         });
       });
     },
@@ -1208,9 +1212,9 @@ export function createPublicQueryRepository(
         if (!lookup.record) {
           return failure(
             "not_found",
-            "未找到匹配该 SOC、州和年份的 prevailing wage 记录。",
+            "未找到匹配该 SOC、州和年份的通行工资（prevailing wage）记录。",
             "socOrJobTitle",
-            "可以先保留 SOC code，尝试去掉城市或换一个已覆盖的 wage year。",
+            "可以先保留 SOC code，尝试去掉城市或换一个已覆盖的工资年份。",
           );
         }
 
@@ -1237,7 +1241,7 @@ export function createPublicQueryRepository(
           sourceNames: sourceInfo.sourceNames,
           latestDataDate: sourceInfo.latestDataDate,
           interpretationNoteZh:
-            "此工具只把输入工资与 DOL/FLAG prevailing wage level 公开数值做近似对照；它不判断职位职责、case 分类、LCA/PWD 填写是否正确，也不构成法律、移民、税务或职业建议。",
+            "此工具只把输入工资与 DOL/FLAG 通行工资等级（prevailing wage level）公开数值做近似对照；它不判断职位职责、case 分类、LCA/PWD 填写是否正确，也不构成法律、移民、税务或职业建议。",
         });
       });
     },
@@ -1285,7 +1289,7 @@ export function createPublicQueryRepository(
       if (chargeabilityArea !== "china-mainland") {
         return failure(
           "invalid_input",
-          "当前查询层只支持中国大陆出生 chargeability area。",
+          "当前查询层只支持中国大陆出生地/Chargeability。",
           "chargeabilityArea",
         );
       }
@@ -1317,7 +1321,7 @@ export function createPublicQueryRepository(
             rows,
             sourceUrl: month.sourceUrl,
             interpretationNoteZh:
-              "Visa Bulletin 日期只是公开排期表信号；实际 I-485 filing chart 还需看 USCIS 当月选择和个人情况。",
+              "Visa Bulletin 日期只是公开排期表信号；实际 I-485 用表还需看 USCIS 当月选择和个人情况。",
           });
         },
       );
@@ -1550,7 +1554,7 @@ function buildAggregateCompanyProfilePayload(
     sourceNames: sourceInfo.sourceNames,
     latestDataDate: sourceInfo.latestDataDate,
     interpretationNoteZh:
-      "公司页把 H-1B LCA、PERM 和 USCIS Employer Data Hub 公开记录的聚合结果作为历史活动信号展示，不代表个案批准、实际录用、未来 sponsor 承诺或法律意见。",
+      "公司页把 H-1B LCA、PERM 和 USCIS Employer Data Hub 公开记录的聚合结果作为历史活动信号展示，不代表个案批准、实际录用、未来担保承诺或法律意见。",
     seo: {
       indexable: indexability?.indexable ?? false,
       noindex: !(indexability?.indexable ?? false),
@@ -1629,7 +1633,7 @@ function buildAggregateCompanyDirectoryPayload(
     sourceNames: sourceInfo.sourceNames,
     latestDataDate: sourceInfo.latestDataDate,
     interpretationNoteZh:
-      "公司目录把 H-1B LCA 与 PERM 公开记录的聚合结果作为雇主信号合并展示，不代表个案批准、实际招聘或未来 sponsor 承诺。",
+      "公司目录把 H-1B LCA 与 PERM 公开记录的聚合结果作为雇主信号合并展示，不代表个案批准、实际招聘或未来担保承诺。",
     seo: noindexDirectorySeo(normalized.filters),
   });
 }
@@ -1712,7 +1716,9 @@ function aggregateCompanyMatchesFilters(
       "location",
     ).some((row) => {
       const stateMatched =
-        !filters.state || row.state?.toUpperCase() === filters.state;
+        !filters.state ||
+        (normalizeStateCode(row.state ?? "") ?? row.state?.toUpperCase()) ===
+          filters.state;
       const cityMatched =
         !filters.city ||
         normalizeLocationText(row.city ?? "").includes(
@@ -1930,11 +1936,11 @@ function buildAggregateImmigrationSignal(input: {
         Math.min(uscisRows * 1.5, 3),
       evidenceZh: [
         `近 5 年 LCA 记录：${h1bTotal} 条`,
-        `Certified LCA：${h1bCertified} 条`,
+        `已认证 LCA：${h1bCertified} 条`,
         `USCIS Employer Data Hub 行：${uscisRows} 条`,
       ],
       explanationZh:
-        "LCA 与 USCIS Employer Data Hub 只能说明公开记录中有 H-1B 相关活动，不代表 petition 批准或未来 sponsor 承诺。",
+        "LCA 与 USCIS Employer Data Hub 只能说明公开记录中有 H-1B 相关活动，不代表申请批准或未来担保承诺。",
     }),
     aggregateSignalDimension({
       key: "perm_activity",
@@ -1943,10 +1949,10 @@ function buildAggregateImmigrationSignal(input: {
       score: Math.min(permTotal * 5, 15) + (permCertified > 0 ? 3 : 0),
       evidenceZh: [
         `近 5 年 PERM 记录：${permTotal} 条`,
-        `Certified PERM：${permCertified} 条`,
+        `已认证 PERM：${permCertified} 条`,
       ],
       explanationZh:
-        "PERM certification 是劳工认证公开记录，不等于 I-140、I-485 或绿卡最终获批。",
+        "PERM 劳工认证是公开记录，不等于 I-140、I-485 或绿卡最终获批。",
     }),
     aggregateSignalDimension({
       key: "repeat_filing_history",
@@ -1954,7 +1960,7 @@ function buildAggregateImmigrationSignal(input: {
       maxScore: 16,
       score: Math.min(fiscalYears.length * 4, 12) + (hasH1B && hasPerm ? 4 : 0),
       evidenceZh: [
-        `覆盖 fiscal years：${fiscalYears.length > 0 ? fiscalYears.map((year) => `FY${year}`).join("、") : "暂无"}`,
+        `覆盖财年：${fiscalYears.length > 0 ? fiscalYears.map((year) => `${year} 财年`).join("、") : "暂无"}`,
         `同时有 H-1B 与 PERM 公开活动：${hasH1B && hasPerm ? "是" : "否"}`,
       ],
       explanationZh:
@@ -1988,7 +1994,7 @@ function buildAggregateImmigrationSignal(input: {
         `地点聚合项：${input.locationBreakdown.length}`,
       ],
       explanationZh:
-        "职位和地点覆盖越多，可比较背景越丰富；这不是对岗位质量或 sponsor 意愿的判断。",
+        "职位和地点覆盖越多，可比较背景越丰富；这不是对岗位质量或担保意愿的判断。",
     }),
     aggregateSignalDimension({
       key: "wage_context",
@@ -2018,7 +2024,7 @@ function buildAggregateImmigrationSignal(input: {
     lowSample: {
       flagged: lowSampleFlagged,
       messageZh: lowSampleFlagged
-        ? `近 5 个 fiscal years 只有 ${filingRecordCount} 条 H-1B/PERM 公开记录、${totalPublicRecordCount} 条相关公开记录。样本太少，只能说明公开数据覆盖有限，不能推断雇主政策或个案结果。`
+        ? `近 5 个财年只有 ${filingRecordCount} 条 H-1B/PERM 公开记录、${totalPublicRecordCount} 条相关公开记录。样本太少，只能说明公开数据覆盖有限，不能推断雇主政策或个案结果。`
         : undefined,
     },
     dimensions,
@@ -2101,18 +2107,13 @@ function aggregateDirectoryFilterOptions(
       (data.companyYearlyImmigrationStats ?? []).map((row) => row.fiscalYear),
     ),
     states: uniqueStrings(
-      (data.companyBreakdownStats ?? [])
-        .filter((row) => row.kind === "location")
-        .map((row) => row.state ?? ""),
+      normalizeStateOptions(
+        (data.companyBreakdownStats ?? [])
+          .filter((row) => row.kind === "location")
+          .map((row) => row.state ?? ""),
+      ),
     ),
-    caseStatuses: [
-      "CERTIFIED",
-      "Certified",
-      "DENIED",
-      "Denied",
-      "WITHDRAWN",
-      "Withdrawn",
-    ],
+    caseStatuses: ["CERTIFIED", "WITHDRAWN", "DENIED"],
   };
 }
 
@@ -2267,7 +2268,7 @@ function normalizeFiscalYear(
   if (!Number.isInteger(value) || value < 2000 || value > 2100) {
     return failure(
       "invalid_input",
-      "Fiscal year 格式无效。",
+      "数据年份格式无效。",
       "fiscalYear",
       "请使用四位年份，例如 2025。",
     );
@@ -2279,14 +2280,12 @@ function normalizeFiscalYear(
 function normalizeOptionalState(
   value: string | undefined,
 ): PublicQueryResult<string | undefined> {
-  const state = value?.trim().toUpperCase();
+  const state = normalizeStateCode(value);
 
   if (!state) {
-    return success(undefined);
-  }
-
-  if (!/^[A-Z]{2}$/.test(state)) {
-    return failure("invalid_input", "州代码格式无效。", "state");
+    return value?.trim()
+      ? failure("invalid_input", "州代码格式无效。", "state")
+      : success(undefined);
   }
 
   return success(state);
@@ -2302,14 +2301,12 @@ function normalizeOptionalCaseStatus(
     return success(undefined);
   }
 
-  const matchedStatus = allowedStatuses.find(
-    (status) => status.toLowerCase() === trimmed.toLowerCase(),
-  );
+  const matchedStatus = normalizeCaseStatusForAllowed(trimmed, allowedStatuses);
 
   if (!matchedStatus) {
     return failure(
       "invalid_input",
-      "Case status 不在当前数据集支持范围内。",
+      "记录状态不在当前数据集支持范围内。",
       "caseStatus",
       `可选状态：${allowedStatuses.join(", ")}。`,
     );
@@ -2398,7 +2395,7 @@ function normalizeWageLevelCheckInput(
   if (!Number.isFinite(offeredWage) || offeredWage === undefined) {
     return failure(
       "invalid_input",
-      "请输入 offered wage 数字。",
+      "请输入 offer 工资数字。",
       "offeredWage",
       "请只输入数字，不需要输入 $ 或逗号。",
     );
@@ -2407,7 +2404,7 @@ function normalizeWageLevelCheckInput(
   if (offeredWage <= 0 || offeredWage > 10_000_000) {
     return failure(
       "invalid_input",
-      "offered wage 数值无效。",
+      "offer 工资数值无效。",
       "offeredWage",
       "请确认工资单位是年薪或时薪，并输入正数。",
     );
@@ -2416,7 +2413,7 @@ function normalizeWageLevelCheckInput(
   if (!Number.isInteger(wageYear) || wageYear === undefined) {
     return failure(
       "invalid_input",
-      "请输入 wage year。",
+      "请输入工资年份。",
       "wageYear",
       "请使用四位年份，例如 2025。",
     );
@@ -2425,7 +2422,7 @@ function normalizeWageLevelCheckInput(
   if (wageYear < 2000 || wageYear > 2100) {
     return failure(
       "invalid_input",
-      "wage year 格式无效。",
+      "工资年份格式无效。",
       "wageYear",
       "请使用四位年份，例如 2025。",
     );
@@ -2481,7 +2478,7 @@ function normalizeVisaBulletinPriorityDateInput(
   if (chargeabilityArea !== "china-mainland") {
     return failure(
       "invalid_input",
-      "当前工具只支持中国大陆出生 chargeability area。",
+      "当前工具只支持中国大陆出生地/Chargeability。",
       "chargeabilityArea",
     );
   }
@@ -2489,7 +2486,7 @@ function normalizeVisaBulletinPriorityDateInput(
   if (!priorityDate || !isValidIsoDate(priorityDate)) {
     return failure(
       "invalid_input",
-      "请输入有效的 priority date。",
+      "请输入有效的优先日（priority date）。",
       "priorityDate",
       "请使用 YYYY-MM-DD 格式，例如 2021-08-31。",
     );
@@ -2500,7 +2497,7 @@ function normalizeVisaBulletinPriorityDateInput(
       "invalid_input",
       "排期表类型无效。",
       "chartType",
-      "请选择 Final Action Dates 或 Dates for Filing。",
+      "请选择最终裁定表（Final Action Dates）或递件排期表（Dates for Filing）。",
     );
   }
 
@@ -2530,13 +2527,15 @@ function toH1BDirectoryRow(
     employer,
     companyHref: `/h1b/company/${employer.slug}`,
     caseNumber: record.caseNumber,
-    caseStatus: record.caseStatus,
+    caseStatus:
+      normalizeCaseStatusForDataset(record.caseStatus, "h1b") ??
+      record.caseStatus,
     fiscalYear: record.fiscalYear,
     jobTitle: record.jobTitle,
     socCode: record.socCode,
     socTitle: record.socTitle,
     city: record.worksiteCity,
-    state: record.worksiteState,
+    state: normalizeStateCode(record.worksiteState) ?? record.worksiteState,
     wageAmount: record.annualizedWageFrom,
     wageUnit: "Year",
     decisionDate: record.decisionDate,
@@ -2562,13 +2561,15 @@ function toPermDirectoryRow(
     employer,
     companyHref: `/perm/company/${employer.slug}`,
     caseNumber: record.caseNumber,
-    caseStatus: record.caseStatus,
+    caseStatus:
+      normalizeCaseStatusForDataset(record.caseStatus, "perm") ??
+      record.caseStatus,
     fiscalYear: record.fiscalYear,
     jobTitle: record.jobTitle,
     socCode: record.socCode,
     socTitle: record.socTitle,
     city: record.worksiteCity,
-    state: record.worksiteState,
+    state: normalizeStateCode(record.worksiteState) ?? record.worksiteState,
     wageAmount: record.wageOfferFrom,
     wageUnit: record.wageUnit,
     decisionDate: record.decisionDate,
@@ -2610,7 +2611,10 @@ function matchesDirectoryFilters(
     return false;
   }
 
-  if (filters.state && row.state.toUpperCase() !== filters.state) {
+  if (
+    filters.state &&
+    (normalizeStateCode(row.state) ?? row.state.toUpperCase()) !== filters.state
+  ) {
     return false;
   }
 
@@ -2674,11 +2678,15 @@ function paginate<T>(
 
 function getDirectoryFilterOptions(
   rows: readonly PublicDisclosureRecordRow[],
+  dataset: "h1b" | "perm" | "combined",
 ): PublicDirectoryFilterOptions {
   return {
     fiscalYears: uniqueSorted(rows.map((row) => row.fiscalYear)),
-    states: uniqueStrings(rows.map((row) => row.state.toUpperCase())),
-    caseStatuses: uniqueCaseStatuses(rows.map((row) => row.caseStatus)),
+    states: normalizeStateOptions(rows.map((row) => row.state)),
+    caseStatuses: normalizeCaseStatusOptions(
+      rows.map((row) => row.caseStatus),
+      dataset,
+    ),
   };
 }
 
@@ -2912,11 +2920,11 @@ function buildWageLevelComparison(
   offeredWageUnitForComparison: "Year" | "Hour",
 ): PublicWageLevelComparison {
   const labels: Record<WageLevelMatchResult["band"], string> = {
-    below_level_1: "低于 Level 1 公开数值",
-    level_1_to_2: "介于 Level 1 和 Level 2",
-    level_2_to_3: "介于 Level 2 和 Level 3",
-    level_3_to_4: "介于 Level 3 和 Level 4",
-    level_4_or_above: "达到或高于 Level 4",
+    below_level_1: "低于等级 1 公开数值",
+    level_1_to_2: "介于等级 1 和等级 2",
+    level_2_to_3: "介于等级 2 和等级 3",
+    level_3_to_4: "介于等级 3 和等级 4",
+    level_4_or_above: "达到或高于等级 4",
     unknown: "无法判断区间",
   };
   const cautionLevels: Record<
@@ -2961,24 +2969,24 @@ function buildUscisFilingChartNote(
 
 function chartTypeLabelZh(chartType: VisaBulletinDate["chartType"]) {
   return chartType === "final_action"
-    ? "Final Action Dates"
-    : "Dates for Filing";
+    ? "最终裁定表（Final Action Dates）"
+    : "递件排期表（Dates for Filing）";
 }
 
 function wageLevelMessageZh(match: WageLevelMatchResult) {
   if (match.band === "below_level_1") {
-    return "输入工资低于该公开记录的 Level 1 数值。请把它视为需要进一步核对的信号，而不是个案法律结论。";
+    return "输入工资低于该公开记录的等级 1 数值。请把它视为需要进一步核对的信号，而不是个案法律结论。";
   }
 
   if (match.band === "level_4_or_above") {
-    return "输入工资达到或高于该公开记录的最高 level 数值。仍需结合职位职责、地区、正式 PWD/LCA 和律师判断。";
+    return "输入工资达到或高于该公开记录的最高工资等级数值。仍需结合职位职责、地区、正式 PWD/LCA 和律师判断。";
   }
 
   if (match.lowerLevel && match.nextLevel) {
-    return `输入工资介于 Level ${match.lowerLevel} 和 Level ${match.nextLevel} 之间。这个区间只能说明与公开 wage table 的相对位置，不能单独判断 H-1B 合规。`;
+    return `输入工资介于等级 ${match.lowerLevel} 和等级 ${match.nextLevel} 之间。这个区间只能说明与官方工资表的相对位置，不能单独判断 H-1B 合规。`;
   }
 
-  return "当前公开记录的 level 数值不完整，工具无法给出可靠区间。";
+  return "当前公开记录的工资等级数值不完整，工具无法给出可靠区间。";
 }
 
 function buildWageLevelRelatedData(
@@ -3073,8 +3081,8 @@ function noindexDirectorySeo(filters: PublicDirectoryFilters) {
   return {
     noindex: true as const,
     noindexReasonZh: filters.hasActiveFilters
-      ? "筛选组合 URL 默认 noindex，避免把低价值参数组合提交给搜索引擎。"
-      : "当前目录仍使用本地数据快照，生产数据质量达标前保持 noindex。",
+      ? "筛选组合页面不单独收录，避免把低价值参数组合提交给搜索引擎。"
+      : "当前目录仍使用本地数据快照，生产数据质量达标前暂不开放公开收录。",
   };
 }
 
@@ -3524,22 +3532,6 @@ function sum(values: readonly number[]) {
 
 function uniqueStrings(values: readonly string[]) {
   return [...new Set(values.filter(Boolean))].sort();
-}
-
-function uniqueCaseStatuses(values: readonly string[]) {
-  const statuses = new Map<string, string>();
-
-  for (const value of values.filter(Boolean)) {
-    const key = value.toLowerCase();
-
-    if (!statuses.has(key)) {
-      statuses.set(key, value);
-    }
-  }
-
-  return [...statuses.values()].sort((left, right) =>
-    left.localeCompare(right),
-  );
 }
 
 function topCounts(values: readonly string[]) {
